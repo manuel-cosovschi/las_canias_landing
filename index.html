@@ -4,11 +4,15 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Las Cañas - Complejo de Casas en Mar de Cobo</title>
+  <meta name="description" content="Alquiler de casas frente al mar en Mar de Cobo. Disfruta de Las Cañas con todas las comodidades."/>
+  <link rel="icon" href="favicon.ico" />
+
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- AOS (Animate On Scroll) -->
   <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet" />
   <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+
   <style>
     html { scroll-behavior: smooth; }
   </style>
@@ -24,7 +28,7 @@
         <li><a href="#gallery" class="hover:text-blue-600">Galería</a></li>
         <li><a href="#contact" class="hover:text-blue-600">Contacto</a></li>
       </ul>
-      <button class="md:hidden" id="menu-btn">☰</button>
+      <button class="md:hidden" id="menu-btn" aria-label="Abrir menú">☰</button>
     </div>
   </nav>
 
@@ -61,51 +65,34 @@
     <div class="container mx-auto px-4 max-w-lg">
       <h3 class="text-3xl font-bold mb-6">Contacto</h3>
 
+      <!-- FORMULARIO NETLIFY -->
       <form
         name="contacto"
         method="POST"
-        action="gracias.html"
         data-netlify="true"
         netlify-honeypot="bot-field"
         class="space-y-4"
       >
-        <!-- Campo oculto requerido por Netlify -->
         <input type="hidden" name="form-name" value="contacto" />
 
-        <!-- Honeypot anti-spam -->
         <p class="hidden">
           <label>Si eres humano, deja este campo vacío: <input name="bot-field" /></label>
         </p>
 
-        <input
-          type="text"
-          name="name"
-          placeholder="Nombre"
-          class="w-full p-3 border rounded"
-          required
-        />
-        <input
-          type="email"
-          name="email"
-          placeholder="Email"
-          class="w-full p-3 border rounded"
-          required
-        />
-        <textarea
-          name="message"
-          placeholder="Mensaje"
-          rows="4"
-          class="w-full p-3 border rounded"
-          required
-        ></textarea>
+        <input type="text" name="name" placeholder="Nombre" class="w-full p-3 border rounded" required />
+        <input type="email" name="email" placeholder="Email" class="w-full p-3 border rounded" required />
+        <textarea name="message" placeholder="Mensaje" rows="4" class="w-full p-3 border rounded" required></textarea>
 
-        <button
-          type="submit"
-          class="w-full py-3 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
-        >
+        <button type="submit" class="w-full py-3 bg-blue-600 text-white rounded hover:bg-blue-700 transition">
           Enviar Mensaje
         </button>
       </form>
+
+      <!-- Mensaje de éxito -->
+      <div id="thankyou" class="hidden mt-6 p-6 bg-green-100 border border-green-200 rounded text-center">
+        <h4 class="text-xl font-bold mb-2">¡Gracias por tu mensaje!</h4>
+        <p>Te responderemos muy pronto.</p>
+      </div>
 
       <p class="mt-6 text-sm text-gray-600">
         También puedes llamarnos al <strong>+54 2236 123456</strong> o
@@ -118,11 +105,33 @@
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       AOS.init({ duration: 800, once: true });
+
+      // Menú móvil
       const btn = document.getElementById('menu-btn');
       const nav = document.querySelector('nav ul');
-      btn.addEventListener('click', () => { nav.classList.toggle('hidden'); });
+      btn.addEventListener('click', () => nav.classList.toggle('hidden'));
+
+      // Interceptar el envío para mostrar mensaje inline
+      const form = document.querySelector('form[name="contacto"]');
+      form.addEventListener('submit', e => {
+        e.preventDefault();
+        fetch('/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: new URLSearchParams(new FormData(form)).toString()
+        })
+        .then(() => {
+          form.classList.add('hidden');
+          document.getElementById('thankyou').classList.remove('hidden');
+        })
+        .catch(err => {
+          console.error('Fallo al enviar:', err);
+          alert('Hubo un error. Intenta de nuevo.');
+        });
+      });
     });
   </script>
 </body>
 </html>
+
 
