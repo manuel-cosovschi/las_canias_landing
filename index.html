@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Las Cañas - Complejo de Casas en Mar de Cobo</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- AOS (Animate On Scroll) -->
+  <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet" />
+  <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+  <style>
+    html { scroll-behavior: smooth; }
+  </style>
+</head>
+<body class="text-gray-800">
+  <!-- Navbar -->
+  <nav class="fixed top-0 w-full bg-white shadow-md z-50">
+    <div class="container mx-auto flex justify-between items-center p-4">
+      <h1 class="text-2xl font-bold">Las Cañas</h1>
+      <ul class="space-x-6 hidden md:flex">
+        <li><a href="#home" class="hover:text-blue-600">Inicio</a></li>
+        <li><a href="#about" class="hover:text-blue-600">Quiénes Somos</a></li>
+        <li><a href="#gallery" class="hover:text-blue-600">Galería</a></li>
+        <li><a href="#contact" class="hover:text-blue-600">Contacto</a></li>
+      </ul>
+      <button class="md:hidden" id="menu-btn">☰</button>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <section id="home" class="h-screen bg-center bg-cover" style="background-image: url('https://via.placeholder.com/1920x1080');">
+    <div class="h-full flex flex-col justify-center items-center bg-black bg-opacity-40" data-aos="fade-down">
+      <h2 class="text-5xl text-white font-extrabold mb-4">Bienvenidos a Las Cañas</h2>
+      <p class="text-xl text-gray-200 max-w-lg text-center">Tu refugio frente al mar en Mar de Cobo. Alquiler de casas equipadas para disfrutar con familia y amigos.</p>
+    </div>
+  </section>
+
+  <!-- About -->
+  <section id="about" class="py-20 bg-gray-100" data-aos="fade-up">
+    <div class="container mx-auto px-4">
+      <h3 class="text-3xl font-bold mb-6">Quiénes Somos</h3>
+      <p class="text-lg leading-relaxed">En Las Cañas ofrecemos un complejo de casas con todas las comodidades: ambientes amplios, camas confortables, parrilla, wifi y más. Estamos a 200 m de la playa y cerca de servicios locales.</p>
+    </div>
+  </section>
+
+  <!-- Gallery -->
+  <section id="gallery" class="py-20" data-aos="fade-up">
+    <div class="container mx-auto px-4">
+      <h3 class="text-3xl font-bold mb-6 text-center">Galería</h3>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <img src="https://via.placeholder.com/600x400" alt="Casa 1" class="rounded-lg shadow-md" data-aos="zoom-in"/>
+        <img src="https://via.placeholder.com/600x400" alt="Casa 2" class="rounded-lg shadow-md" data-aos="zoom-in"/>
+        <img src="https://via.placeholder.com/600x400" alt="Exterior" class="rounded-lg shadow-md" data-aos="zoom-in"/>
+      </div>
+    </div>
+  </section>
+
+  <!-- Contact -->
+  <section id="contact" class="py-20 bg-gray-100" data-aos="fade-up">
+    <div class="container mx-auto px-4 max-w-lg">
+      <h3 class="text-3xl font-bold mb-6">Contacto</h3>
+
+      <form
+        name="contacto"
+        method="POST"
+        action="gracias.html"
+        data-netlify="true"
+        netlify-honeypot="bot-field"
+        class="space-y-4"
+      >
+        <!-- Campo oculto requerido por Netlify -->
+        <input type="hidden" name="form-name" value="contacto" />
+
+        <!-- Honeypot anti-spam -->
+        <p class="hidden">
+          <label>Si eres humano, deja este campo vacío: <input name="bot-field" /></label>
+        </p>
+
+        <input
+          type="text"
+          name="name"
+          placeholder="Nombre"
+          class="w-full p-3 border rounded"
+          required
+        />
+        <input
+          type="email"
+          name="email"
+          placeholder="Email"
+          class="w-full p-3 border rounded"
+          required
+        />
+        <textarea
+          name="message"
+          placeholder="Mensaje"
+          rows="4"
+          class="w-full p-3 border rounded"
+          required
+        ></textarea>
+
+        <button
+          type="submit"
+          class="w-full py-3 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+        >
+          Enviar Mensaje
+        </button>
+      </form>
+
+      <p class="mt-6 text-sm text-gray-600">
+        También puedes llamarnos al <strong>+54 2236 123456</strong> o
+        visitarnos en Google Maps.
+      </p>
+    </div>
+  </section>
+
+  <!-- Scripts -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      AOS.init({ duration: 800, once: true });
+      const btn = document.getElementById('menu-btn');
+      const nav = document.querySelector('nav ul');
+      btn.addEventListener('click', () => { nav.classList.toggle('hidden'); });
+    });
+  </script>
+</body>
+</html>
+
