@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -5,7 +6,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Las Cañas - Complejo de Casas en Mar de Cobo</title>
   <meta name="description" content="Alquiler de casas frente al mar en Mar de Cobo. Disfruta de Las Cañas con todas las comodidades."/>
-  <link rel="icon" href="favicon.ico" />
+  <!-- favicon usando tu logo -->
+  <link rel="icon" href="logo.PNG" type="image/png" />
 
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -21,7 +23,11 @@
   <!-- Navbar -->
   <nav class="fixed top-0 w-full bg-white shadow-md z-50">
     <div class="container mx-auto flex justify-between items-center p-4">
-      <h1 class="text-2xl font-bold">Las Cañas</h1>
+      <!-- Logo + Nombre -->
+      <a href="#home" class="flex items-center">
+        <img src="logo.PNG" alt="Logo Las Cañas" class="h-10 w-auto mr-3" />
+        <span class="text-2xl font-bold">Las Cañas</span>
+      </a>
       <ul class="space-x-6 hidden md:flex">
         <li><a href="#home" class="hover:text-blue-600">Inicio</a></li>
         <li><a href="#about" class="hover:text-blue-600">Quiénes Somos</a></li>
@@ -74,15 +80,12 @@
         class="space-y-4"
       >
         <input type="hidden" name="form-name" value="contacto" />
-
         <p class="hidden">
           <label>Si eres humano, deja este campo vacío: <input name="bot-field" /></label>
         </p>
-
         <input type="text" name="name" placeholder="Nombre" class="w-full p-3 border rounded" required />
         <input type="email" name="email" placeholder="Email" class="w-full p-3 border rounded" required />
         <textarea name="message" placeholder="Mensaje" rows="4" class="w-full p-3 border rounded" required></textarea>
-
         <button type="submit" class="w-full py-3 bg-blue-600 text-white rounded hover:bg-blue-700 transition">
           Enviar Mensaje
         </button>
@@ -133,5 +136,7 @@
   </script>
 </body>
 </html>
+```
+
 
 
