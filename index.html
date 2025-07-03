@@ -27,12 +27,14 @@
 <body class="text-gray-800">
   <!-- Navbar -->
   <nav class="fixed top-0 w-full bg-white shadow-md z-50">
-    <div class="container mx-auto flex justify-between items-center p-4">
+    <div class="container mx-auto px-6 sm:px-8 lg:px-4 flex justify-between items-center p-4">
       <a href="#home" class="flex items-center">
         <img src="logo.PNG" alt="Logo Las Cañas" class="h-10 mr-3" />
         <span class="text-2xl font-bold">Las Cañas</span>
       </a>
-      <ul id="menu" class="hidden absolute top-full left-0 w-full bg-white flex-col items-center space-y-4 py-4 shadow-md md:static md:flex md:flex-row md:space-y-0 md:space-x-6 md:py-0 md:bg-transparent md:shadow-none">
+      <ul id="menu"
+          class="hidden absolute top-full left-0 w-full bg-white flex-col items-center space-y-4 py-4 shadow-md
+                 md:static md:flex md:flex-row md:space-y-0 md:space-x-6 md:py-0 md:bg-transparent md:shadow-none">
         <li><a href="#home" class="block hover:text-blue-600">Inicio</a></li>
         <li><a href="#about" class="block hover:text-blue-600">Quiénes Somos</a></li>
         <li><a href="#gallery" class="block hover:text-blue-600">Galería</a></li>
@@ -45,42 +47,48 @@
 
   <!-- Hero -->
   <section id="home" class="h-screen bg-center bg-cover" style="background-image: url('https://via.placeholder.com/1920x1080');">
-    <div class="h-full flex flex-col justify-center items-center bg-black bg-opacity-40" data-aos="fade-down">
+    <div class="h-full flex flex-col justify-center items-center bg-black bg-opacity-40 px-6 sm:px-8 lg:px-4" data-aos="fade-down">
       <h2 class="text-3xl sm:text-5xl text-white font-extrabold mb-4 text-center">Las Cañas</h2>
-      <p class="text-base sm:text-lg text-gray-200 max-w-xl text-center mb-2">Donde descansa el silencio a una cuadra de la playa en Mar de Cobo.</p>
-      <p class="text-base sm:text-lg text-gray-200 max-w-xl text-center">Casas de alquiler temporario con parque y parrilla privadas para disfrutar con amigos y en familia.</p>
+      <p class="text-base sm:text-lg text-gray-200 max-w-xl text-center mb-2">
+        Donde descansa el silencio a una cuadra de la playa en Mar de Cobo.
+      </p>
+      <p class="text-base sm:text-lg text-gray-200 max-w-xl text-center">
+        Casas de alquiler temporario con parque y parrilla privadas para disfrutar con amigos y en familia.
+      </p>
     </div>
   </section>
 
   <!-- About -->
   <section id="about" class="py-20 bg-gray-100" data-aos="fade-up">
-    <div class="container mx-auto px-4">
+    <div class="container mx-auto px-6 sm:px-8 lg:px-4">
       <h3 class="text-3xl font-bold mb-6">Quiénes Somos</h3>
       <p class="text-lg leading-relaxed">
-        Hoy les queremos contar quienes somos..., muchos de ustedes ya nos conocen pero acá va parte de la historia.
+        Hoy les queremos contar quiénes somos... Muchos de ustedes ya nos conocen, pero acá va parte de la historia.
         Somos Ana y Gonzalo, dos que aún sin conocernos, descubrimos hace muchos años que Mar de Cobo era nuestro lugar en el mundo.
         Las Cañas es un sueño que comenzó hace 10 años y poco a poco fue haciéndose realidad.
-        Hoy tenemos 4 hermosas casas y una mas en camino..., de las cuales estamos muy orgullosos y a las que siempre año a año seguimos mejorando para ofrecerles a nuestros huéspedes lo mejor que tenemos.
-        Cuando pensamos en Las Cañas, siempre esperamos que les haga encontrar en Mar de Cobo, aunque sea una partecita de todo lo que encontramos nosotros acá...❤️
+        Hoy tenemos 4 hermosas casas y una más en camino, de las cuales estamos muy orgullosos y que año a año seguimos mejorando
+        para ofrecerles a nuestros huéspedes lo mejor que tenemos.
+        Cuando pensamos en Las Cañas, esperamos que encuentren en Mar de Cobo, aunque sea una partecita de todo lo que
+        nosotros descubrimos acá... ❤️
       </p>
     </div>
   </section>
 
   <!-- Gallery -->
   <section id="gallery" class="py-20" data-aos="fade-up">
-    <div class="container mx-auto px-4">
+    <div class="container mx-auto px-6 sm:px-8 lg:px-4">
       <h3 class="text-3xl font-bold mb-6 text-center">Galería</h3>
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        <img src="portonEntrada.JPG" alt="Casa 1" class="rounded-lg shadow-md" data-aos="zoom-in"/>
-        <img src="entradaVista1.jpg" alt="Casa 2" class="rounded-lg shadow-md" data-aos="zoom-in"/>
-        <img src="autosentrada.jpg" alt="Casa 3" class="rounded-lg shadow-md" data-aos="zoom-in"/>
+        <img src="portonEntrada.JPG" alt="Portón de ingreso" class="rounded-lg shadow-md" data-aos="zoom-in"/>
+        <img src="entradaVista1.jpg" alt="Vista de la entrada" class="rounded-lg shadow-md" data-aos="zoom-in"/>
+        <img src="autosentrada.jpg" alt="Estacionamiento" class="rounded-lg shadow-md" data-aos="zoom-in"/>
       </div>
     </div>
   </section>
 
   <!-- Nuestras Casas -->
   <section id="casas" class="py-20 bg-white" data-aos="fade-up">
-    <div class="container mx-auto px-4">
+    <div class="container mx-auto px-6 sm:px-8 lg:px-4">
       <h3 class="text-3xl font-bold mb-8 text-center">Nuestras Casas</h3>
 
       <!-- Casa 1 -->
@@ -89,12 +97,12 @@
         <p class="mb-2">
           La casa está muy bien equipada. Tiene wifi y un LED Smart de 42”.
           Todo lo necesario de batería de cocina, microondas, heladera y tostadora eléctrica.
-          También cuenta con mosquiteros y 2 ventiladores de pie.
+          También cuenta con mosquiteros y dos ventiladores de pie.
         </p>
         <p class="mb-4">
           En PB la casa tiene toilette y un sofá cama (2 camas de 1 plaza).
           En PA baño completo y habitación matrimonial con sommier de 1,60 m.
-          Les dejamos 1 toallón de ducha por persona y una toalla de mano en cada baño. Solo tienen que traer sábanas.
+          Les dejamos un toallón de ducha por persona y una toalla de mano en cada baño. Solo tienen que traer sábanas.
         </p>
         <p class="mb-4">
           <strong>No aceptamos mascotas. Estamos a 1 cuadra de la playa.</strong>
@@ -112,18 +120,19 @@
         <h4 class="text-2xl font-semibold mb-4">Casa 2</h4>
         <p class="mb-2">
           La casa está muy bien equipada. Tiene wifi, LED Smart de 42”. Todo lo necesario de batería de cocina,
-          microondas, heladera, tostadora eléctrica. Tiene mosquiteros y 2 ventiladores de pie.
-        </p>
-        <p class="mb-2">
-          En PB la casa tiene toilette y un sofá cama (2 camas de 1 plaza). En PA baño completo y habitación matrimonial
-          con sommier de 1,60 m. Les dejamos 1 toallón de ducha por persona y una toalla de mano en cada baño. Solo tienen que traer sábanas.
+          microondas, heladera y tostadora eléctrica. También cuenta con mosquiteros y dos ventiladores de pie.
         </p>
         <p class="mb-4">
-          <strong>Única con 2 TVs Smart de 42” (living y habitación). No aceptamos mascotas. Estamos a 1 cuadra de la playa.</strong>
+          En PB la casa tiene toilette y un sofá cama (2 camas de 1 plaza).
+          En PA baño completo y habitación matrimonial con sommier de 1,60 m.
+          Les dejamos un toallón de ducha por persona y una toalla de mano en cada baño. Solo tienen que traer sábanas.
+        </p>
+        <p class="mb-4">
+          <strong>Única con dos TVs Smart de 42” (living y habitación). No aceptamos mascotas. Estamos a 1 cuadra de la playa.</strong>
         </p>
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <img src="Casa 2 Imagenes/entrada2.JPG" alt="Entrada Casa 2" class="rounded-lg shadow-md"/>
-          <img src="Casa 2 Imagenes/entradaafuera2.JPG" alt="Living Casa 2" class="rounded-lg shadow-md"/>
+          <img src="Casa 2 Imagenes/entradaafuera2.JPG" alt="Entrada exterior Casa 2" class="rounded-lg shadow-md"/>
           <img src="Casa 2 Imagenes/cama2.JPG" alt="Habitación Casa 2" class="rounded-lg shadow-md"/>
           <img src="Casa 2 Imagenes/parrilla2.JPG" alt="Parrilla Casa 2" class="rounded-lg shadow-md"/>
         </div>
@@ -135,12 +144,12 @@
         <p class="mb-2">
           La casa está muy bien equipada. Tiene wifi y un LED Smart de 42”.
           Todo lo necesario de batería de cocina, microondas, heladera y tostadora eléctrica.
-          También cuenta con mosquiteros y 2 ventiladores de pie.
+          También cuenta con mosquiteros y dos ventiladores de pie.
         </p>
         <p class="mb-4">
           En PB la casa tiene toilette y un sofá cama (2 camas de 1 plaza).
           En PA baño completo y habitación matrimonial con sommier de 1,60 m.
-          Les dejamos 1 toallón de ducha por persona y una toalla de mano en cada baño. Solo tienen que traer sábanas.
+          Les dejamos un toallón de ducha por persona y una toalla de mano en cada baño. Solo tienen que traer sábanas.
         </p>
         <p class="mb-4">
           <strong>No aceptamos mascotas. Estamos a 1 cuadra de la playa.</strong>
@@ -157,7 +166,7 @@
 
   <!-- Contact -->
   <section id="contact" class="py-20 bg-gray-100" data-aos="fade-up">
-    <div class="container mx-auto px-4 max-w-lg">
+    <div class="container mx-auto px-6 sm:px-8 lg:px-4 max-w-lg">
       <h3 class="text-3xl font-bold mb-6">Contacto</h3>
       <form name="contacto" method="POST" data-netlify="true" netlify-honeypot="bot-field" class="space-y-4">
         <input type="hidden" name="form-name" value="contacto" />
@@ -165,13 +174,17 @@
         <input type="text" name="name" placeholder="Nombre" class="w-full p-3 border rounded" required />
         <input type="email" name="email" placeholder="Email" class="w-full p-3 border rounded" required />
         <textarea name="message" placeholder="Mensaje" rows="4" class="w-full p-3 border rounded" required></textarea>
-        <button type="submit" class="w-full py-3 bg-blue-600 text-white rounded hover:bg-blue-700 transition">Enviar Mensaje</button>
+        <button type="submit" class="w-full py-3 bg-blue-600 text-white rounded hover:bg-blue-700 transition">
+          Enviar Mensaje
+        </button>
       </form>
       <div id="thankyou" class="hidden mt-6 p-6 bg-green-100 border border-green-200 rounded text-center">
         <h4 class="text-xl font-bold mb-2">¡Gracias por tu mensaje!</h4>
         <p>Te responderemos muy pronto.</p>
       </div>
-      <p class="mt-6 text-sm text-gray-600">También puedes llamarnos al <strong>+54 2236 123456</strong> o visitarnos en Google Maps.</p>
+      <p class="mt-6 text-sm text-gray-600">
+        También puedes llamarnos al <strong>+54 2236 123456</strong> o visitarnos en Google Maps.
+      </p>
     </div>
   </section>
 
@@ -185,14 +198,25 @@
       const form = document.querySelector('form[name="contacto"]');
       form.addEventListener('submit', e => {
         e.preventDefault();
-        fetch('/', {method: 'POST', headers: {'Content-Type': 'application/x-www-form-urlencoded'}, body: new URLSearchParams(new FormData(form)).toString()})
-          .then(() => { form.classList.add('hidden'); document.getElementById('thankyou').classList.remove('hidden'); })
-          .catch(err => { console.error('Error al enviar:', err); alert('Hubo un problema. Intenta de nuevo.'); });
+        fetch('/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: new URLSearchParams(new FormData(form)).toString()
+        })
+        .then(() => {
+          form.classList.add('hidden');
+          document.getElementById('thankyou').classList.remove('hidden');
+        })
+        .catch(err => {
+          console.error('Error al enviar:', err);
+          alert('Hubo un problema. Intenta de nuevo.');
+        });
       });
     });
   </script>
 </body>
 </html>
+
 
 
 
