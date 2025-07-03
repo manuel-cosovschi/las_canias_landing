@@ -13,7 +13,7 @@
 
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- AOS (Animate On Scroll) -->
+  <!-- AOS -->
   <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet" />
   <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
   <!-- Glide.js -->
@@ -21,7 +21,6 @@
   <script src="https://cdn.jsdelivr.net/npm/@glidejs/glide/dist/glide.min.js"></script>
   <style>
     html { scroll-behavior: smooth; scroll-padding-top: 4rem; }
-    /* flechas más visibles y centradas */
     .glide { position: relative; }
     .glide__arrow {
       position: absolute;
@@ -39,24 +38,59 @@
   </style>
 </head>
 <body class="text-gray-800">
-  <!-- Navbar omitted for brevity -->
+  <!-- Navbar -->
+  <nav class="fixed top-0 w-full bg-white shadow-md z-50">
+    <div class="container mx-auto px-6 sm:px-8 lg:px-4 flex justify-between items-center p-4">
+      <a href="#home" class="flex items-center">
+        <img src="logo.PNG" alt="Logo Las Cañas" class="h-10 mr-3" />
+        <span class="text-2xl font-bold">Las Cañas</span>
+      </a>
+      <ul id="menu" class="hidden absolute top-full left-0 w-full bg-white px-6 flex-col items-start space-y-4 py-4 shadow-md md:static md:flex md:flex-row md:space-y-0 md:space-x-6 md:px-0 md:py-0 md:bg-transparent md:shadow-none">
+        <li><a href="#home" class="block hover:text-blue-600">Inicio</a></li>
+        <li><a href="#about" class="block hover:text-blue-600">Quiénes Somos</a></li>
+        <li><a href="#gallery" class="block hover:text-blue-600">Galería</a></li>
+        <li><a href="#casas" class="block hover:text-blue-600">Nuestras Casas</a></li>
+        <li><a href="#contact" class="block hover:text-blue-600">Contacto</a></li>
+      </ul>
+      <button id="menu-btn" class="md:hidden" aria-label="Abrir menú">☰</button>
+    </div>
+  </nav>
 
-  <!-- Galería dinámica (ejemplo) -->
+  <!-- Hero -->
+  <section id="home" class="h-screen bg-center bg-cover" style="background-image:url('https://via.placeholder.com/1920x1080');">
+    <div class="h-full flex flex-col justify-center items-center bg-black bg-opacity-40 px-6 sm:px-8 lg:px-4" data-aos="fade-down">
+      <h2 class="text-3xl sm:text-5xl text-white font-extrabold mb-4 text-center">Las Cañas</h2>
+      <p class="text-base sm:text-lg text-gray-200 max-w-xl text-center mb-2">Donde descansa el silencio a una cuadra de la playa en Mar de Cobo.</p>
+      <p class="text-base sm:text-lg text-gray-200 max-w-xl text-center">Casas de alquiler temporario con parque y parrilla privadas para disfrutar con amigos y en familia.</p>
+    </div>
+  </section>
+
+  <!-- About -->
+  <section id="about" class="py-20 bg-gray-100" data-aos="fade-up">
+    <div class="container mx-auto px-6 sm:px-8 lg:px-4">
+      <h3 class="text-3xl font-bold mb-6">Quiénes Somos</h3>
+      <p class="text-lg leading-relaxed">
+        Hoy les queremos contar quiénes somos... Muchos de ustedes ya nos conocen, pero acá va parte de la historia.
+        Somos Ana y Gonzalo, dos que aún sin conocernos, descubrimos hace muchos años que Mar de Cobo era nuestro lugar en el mundo.
+        Las Cañas es un sueño que comenzó hace 10 años y poco a poco fue haciéndose realidad.
+        Hoy tenemos 4 hermosas casas y una más en camino, de las cuales estamos muy orgullosos y que año a año seguimos mejorando
+        para ofrecerles a nuestros huéspedes lo mejor que tenemos.
+        Cuando pensamos en Las Cañas, esperamos que encuentren en Mar de Cobo, aunque sea una partecita de todo lo que
+        nosotros descubrimos acá... ❤️
+      </p>
+    </div>
+  </section>
+
+  <!-- Galería Dinámica -->
   <section id="gallery" class="py-20" data-aos="fade-up">
     <div class="container mx-auto px-6 sm:px-8 lg:px-4">
       <h3 class="text-3xl font-bold mb-6 text-center">Galería</h3>
       <div class="glide glide-gallery">
         <div class="glide__track" data-glide-el="track">
           <ul class="glide__slides">
-            <li class="glide__slide">
-              <img src="entradaVista1.jpg" alt="Entrada" class="rounded-lg mx-auto w-11/12 max-w-xl h-64 sm:h-80 object-cover" />
-            </li>
-            <li class="glide__slide">
-              <img src="portonEntrada.JPG" alt="Portón" class="rounded-lg mx-auto w-11/12 max-w-xl h-64 sm:h-80 object-cover" />
-            </li>
-            <li class="glide__slide">
-              <img src="autosentrada.jpg" alt="Estacionamiento" class="rounded-lg mx-auto w-11/12 max-w-xl h-64 sm:h-80 object-cover" />
-            </li>
+            <li class="glide__slide"><img src="entradaVista1.jpg" alt="Entrada" class="rounded-lg mx-auto w-11/12 max-w-xl h-64 sm:h-80 object-cover"/></li>
+            <li class="glide__slide"><img src="portonEntrada.JPG" alt="Portón" class="rounded-lg mx-auto w-11/12 max-w-xl h-64 sm:h-80 object-cover"/></li>
+            <li class="glide__slide"><img src="autosentrada.jpg" alt="Estacionamiento" class="rounded-lg mx-auto w-11/12 max-w-xl h-64 sm:h-80 object-cover"/></li>
           </ul>
         </div>
         <button class="glide__arrow glide__arrow--left" data-glide-dir="<">‹</button>
@@ -65,39 +99,47 @@
     </div>
   </section>
 
-  <!-- Carrusel Casa 1 -->
+  <!-- Nuestras Casas -->
   <section id="casas" class="py-20 bg-white" data-aos="fade-up">
     <div class="container mx-auto px-6 sm:px-8 lg:px-4">
       <h3 class="text-3xl font-bold mb-8 text-center">Nuestras Casas</h3>
+
+      <!-- Casa 1 -->
       <div class="glide glide-casa1 mb-12">
         <h4 class="text-2xl font-semibold mb-4">Casa 1</h4>
         <div class="glide__track" data-glide-el="track">
           <ul class="glide__slides">
-            <li class="glide__slide"><img src="Casa 1 Imagenes/entradacasa1.JPG" alt="Entrada" class="rounded-lg mx-auto w-11/12 max-w-xl h-64 sm:h-80 object-cover" /></li>
-            <li class="glide__slide"><img src="Casa 1 Imagenes/living1.JPG" alt="Living" class="rounded-lg mx-auto w-11/12 max-w-xl h-64 sm:h-80 object-cover" /></li>
-            <li class="glide__slide"><img src="Casa 1 Imagenes/cocina1.JPG" alt="Cocina" class="rounded-lg mx-auto w-11/12 max-w-xl h-64 sm:h-80 object-cover" /></li>
-            <li class="glide__slide"><img src="Casa 1 Imagenes/patio1.JPG" alt="Patio" class="rounded-lg mx-auto w-11/12 max-w-xl h-64 sm:h-80 object-cover" /></li>
+            <li class="glide__slide"><img src="Casa 1 Imagenes/entradacasa1.JPG" alt="Entrada" class="rounded-lg mx-auto w-11/12 max-w-xl h-64 sm:h-80 object-cover"/></li>
+            <li class="glide__slide"><img src="Casa 1 Imagenes/living1.JPG" alt="Living" class="rounded-lg mx-auto w-11/12 max-w-xl h-64 sm:h-80 object-cover"/></li>
+            <li class="glide__slide"><img src="Casa 1 Imagenes/cocina1.JPG" alt="Cocina" class="rounded-lg mx-auto w-11/12 max-w-xl h-64 sm:h-80 object-cover"/></li>
+            <li class="glide__slide"><img src="Casa 1 Imagenes/patio1.JPG" alt="Patio" class="rounded-lg mx-auto w-11/12 max-w-xl h-64 sm:h-80 object-cover"/></li>
           </ul>
         </div>
         <button class="glide__arrow glide__arrow--left" data-glide-dir="<">‹</button>
         <button class="glide__arrow glide__arrow--right" data-glide-dir=">">›</button>
       </div>
 
-      <!-- Repetir similar para Casa 2 y Casa 3 -->
-    </div>
-  </section>
+      <!-- Casa 2 -->
+      <div class="glide glide-casa2 mb-12">
+        <h4 class="text-2xl font-semibold mb-4">Casa 2</h4>
+        <div class="glide__track" data-glide-el="track">
+          <ul class="glide__slides">
+            <li class="glide__slide"><img src="Casa 2 Imagenes/entrada2.JPG" alt="Entrada 2" class="rounded-lg mx-auto w-11/12 max-w-xl h-64 sm:h-80 object-cover"/></li>
+            <li class="glide__slide"><img src="Casa 2 Imagenes/entradaafuera2.JPG" alt="Exterior 2" class="rounded-lg mx-auto w-11/12 max-w-xl h-64 sm:h-80 object-cover"/></li>
+            <li class="glide__slide"><img src="Casa 2 Imagenes/cama2.JPG" alt="Habitación 2" class="rounded-lg mx-auto w-11/12 max-w-xl h-64 sm:h-80 object-cover"/></li>
+            <li class="glide__slide"><img src="Casa 2 Imagenes/parrilla2.JPG" alt="Parrilla 2" class="rounded-lg mx-auto w-11/12 max-w-xl h-64 sm:h-80 object-cover"/></li>
+          </ul>
+        </div>
+        <button class="glide__arrow glide__arrow--left" data-glide-dir="<">‹</button>
+        <button class="glide__arrow glide__arrow--right" data-glide-dir=">">›</button>
+      </div>
 
-  <!-- Scripts comunes -->
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      AOS.init({ duration: 800, once: true });
-      document.querySelectorAll('.glide').forEach(el => {
-        new Glide(el, { type: 'carousel', perView: 1, focusAt: 'center', gap: 16 }).mount();
-      });
-    });
-  </script>
-</body>
-</html>
+      <!-- Casa 3 -->
+      <div class="glide glide-casa3 mb-12">
+        <h4 class="text-2xl font-semibold mb-4">Casa 3</h4>
+        <div class="glide__track" data-glide-el="track">
+          <ul class="glide__
+
 
 
 
