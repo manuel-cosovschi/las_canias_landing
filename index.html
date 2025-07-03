@@ -1,4 +1,3 @@
-```html
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -7,10 +6,9 @@
   <title>Las Cañas - Complejo de Casas en Mar de Cobo</title>
   <meta name="description" content="Alquiler de casas frente al mar en Mar de Cobo. Disfruta de Las Cañas con todas las comodidades."/>
 
-  <!-- Favicon -->
+  <!-- favicon usando tu logo -->
   <link rel="icon" href="logo.PNG" type="image/png" />
   <link rel="shortcut icon" href="logo.PNG" />
-  <!-- Para iOS/Home Screen -->
   <link rel="apple-touch-icon" href="logo.PNG" />
 
   <!-- Tailwind CSS CDN -->
@@ -20,34 +18,37 @@
   <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
 
   <style>
-    html { scroll-behavior: smooth; }
+    html {
+      scroll-behavior: smooth;
+      scroll-padding-top: 4rem;
+    }
   </style>
 </head>
-
 <body class="text-gray-800">
   <!-- Navbar -->
   <nav class="fixed top-0 w-full bg-white shadow-md z-50">
     <div class="container mx-auto flex justify-between items-center p-4">
-      <!-- Logo + Nombre -->
       <a href="#home" class="flex items-center">
-        <img src="logo.PNG" alt="Logo Las Cañas" class="h-10 w-auto mr-3" />
+        <img src="logo.PNG" alt="Logo Las Cañas" class="h-10 mr-3" />
         <span class="text-2xl font-bold">Las Cañas</span>
       </a>
-      <ul class="space-x-6 hidden md:flex">
-        <li><a href="#home" class="hover:text-blue-600">Inicio</a></li>
-        <li><a href="#about" class="hover:text-blue-600">Quiénes Somos</a></li>
-        <li><a href="#gallery" class="hover:text-blue-600">Galería</a></li>
-        <li><a href="#contact" class="hover:text-blue-600">Contacto</a></li>
+      <ul id="menu" class="hidden absolute top-full left-0 w-full bg-white flex-col items-center space-y-4 py-4 shadow-md md:static md:flex md:flex-row md:space-y-0 md:space-x-6 md:py-0 md:bg-transparent md:shadow-none">
+        <li><a href="#home" class="block hover:text-blue-600">Inicio</a></li>
+        <li><a href="#about" class="block hover:text-blue-600">Quiénes Somos</a></li>
+        <li><a href="#gallery" class="block hover:text-blue-600">Galería</a></li>
+        <li><a href="#casas" class="block hover:text-blue-600">Nuestras Casas</a></li>
+        <li><a href="#contact" class="block hover:text-blue-600">Contacto</a></li>
       </ul>
-      <button class="md:hidden" id="menu-btn" aria-label="Abrir menú">☰</button>
+      <button id="menu-btn" class="md:hidden" aria-label="Abrir menú">☰</button>
     </div>
   </nav>
 
   <!-- Hero -->
   <section id="home" class="h-screen bg-center bg-cover" style="background-image: url('https://via.placeholder.com/1920x1080');">
     <div class="h-full flex flex-col justify-center items-center bg-black bg-opacity-40" data-aos="fade-down">
-      <h2 class="text-5xl text-white font-extrabold mb-4">Bienvenidos a Las Cañas</h2>
-      <p class="text-xl text-gray-200 max-w-lg text-center">Tu refugio frente al mar en Mar de Cobo. Alquiler de casas equipadas para disfrutar con familia y amigos.</p>
+      <h2 class="text-3xl sm:text-5xl text-white font-extrabold mb-4 text-center">Las Cañas</h2>
+      <p class="text-base sm:text-lg text-gray-200 max-w-xl text-center mb-2">Donde descansa el silencio a una cuadra de la playa en Mar de Cobo.</p>
+      <p class="text-base sm:text-lg text-gray-200 max-w-xl text-center">Casas de alquiler temporario con parque y parrilla privadas para disfrutar con amigos y en familia.</p>
     </div>
   </section>
 
@@ -55,7 +56,10 @@
   <section id="about" class="py-20 bg-gray-100" data-aos="fade-up">
     <div class="container mx-auto px-4">
       <h3 class="text-3xl font-bold mb-6">Quiénes Somos</h3>
-      <p class="text-lg leading-relaxed">En Las Cañas ofrecemos un complejo de casas con todas las comodidades: ambientes amplios, camas confortables, parrilla, wifi y más. Estamos a 200 m de la playa y cerca de servicios locales.</p>
+      <p class="text-lg leading-relaxed">
+        En Las Cañas ofrecemos un complejo de casas con todas las comodidades: ambientes amplios,
+        camas confortables, parrilla, wifi y más. Estamos a 200 m de la playa y cerca de servicios locales.
+      </p>
     </div>
   </section>
 
@@ -66,7 +70,67 @@
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         <img src="https://via.placeholder.com/600x400" alt="Casa 1" class="rounded-lg shadow-md" data-aos="zoom-in"/>
         <img src="https://via.placeholder.com/600x400" alt="Casa 2" class="rounded-lg shadow-md" data-aos="zoom-in"/>
-        <img src="https://via.placeholder.com/600x400" alt="Exterior" class="rounded-lg shadow-md" data-aos="zoom-in"/>
+        <img src="https://via.placeholder.com/600x400" alt="Casa 3" class="rounded-lg shadow-md" data-aos="zoom-in"/>
+      </div>
+    </div>
+  </section>
+
+  <!-- Nuestras Casas -->
+  <section id="casas" class="py-20 bg-white" data-aos="fade-up">
+    <div class="container mx-auto px-4">
+      <h3 class="text-3xl font-bold mb-8 text-center">Nuestras Casas</h3>
+
+      <!-- Casa 1 -->
+      <div class="mb-12">
+        <h4 class="text-2xl font-semibold mb-4">Casa 1</h4>
+        <p class="mb-4">
+          Donde descansa el silencio a una cuadra de la playa en Mar de Cobo. Casas de alquiler temporario
+          con parque y parrilla privadas para disfrutar con amigos y en familia.
+        </p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <img src="Casa 1 Imagenes/entrada1.JPG" alt="Entrada Casa 1" class="rounded-lg shadow-md"/>
+          <img src="Casa 1 Imagenes/living1.JPG" alt="Living Casa 1" class="rounded-lg shadow-md"/>
+          <img src="Casa 1 Imagenes/cocina1.JPG" alt="Cocina Casa 1" class="rounded-lg shadow-md"/>
+          <img src="Casa 1 Imagenes/patio1.JPG" alt="Patio Casa 1" class="rounded-lg shadow-md"/>
+        </div>
+      </div>
+
+      <!-- Casa 2 -->
+      <div class="mb-12">
+        <h4 class="text-2xl font-semibold mb-4">Casa 2</h4>
+        <p class="mb-2">
+          La casa está muy bien equipada. Tiene wifi, LED Smart de 42”. Todo lo necesario de batería de cocina,
+          microondas, heladera, tostadora eléctrica. Tiene mosquiteros, 2 ventiladores de pie.
+        </p>
+        <p class="mb-2">
+          En PB la casa tiene toilette y un sofá cama (2 camas de 1 plaza). En PA baño completo y habitación matrimonial
+          con sommier de 1,60 m. Les dejamos 1 toallón de ducha por persona y una toalla de mano en cada baño. Solo
+          tienen que traer sábanas.
+        </p>
+        <p class="mb-4">
+          <strong>Única con 2 TVs Smart de 42” (living y habitación). No aceptamos mascotas. Estamos a 1 cuadra de la playa.</strong>
+        </p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <img src="Casa 2 Imagenes/entrada2.JPG" alt="Entrada Casa 2" class="rounded-lg shadow-md"/>
+          <img src="Casa 2 Imagenes/living2.JPG" alt="Living Casa 2" class="rounded-lg shadow-md"/>
+          <img src="Casa 2 Imagenes/cama2.JPG" alt="Habitación Casa 2" class="rounded-lg shadow-md"/>
+          <img src="Casa 2 Imagenes/parrilla2.JPG" alt="Parrilla Casa 2" class="rounded-lg shadow-md"/>
+        </div>
+      </div>
+
+      <!-- Casa 3 -->
+      <div class="mb-12">
+        <h4 class="text-2xl font-semibold mb-4">Casa 3</h4>
+        <p class="mb-4">
+          Misma descripción que Casa 1 y Casa 2 (sin TVs extra). Donde descansa el silencio a una cuadra de la playa
+          en Mar de Cobo. Casas de alquiler temporario con parque y parrilla privadas para disfrutar con amigos y en familia.
+        </p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <img src="Casa 3 Imagenes/entrada3.JPG" alt="Entrada Casa 3" class="rounded-lg shadow-md"/>
+          <img src="Casa 3 Imagenes/living3.JPG" alt="Living Casa 3" class="rounded-lg shadow-md"/>
+          <img src="Casa 3 Imagenes/cocina3.JPG" alt="Cocina Casa 3" class="rounded-lg shadow-md"/>
+          <img src="Casa 3 Imagenes/patio3.JPG" alt="Patio Casa 3" class="rounded-lg shadow-md"/>
+        </div>
       </div>
     </div>
   </section>
@@ -75,37 +139,19 @@
   <section id="contact" class="py-20 bg-gray-100" data-aos="fade-up">
     <div class="container mx-auto px-4 max-w-lg">
       <h3 class="text-3xl font-bold mb-6">Contacto</h3>
-
-      <!-- FORMULARIO NETLIFY -->
-      <form
-        name="contacto"
-        method="POST"
-        data-netlify="true"
-        netlify-honeypot="bot-field"
-        class="space-y-4"
-      >
+      <form name="contacto" method="POST" data-netlify="true" netlify-honeypot="bot-field" class="space-y-4">
         <input type="hidden" name="form-name" value="contacto" />
-        <p class="hidden">
-          <label>Si eres humano, deja este campo vacío: <input name="bot-field" /></label>
-        </p>
+        <p class="hidden"><label>Si eres humano, deja este campo vacío: <input name="bot-field" /></label></p>
         <input type="text" name="name" placeholder="Nombre" class="w-full p-3 border rounded" required />
         <input type="email" name="email" placeholder="Email" class="w-full p-3 border rounded" required />
         <textarea name="message" placeholder="Mensaje" rows="4" class="w-full p-3 border rounded" required></textarea>
-        <button type="submit" class="w-full py-3 bg-blue-600 text-white rounded hover:bg-blue-700 transition">
-          Enviar Mensaje
-        </button>
+        <button type="submit" class="w-full py-3 bg-blue-600 text-white rounded hover:bg-blue-700 transition">Enviar Mensaje</button>
       </form>
-
-      <!-- Mensaje de éxito -->
       <div id="thankyou" class="hidden mt-6 p-6 bg-green-100 border border-green-200 rounded text-center">
         <h4 class="text-xl font-bold mb-2">¡Gracias por tu mensaje!</h4>
         <p>Te responderemos muy pronto.</p>
       </div>
-
-      <p class="mt-6 text-sm text-gray-600">
-        También puedes llamarnos al <strong>+54 2236 123456</strong> o
-        visitarnos en Google Maps.
-      </p>
+      <p class="mt-6 text-sm text-gray-600">También puedes llamarnos al <strong>+54 2236 123456</strong> o visitarnos en Google Maps.</p>
     </div>
   </section>
 
@@ -113,35 +159,21 @@
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       AOS.init({ duration: 800, once: true });
-
-      // Menú móvil
       const btn = document.getElementById('menu-btn');
-      const nav = document.querySelector('nav ul');
-      btn.addEventListener('click', () => nav.classList.toggle('hidden'));
-
-      // Interceptar el envío para mostrar mensaje inline
+      const menu = document.getElementById('menu');
+      btn.addEventListener('click', () => menu.classList.toggle('hidden'));
       const form = document.querySelector('form[name="contacto"]');
       form.addEventListener('submit', e => {
         e.preventDefault();
-        fetch('/', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: new URLSearchParams(new FormData(form)).toString()
-        })
-        .then(() => {
-          form.classList.add('hidden');
-          document.getElementById('thankyou').classList.remove('hidden');
-        })
-        .catch(err => {
-          console.error('Fallo al enviar:', err);
-          alert('Hubo un error. Intenta de nuevo.');
-        });
+        fetch('/', {method: 'POST', headers: {'Content-Type': 'application/x-www-form-urlencoded'}, body: new URLSearchParams(new FormData(form)).toString()})
+          .then(() => { form.classList.add('hidden'); document.getElementById('thankyou').classList.remove('hidden'); })
+          .catch(err => { console.error('Error al enviar:', err); alert('Hubo un problema. Intenta de nuevo.'); });
       });
     });
   </script>
 </body>
 </html>
-```
+
 
 
 
