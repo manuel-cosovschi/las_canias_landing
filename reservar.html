@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reservar - Las Cañas</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 text-gray-900">
+
+  <header class="bg-white shadow">
+    <div class="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
+      <a href="index.html" class="font-bold text-xl">← Las Cañas</a>
+      <a href="index.html#contact" class="text-blue-600 font-semibold">Contacto</a>
+    </div>
+  </header>
+
+  <main class="max-w-3xl mx-auto px-4 py-10">
+    <h1 class="text-3xl font-bold mb-2">Reservar</h1>
+    <p class="text-gray-600 mb-8">
+      Elegí la casa y las fechas. Luego podés pagar la seña con tarjeta o solicitar transferencia.
+    </p>
+
+    <!-- Selector -->
+    <section class="bg-white rounded-xl shadow p-6 mb-6">
+      <h2 class="text-xl font-semibold mb-4">1) Datos de la estadía</h2>
+
+      <div class="grid sm:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium mb-1">Casa</label>
+          <select id="house" class="w-full border rounded-lg p-3">
+            <option value="LC1">Las Cañas 1 (4 / excepción 5 con colchón extra)</option>
+            <option value="LC2">Las Cañas 2 (máx 4; ideal 2 adultos + 2 niños)</option>
+            <option value="LC3">Las Cañas 3 (máx 4 adultos + 1 joven + 1 niño)</option>
+            <option value="LC4">Las Cañas 4 (3 adultos o 2 adultos + 2 niños)</option>
+            <option value="LC5">Las Cañas 5 (2 adultos + 1 niño)</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium mb-1">Cantidad de personas</label>
+          <input id="guests" type="number" min="1" class="w-full border rounded-lg p-3" placeholder="Ej: 4" />
+          <p class="text-xs text-gray-500 mt-1">Validamos capacidad según la casa.</p>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium mb-1">Check-in (14:00)</label>
+          <input id="checkin" type="date" class="w-full border rounded-lg p-3" />
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium mb-1">Check-out (10:00)</label>
+          <input id="checkout" type="date" class="w-full border rounded-lg p-3" />
+        </div>
+      </div>
+
+      <div id="availabilityBox" class="mt-4 p-4 rounded-lg bg-gray-50 text-sm text-gray-700">
+        Próximo paso: mostrar calendario con disponibilidad real (lo conectamos a Google Sheets).
+      </div>
+
+      <button id="continue"
+        class="mt-5 w-full py-3 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 transition">
+        Continuar
+      </button>
+    </section>
+
+    <!-- Datos del huésped -->
+    <section id="guestSection" class="bg-white rounded-xl shadow p-6 hidden">
+      <h2 class="text-xl font-semibold mb-4">2) Datos del huésped</h2>
+
+      <div class="grid sm:grid-cols-2 gap-4">
+        <input id="name" class="border rounded-lg p-3" placeholder="Nombre y apellido" />
+        <input id="dni" class="border rounded-lg p-3" placeholder="DNI" />
+        <input id="email" type="email" class="border rounded-lg p-3" placeholder="Email" />
+        <input id="phone" class="border rounded-lg p-3" placeholder="Teléfono (WhatsApp)" />
+      </div>
+
+      <div class="mt-6 p-4 rounded-lg bg-yellow-50 text-sm">
+        <strong>Importante:</strong> la reserva se confirma con una seña del <strong>50%</strong>.
+        Con <strong>tarjeta</strong> es instantáneo (10% recargo vs transferencia). Con <strong>transferencia</strong>,
+        la confirmación es manual cuando impacte.
+      </div>
+
+      <div class="mt-6 grid sm:grid-cols-2 gap-3">
+        <button class="py-3 rounded-lg border font-semibold hover:bg-gray-50">
+          Transferencia (confirmación manual)
+        </button>
+        <button class="py-3 rounded-lg bg-green-600 text-white font-semibold hover:bg-green-700">
+          Pagar con tarjeta (Mercado Pago)
+        </button>
+      </div>
+
+      <p class="mt-4 text-xs text-gray-500">
+        Luego conectamos estos botones al backend: Mercado Pago + registro en Google Sheets.
+      </p>
+    </section>
+  </main>
+
+  <script>
+    // Precargar con query params (deep link del bot)
+    const params = new URLSearchParams(location.search);
+    const setIf = (id, key) => { if (params.get(key)) document.getElementById(id).value = params.get(key); };
+
+    setIf("house", "house");
+    setIf("guests", "guests");
+    setIf("checkin", "checkin");
+    setIf("checkout", "checkout");
+    setIf("name", "name");
+    setIf("dni", "dni");
+    setIf("email", "email");
+    setIf("phone", "phone");
+
+    document.getElementById("continue").addEventListener("click", () => {
+      document.getElementById("guestSection").classList.remove("hidden");
+      document.getElementById("guestSection").scrollIntoView({ behavior: "smooth" });
+    });
+  </script>
+
+</body>
+</html>
