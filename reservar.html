@@ -18,54 +18,77 @@
   <main class="max-w-3xl mx-auto px-4 py-10">
     <h1 class="text-3xl font-bold mb-2">Reservar</h1>
     <p class="text-gray-600 mb-8">
-      Elegí la casa y las fechas. Luego podés pagar la seña con tarjeta o solicitar transferencia.
+      Elegí la casa, cantidad de personas y fechas. Después completás tus datos y elegís el medio de pago.
     </p>
 
-    <!-- Selector -->
+    <!-- Status / helper -->
+    <div id="statusBox" class="mb-6 p-4 rounded-lg bg-gray-100 text-sm text-gray-700">
+      1) Elegí una casa para empezar.
+    </div>
+
+    <!-- Paso 1/2/3: Casa + Personas + Fechas -->
     <section class="bg-white rounded-xl shadow p-6 mb-6">
-      <h2 class="text-xl font-semibold mb-4">1) Datos de la estadía</h2>
+      <h2 class="text-xl font-semibold mb-4">1) Estadía</h2>
 
       <div class="grid sm:grid-cols-2 gap-4">
+        <!-- Casa -->
         <div>
           <label class="block text-sm font-medium mb-1">Casa</label>
           <select id="house" class="w-full border rounded-lg p-3">
-            <option value="LC1">Las Cañas 1 (4 / excepción 5 con colchón extra)</option>
-            <option value="LC2">Las Cañas 2 (máx 4; ideal 2 adultos + 2 niños)</option>
-            <option value="LC3">Las Cañas 3 (máx 4 adultos + 1 joven + 1 niño)</option>
-            <option value="LC4">Las Cañas 4 (3 adultos o 2 adultos + 2 niños)</option>
-            <option value="LC5">Las Cañas 5 (2 adultos + 1 niño)</option>
+            <option value="" selected>Seleccionar...</option>
+            <option value="LC1">Las Cañas 1</option>
+            <option value="LC2">Las Cañas 2</option>
+            <option value="LC3">Las Cañas 3</option>
+            <option value="LC4">Las Cañas 4</option>
+            <option value="LC5">Las Cañas 5</option>
           </select>
+          <p id="houseHint" class="text-xs text-gray-500 mt-1 hidden"></p>
         </div>
 
+        <!-- Personas -->
         <div>
           <label class="block text-sm font-medium mb-1">Cantidad de personas</label>
-          <input id="guests" type="number" min="1" class="w-full border rounded-lg p-3" placeholder="Ej: 4" />
-          <p class="text-xs text-gray-500 mt-1">Validamos capacidad según la casa.</p>
+          <input id="guests" type="number" min="1"
+                 class="w-full border rounded-lg p-3 bg-gray-100"
+                 placeholder="Elegí una casa primero"
+                 disabled />
+          <p id="guestsHint" class="text-xs text-gray-500 mt-1">
+            Se habilita luego de elegir casa.
+          </p>
         </div>
 
+        <!-- Check-in -->
         <div>
           <label class="block text-sm font-medium mb-1">Check-in (14:00)</label>
-          <input id="checkin" type="date" class="w-full border rounded-lg p-3" />
+          <input id="checkin" type="date"
+                 class="w-full border rounded-lg p-3 bg-gray-100"
+                 disabled />
         </div>
 
+        <!-- Check-out -->
         <div>
           <label class="block text-sm font-medium mb-1">Check-out (10:00)</label>
-          <input id="checkout" type="date" class="w-full border rounded-lg p-3" />
+          <input id="checkout" type="date"
+                 class="w-full border rounded-lg p-3 bg-gray-100"
+                 disabled />
         </div>
       </div>
 
-      <div id="availabilityBox" class="mt-4 p-4 rounded-lg bg-gray-50 text-sm text-gray-700">
-        Próximo paso: mostrar calendario con disponibilidad real (lo conectamos a Google Sheets).
+      <div class="mt-4 p-4 rounded-lg bg-yellow-50 text-sm">
+        <strong>Importante:</strong> La reserva se confirma con una seña del <strong>50%</strong>.
+        Con <strong>tarjeta</strong> es instantáneo (10% recargo vs transferencia). Con <strong>transferencia</strong>,
+        la confirmación es manual cuando impacte.
       </div>
 
       <button id="continue"
-        class="mt-5 w-full py-3 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 transition">
+        class="mt-5 w-full py-3 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 transition disabled:opacity-40 disabled:cursor-not-allowed"
+        disabled>
         Continuar
       </button>
     </section>
 
-    <!-- Datos del huésped -->
-    <section id="guestSection" class="bg-white rounded-xl shadow p-6 hidden">
+    <!-- Paso 4: Datos del huésped -->
+    <section id="guestSection" class="bg-white rounded-xl shadow p-6 mb-6 hidden">
       <h2 class="text-xl font-semibold mb-4">2) Datos del huésped</h2>
 
       <div class="grid sm:grid-cols-2 gap-4">
@@ -75,45 +98,257 @@
         <input id="phone" class="border rounded-lg p-3" placeholder="Teléfono (WhatsApp)" />
       </div>
 
-      <div class="mt-6 p-4 rounded-lg bg-yellow-50 text-sm">
-        <strong>Importante:</strong> la reserva se confirma con una seña del <strong>50%</strong>.
-        Con <strong>tarjeta</strong> es instantáneo (10% recargo vs transferencia). Con <strong>transferencia</strong>,
-        la confirmación es manual cuando impacte.
+      <button id="guestContinue"
+        class="mt-5 w-full py-3 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 transition disabled:opacity-40 disabled:cursor-not-allowed"
+        disabled>
+        Continuar a pago
+      </button>
+
+      <p class="mt-3 text-xs text-gray-500">
+        Te pedimos estos datos para tomar la reserva y contactarte por WhatsApp.
+      </p>
+    </section>
+
+    <!-- Paso 5: Pago -->
+    <section id="paySection" class="bg-white rounded-xl shadow p-6 hidden">
+      <h2 class="text-xl font-semibold mb-4">3) Pago</h2>
+
+      <div class="mt-2 p-4 rounded-lg bg-gray-50 text-sm text-gray-700">
+        <div><strong>Casa:</strong> <span id="sumHouse">-</span></div>
+        <div><strong>Personas:</strong> <span id="sumGuests">-</span></div>
+        <div><strong>Check-in:</strong> <span id="sumCheckin">-</span> (14:00)</div>
+        <div><strong>Check-out:</strong> <span id="sumCheckout">-</span> (10:00)</div>
       </div>
 
       <div class="mt-6 grid sm:grid-cols-2 gap-3">
-        <button class="py-3 rounded-lg border font-semibold hover:bg-gray-50">
+        <button id="payTransfer" class="py-3 rounded-lg border font-semibold hover:bg-gray-50">
           Transferencia (confirmación manual)
         </button>
-        <button class="py-3 rounded-lg bg-green-600 text-white font-semibold hover:bg-green-700">
+        <button id="payCard" class="py-3 rounded-lg bg-green-600 text-white font-semibold hover:bg-green-700">
           Pagar con tarjeta (Mercado Pago)
         </button>
       </div>
 
       <p class="mt-4 text-xs text-gray-500">
-        Luego conectamos estos botones al backend: Mercado Pago + registro en Google Sheets.
+        (Todavía no está conectado al backend. En la próxima fase hacemos Google Sheets + Mercado Pago + confirmaciones.)
       </p>
     </section>
   </main>
 
   <script>
-    // Precargar con query params (deep link del bot)
-    const params = new URLSearchParams(location.search);
-    const setIf = (id, key) => { if (params.get(key)) document.getElementById(id).value = params.get(key); };
+    // Reglas de capacidad por casa (versión simple con lo que definiste)
+    const HOUSE_RULES = {
+      LC1: { max: 5, hint: "Máx 4 (excepción 5 con colchón extra). Ideal familiar." },
+      LC2: { max: 4, hint: "Máx 4. Ideal 2 adultos + 2 niños/adolescentes." },
+      LC3: { max: 6, hint: "Máx 4 adultos + 1 joven + 1 niño (según disposición)." },
+      LC4: { max: 4, hint: "Máx 3 adultos o 2 adultos + 2 niños pequeños." },
+      LC5: { max: 3, hint: "Máx 2 adultos + 1 niño." }
+    };
 
-    setIf("house", "house");
-    setIf("guests", "guests");
-    setIf("checkin", "checkin");
-    setIf("checkout", "checkout");
-    setIf("name", "name");
-    setIf("dni", "dni");
-    setIf("email", "email");
-    setIf("phone", "phone");
+    const el = (id) => document.getElementById(id);
 
-    document.getElementById("continue").addEventListener("click", () => {
-      document.getElementById("guestSection").classList.remove("hidden");
-      document.getElementById("guestSection").scrollIntoView({ behavior: "smooth" });
+    const house = el("house");
+    const houseHint = el("houseHint");
+    const guests = el("guests");
+    const checkin = el("checkin");
+    const checkout = el("checkout");
+    const continueBtn = el("continue");
+
+    const guestSection = el("guestSection");
+    const guestContinue = el("guestContinue");
+    const paySection = el("paySection");
+
+    const name = el("name");
+    const dni = el("dni");
+    const email = el("email");
+    const phone = el("phone");
+
+    const statusBox = el("statusBox");
+
+    const sumHouse = el("sumHouse");
+    const sumGuests = el("sumGuests");
+    const sumCheckin = el("sumCheckin");
+    const sumCheckout = el("sumCheckout");
+
+    function setStatus(msg) {
+      statusBox.textContent = msg;
+    }
+
+    function disableStepAfterHouseChange() {
+      // Reset valores
+      guests.value = "";
+      checkin.value = "";
+      checkout.value = "";
+      name.value = "";
+      dni.value = "";
+      email.value = "";
+      phone.value = "";
+
+      // Ocultar secciones y deshabilitar botones
+      guestSection.classList.add("hidden");
+      paySection.classList.add("hidden");
+      continueBtn.disabled = true;
+      guestContinue.disabled = true;
+
+      // Deshabilitar inputs siguientes
+      guests.disabled = true;
+      guests.classList.add("bg-gray-100");
+
+      checkin.disabled = true;
+      checkin.classList.add("bg-gray-100");
+      checkout.disabled = true;
+      checkout.classList.add("bg-gray-100");
+
+      // Limpiar resumen
+      sumHouse.textContent = "-";
+      sumGuests.textContent = "-";
+      sumCheckin.textContent = "-";
+      sumCheckout.textContent = "-";
+    }
+
+    function enableGuestsForHouse(h) {
+      const rule = HOUSE_RULES[h];
+      guests.disabled = false;
+      guests.classList.remove("bg-gray-100");
+      guests.placeholder = `1 a ${rule.max}`;
+      guests.max = rule.max;
+
+      houseHint.textContent = rule.hint;
+      houseHint.classList.remove("hidden");
+
+      setStatus(`2) Ahora elegí la cantidad de personas (máx ${rule.max} para ${h}).`);
+    }
+
+    function enableDatesIfGuestsOk() {
+      const h = house.value;
+      if (!h) return;
+
+      const rule = HOUSE_RULES[h];
+      const g = Number(guests.value);
+
+      if (!g || g < 1) {
+        setStatus("Ingresá una cantidad de personas válida.");
+        return;
+      }
+
+      if (g > rule.max) {
+        guests.value = rule.max; // clamp
+      }
+
+      checkin.disabled = false;
+      checkout.disabled = false;
+      checkin.classList.remove("bg-gray-100");
+      checkout.classList.remove("bg-gray-100");
+
+      setStatus("3) Elegí las fechas de check-in y check-out.");
+    }
+
+    function validateDates() {
+      if (!checkin.value || !checkout.value) return false;
+      const ci = new Date(checkin.value);
+      const co = new Date(checkout.value);
+      return co > ci;
+    }
+
+    function updateContinueState() {
+      const ok = house.value && guests.value && validateDates();
+      continueBtn.disabled = !ok;
+
+      if (house.value && guests.value && checkin.value && checkout.value && !validateDates()) {
+        setStatus("El check-out debe ser posterior al check-in.");
+      } else if (ok) {
+        setStatus("4) Perfecto. Continuá para ingresar los datos del huésped.");
+      }
+    }
+
+    function validateGuestData() {
+      const ok = name.value.trim() && dni.value.trim() && email.value.trim() && phone.value.trim();
+      guestContinue.disabled = !ok;
+      return ok;
+    }
+
+    // Eventos
+    house.addEventListener("change", () => {
+      disableStepAfterHouseChange();
+
+      const h = house.value;
+      if (!h) {
+        houseHint.classList.add("hidden");
+        setStatus("1) Elegí una casa para empezar.");
+        return;
+      }
+
+      enableGuestsForHouse(h);
     });
+
+    guests.addEventListener("input", () => {
+      const h = house.value;
+      if (!h) return;
+
+      const rule = HOUSE_RULES[h];
+      const g = Number(guests.value);
+
+      if (g > rule.max) guests.value = rule.max;
+      if (g < 1 && guests.value !== "") guests.value = 1;
+
+      enableDatesIfGuestsOk();
+      updateContinueState();
+    });
+
+    checkin.addEventListener("change", updateContinueState);
+    checkout.addEventListener("change", updateContinueState);
+
+    continueBtn.addEventListener("click", () => {
+      guestSection.classList.remove("hidden");
+      guestSection.scrollIntoView({ behavior: "smooth" });
+      setStatus("4) Completá los datos del huésped para habilitar el pago.");
+    });
+
+    [name, dni, email, phone].forEach(inp => {
+      inp.addEventListener("input", () => {
+        if (validateGuestData()) setStatus("5) Listo. Ya podés continuar a pago.");
+      });
+    });
+
+    guestContinue.addEventListener("click", () => {
+      // Cargar resumen
+      sumHouse.textContent = house.value;
+      sumGuests.textContent = guests.value;
+      sumCheckin.textContent = checkin.value;
+      sumCheckout.textContent = checkout.value;
+
+      paySection.classList.remove("hidden");
+      paySection.scrollIntoView({ behavior: "smooth" });
+      setStatus("5) Elegí el medio de pago.");
+    });
+
+    // Deep link params (si vienen del bot)
+    const params = new URLSearchParams(location.search);
+    const setIf = (id, key) => { if (params.get(key)) el(id).value = params.get(key); };
+
+    // Aplicamos en orden para respetar el flujo
+    if (params.get("house")) {
+      setIf("house", "house");
+      // dispara setup
+      house.dispatchEvent(new Event("change"));
+    }
+    if (params.get("guests")) {
+      setIf("guests", "guests");
+      guests.dispatchEvent(new Event("input"));
+    }
+    if (params.get("checkin")) setIf("checkin", "checkin");
+    if (params.get("checkout")) setIf("checkout", "checkout");
+    updateContinueState();
+
+    if (params.get("name")) setIf("name", "name");
+    if (params.get("dni")) setIf("dni", "dni");
+    if (params.get("email")) setIf("email", "email");
+    if (params.get("phone")) setIf("phone", "phone");
+    validateGuestData();
+
+    // Clicks de pago por ahora placeholder
+    el("payTransfer").addEventListener("click", () => alert("Transferencia: en la próxima fase conectamos alias/CBU y confirmación manual."));
+    el("payCard").addEventListener("click", () => alert("Tarjeta (Mercado Pago): en la próxima fase conectamos el checkout real."));
   </script>
 
 </body>
