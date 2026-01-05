@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin - Las Cañas</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Netlify Identity Widget -->
+  <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+</head>
+<body class="bg-gray-50 text-gray-900">
+  <header class="bg-white shadow">
+    <div class="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
+      <a href="index.html" class="font-bold text-xl">← Las Cañas</a>
+      <button id="btnAuth" class="px-4 py-2 rounded-lg bg-blue-600 text-white font-semibold">
+        Iniciar sesión
+      </button>
+    </div>
+  </header>
+
+  <main class="max-w-3xl mx-auto px-4 py-8">
+    <h1 class="text-2xl font-bold mb-2">Panel de Dueños</h1>
+    <p class="text-gray-600 mb-6">Marcar fechas ocupadas y confirmar transferencias.</p>
+
+    <div id="status" class="mb-6 p-4 rounded-lg bg-gray-100 text-sm text-gray-700">
+      Iniciá sesión para continuar.
+    </div>
+
+    <section id="app" class="hidden">
+      <!-- Tabs -->
+      <div class="flex gap-2 mb-6">
+        <button id="tabBlock" class="px-4 py-2 rounded-lg bg-white border font-semibold">Bloquear fechas</button>
+        <button id="tabTransfers" class="px-4 py-2 rounded-lg bg-white border font-semibold">Transferencias</button>
+      </div>
+
+      <!-- Bloquear -->
+      <div id="viewBlock" class="bg-white rounded-xl shadow p-6">
+        <h2 class="text-xl font-semibold mb-4">Bloquear fechas (ocupado manual)</h2>
+
+        <div class="grid sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium mb-1">Casa</label>
+            <select id="house" class="w-full border rounded-lg p-3">
+              <option value="LC1">Las Cañas 1</option>
+              <option value="LC2">Las Cañas 2</option>
+              <option value="LC3">Las Cañas 3</option>
+              <option value="LC4">Las Cañas 4</option>
+              <option value="LC5">Las Cañas 5</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium mb-1">Motivo (opcional)</label>
+            <input id="note" class="w-full border rounded-lg p-3" placeholder="Ej: mantenimiento" />
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium mb-1">Check-in</label>
+            <input id="checkin" type="date" class="w-full border rounded-lg p-3" />
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium mb-1">Check-out</label>
+            <input id="checkout" type="date" class="w-full border rounded-lg p-3" />
+          </div>
+        </div>
+
+        <button id="btnBlock"
+          class="mt-5 w-full py-3 rounded-lg bg-red-600 text-white font-semibold hover:bg-red-700">
+          Bloquear fechas
+        </button>
+
+        <p class="mt-3 text-xs text-gray-500">
+          Esto crea un bloqueo manual (no es una reserva de huésped).
+        </p>
+      </div>
+
+      <!-- Transferencias -->
+      <div id="viewTransfers" class="bg-white rounded-xl shadow p-6 hidden">
+        <h2 class="text-xl font-semibold mb-4">Transferencias pendientes</h2>
+
+        <button id="btnRefresh"
+          class="mb-4 px-4 py-2 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700">
+          Actualizar lista
+        </button>
+
+        <div id="pendingList" class="space-y-3 text-sm text-gray-700">
+          <!-- items -->
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const el = (id) => document.getElementById(id);
+
+    const status = el("status");
+    const app = el("app");
+    const btnAuth = el("btnAuth");
+
+    const tabBlock = el("tabBlock");
+    const tabTransfers = el("tabTransfers");
+    const viewBlock = el("viewBlock");
+    const viewTransfers = el("viewTransfers");
+
+    // Netlify Functions endpoints (los vamos a crear en el paso 3)
+    const API = {
+      ownerBlock: "/.netlify/functions/owner-block",
+      listPending: "/.netlify/functions/list-pending",
+      confirm: "/.netlify/functions/confirm-transfer",
+      cancel: "/.netlify/functions/cancel-reservation",
+    };
+
+    function setStatus(msg) { status.textContent = msg; }
+
+    function showTab(which) {
+      const isBlock = which === "block";
+      viewBlock.classList.toggle("hidden", !isBlock);
+      viewTransfers.classList.toggle("hidden", isBlock);
+      tabBlock.classList.toggle("bg-gray-100", isBlock);
+      tabTransfers.classList.toggle("bg-gray-100", !isBlock);
+    }
+
+    async function getToken() {
+      const user = netlifyIdentity.currentUser();
+      if (!user) return null;
+      const token = await user.jwt(); // JWT válido
+      return token;
+    }
+
+    async function apiFetch(url, { method="POST", body=null } = {}) {
+      const token = await getToken();
+      if (!token) throw new Error("No logueado");
+      const res = await fetch(url, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+        body: body ? JSON.stringify(body) : null,
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.message || "Error");
+      return data;
+    }
+
+    // UI auth
+    function refreshAuthUI() {
+      const user = netlifyIdentity.currentUser();
+      if (user) {
+        btnAuth.textContent = "Cerrar sesión";
+        app.classList.remove("hidden");
+        setStatus(`Logueado como: ${user.user_metadata?.full_name || user.email}`);
+      } else {
+        btnAuth.textContent = "Iniciar sesión";
+        app.classList.add("hidden");
+        setStatus("Iniciá sesión para continuar.");
+      }
+    }
+
+    btnAuth.addEventListener("click", () => {
+      const user = netlifyIdentity.currentUser();
+      if (user) netlifyIdentity.logout();
+      else netlifyIdentity.open();
+    });
+
+    // Tabs
+    tabBlock.addEventListener("click", () => showTab("block"));
+    tabTransfers.addEventListener("click", () => showTab("transfers"));
+    showTab("block");
+
+    // Bloquear fechas
+    el("btnBlock").addEventListener("click", async () => {
+      try {
+        const payload = {
+          house_code: el("house").value,
+          checkin: el("checkin").value,
+          checkout: el("checkout").value,
+          note: el("note").value || "",
+        };
+        if (!payload.checkin || !payload.checkout) {
+          setStatus("Elegí check-in y check-out.");
+          return;
+        }
+        setStatus("Bloqueando...");
+        const out = await apiFetch(API.ownerBlock, { body: payload });
+        setStatus(`✅ Bloqueado. ID: ${out.id}`);
+      } catch (e) {
+        setStatus(`❌ ${e.message}`);
+      }
+    });
+
+    // Listar pendientes
+    function renderPending(items) {
+      const box = el("pendingList");
+      box.innerHTML = "";
+      if (!items.length) {
+        box.innerHTML = `<div class="p-4 rounded-lg bg-gray-50">No hay pendientes.</div>`;
+        return;
+      }
+
+      items.forEach(r => {
+        const div = document.createElement("div");
+        div.className = "p-4 rounded-lg border bg-white";
+        div.innerHTML = `
+          <div class="font-semibold">${r.id} — ${r.house_code} (${r.check_in} → ${r.check_out})</div>
+          <div>${r.guest_name} — ${r.phone}</div>
+          <div class="text-xs text-gray-500">Vence: ${r.hold_expires_at || "-"}</div>
+          <div class="mt-3 flex gap-2">
+            <button data-confirm="${r.id}" class="px-3 py-2 rounded-lg bg-green-600 text-white font-semibold">Confirmar</button>
+            <button data-cancel="${r.id}" class="px-3 py-2 rounded-lg bg-gray-200 font-semibold">Cancelar</button>
+          </div>
+        `;
+        box.appendChild(div);
+      });
+
+      box.querySelectorAll("[data-confirm]").forEach(btn => {
+        btn.addEventListener("click", async () => {
+          const id = btn.getAttribute("data-confirm");
+          try {
+            setStatus("Confirmando...");
+            await apiFetch(API.confirm, { body: { id } });
+            setStatus(`✅ Confirmada: ${id}`);
+            await loadPending();
+          } catch (e) {
+            setStatus(`❌ ${e.message}`);
+          }
+        });
+      });
+
+      box.querySelectorAll("[data-cancel]").forEach(btn => {
+        btn.addEventListener("click", async () => {
+          const id = btn.getAttribute("data-cancel");
+          try {
+            setStatus("Cancelando...");
+            await apiFetch(API.cancel, { body: { id } });
+            setStatus(`✅ Cancelada: ${id}`);
+            await loadPending();
+          } catch (e) {
+            setStatus(`❌ ${e.message}`);
+          }
+        });
+      });
+    }
+
+    async function loadPending() {
+      const out = await apiFetch(API.listPending, { method: "GET" });
+      renderPending(out.items || []);
+    }
+
+    el("btnRefresh").addEventListener("click", async () => {
+      try { setStatus("Cargando pendientes..."); await loadPending(); setStatus("✅ Lista actualizada."); }
+      catch (e) { setStatus(`❌ ${e.message}`); }
+    });
+
+    // Netlify Identity hooks
+    netlifyIdentity.on("init", refreshAuthUI);
+    netlifyIdentity.on("login", () => { netlifyIdentity.close(); refreshAuthUI(); });
+    netlifyIdentity.on("logout", refreshAuthUI);
+
+    netlifyIdentity.init();
+  </script>
+</body>
+</html>
