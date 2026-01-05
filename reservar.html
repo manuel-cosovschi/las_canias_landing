@@ -136,9 +136,9 @@
   </main>
 
   <script>
-    // ✅ Production URL (n8n)
-    const AVAILABILITY_API =
-      "https://cosovschim.app.n8n.cloud/webhook/762ab856-f304-447f-8267-aef78e72609f";
+    // ✅ IMPORTANTE: ya NO llamamos a n8n directo desde el front (evita Netlify Secrets Scan)
+    // Este endpoint es una Netlify Function que internamente llama a n8n.
+    const AVAILABILITY_API = "/.netlify/functions/availability";
 
     // Reglas de capacidad por casa
     const HOUSE_RULES = {
@@ -176,7 +176,7 @@
 
     function setStatus(msg) { statusBox.textContent = msg; }
 
-    // -------- Availability (n8n) --------
+    // -------- Availability --------
     let blockedRanges = [];
     let availabilityLoaded = false;
 
@@ -215,8 +215,7 @@
         }));
 
         availabilityLoaded = true;
-
-        // No tocamos el status final acá porque lo maneja el flujo (para no pisar mensajes)
+        // el status lo maneja el flujo para no pisar mensajes
       } catch (e) {
         console.error(e);
         availabilityLoaded = false;
@@ -318,7 +317,6 @@
       setStatus("3) Elegí las fechas de check-in y check-out.");
     }
 
-    // ✅ sin timezone bug
     function validateDates() {
       if (!checkin.value || !checkout.value) return false;
       const ci = parseDate(checkin.value);
@@ -326,7 +324,6 @@
       return co > ci;
     }
 
-    // ✅ BLOQUEO REAL: no avanza si está ocupado o si no cargó disponibilidad
     function updateContinueState() {
       const base = house.value && guests.value && checkin.value && checkout.value;
 
@@ -367,7 +364,6 @@
       }
 
       enableGuestsForHouse(h);
-
       // ✅ carga disponibilidad al elegir casa
       loadAvailability(h);
     });
@@ -429,7 +425,6 @@
     if (params.get("checkin")) setIf("checkin", "checkin");
     if (params.get("checkout")) setIf("checkout", "checkout");
 
-    // recalcular siempre
     updateContinueState();
 
     if (params.get("name")) setIf("name", "name");
