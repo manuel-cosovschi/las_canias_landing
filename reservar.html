@@ -136,7 +136,11 @@
   </main>
 
   <script>
-    // Reglas de capacidad por casa (versión simple con lo que definiste)
+    // ✅ Production URL (n8n)
+    const AVAILABILITY_API =
+      "https://cosovschim.app.n8n.cloud/webhook/762ab856-f304-447f-8267-aef78e72609f";
+
+    // Reglas de capacidad por casa
     const HOUSE_RULES = {
       LC1: { max: 5, hint: "Máx 4 (excepción 5 con colchón extra). Ideal familiar." },
       LC2: { max: 4, hint: "Máx 4. Ideal 2 adultos + 2 niños/adolescentes." },
@@ -170,12 +174,82 @@
     const sumCheckin = el("sumCheckin");
     const sumCheckout = el("sumCheckout");
 
-    function setStatus(msg) {
-      statusBox.textContent = msg;
+    function setStatus(msg) { statusBox.textContent = msg; }
+
+    // -------- Availability (n8n) --------
+    let blockedRanges = [];
+    let availabilityLoaded = false;
+
+    // ✅ sin bug de timezone
+    function parseDate(d) {
+      const [y, m, day] = d.split("-").map(Number);
+      return new Date(y, m - 1, day);
     }
 
+    function overlaps(ci, co, start, end) {
+      // [ci, co) solapa con [start, end)
+      return ci < end && co > start;
+    }
+
+    async function loadAvailability(houseCode) {
+      availabilityLoaded = false;
+      blockedRanges = [];
+      setStatus("Cargando disponibilidad...");
+
+      try {
+        const res = await fetch(AVAILABILITY_API, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ house_code: houseCode })
+        });
+
+        if (!res.ok) throw new Error("No se pudo cargar disponibilidad");
+
+        const data = await res.json();
+
+        blockedRanges = (data.blocked || []).map(r => ({
+          start: parseDate(r.start),
+          end: parseDate(r.end),
+          rawStart: r.start,
+          rawEnd: r.end
+        }));
+
+        availabilityLoaded = true;
+
+        // No tocamos el status final acá porque lo maneja el flujo (para no pisar mensajes)
+      } catch (e) {
+        console.error(e);
+        availabilityLoaded = false;
+        setStatus("No se pudo cargar disponibilidad. Intentá más tarde.");
+      }
+
+      // ✅ clave: recalcular estado de botón
+      updateContinueState();
+    }
+
+    function validateAgainstBlocked() {
+      // ✅ si no cargó, NO dejar continuar
+      if (!availabilityLoaded) {
+        setStatus("Cargando disponibilidad... (esperá un segundo)");
+        return false;
+      }
+
+      if (!checkin.value || !checkout.value) return true;
+
+      const ci = parseDate(checkin.value);
+      const co = parseDate(checkout.value);
+
+      for (const r of blockedRanges) {
+        if (overlaps(ci, co, r.start, r.end)) {
+          setStatus(`No disponible 😕 (ocupado del ${r.rawStart} al ${r.rawEnd}). Probá otras fechas.`);
+          return false;
+        }
+      }
+      return true;
+    }
+
+    // -------- Flow helpers --------
     function disableStepAfterHouseChange() {
-      // Reset valores
       guests.value = "";
       checkin.value = "";
       checkout.value = "";
@@ -184,22 +258,24 @@
       email.value = "";
       phone.value = "";
 
-      // Ocultar secciones y deshabilitar botones
+      availabilityLoaded = false;
+      blockedRanges = [];
+
       guestSection.classList.add("hidden");
       paySection.classList.add("hidden");
       continueBtn.disabled = true;
       guestContinue.disabled = true;
 
-      // Deshabilitar inputs siguientes
       guests.disabled = true;
       guests.classList.add("bg-gray-100");
+      guests.placeholder = "Elegí una casa primero";
+      guests.removeAttribute("max");
 
       checkin.disabled = true;
       checkin.classList.add("bg-gray-100");
       checkout.disabled = true;
       checkout.classList.add("bg-gray-100");
 
-      // Limpiar resumen
       sumHouse.textContent = "-";
       sumGuests.textContent = "-";
       sumCheckin.textContent = "-";
@@ -208,6 +284,7 @@
 
     function enableGuestsForHouse(h) {
       const rule = HOUSE_RULES[h];
+
       guests.disabled = false;
       guests.classList.remove("bg-gray-100");
       guests.placeholder = `1 a ${rule.max}`;
@@ -216,7 +293,7 @@
       houseHint.textContent = rule.hint;
       houseHint.classList.remove("hidden");
 
-      setStatus(`2) Ahora elegí la cantidad de personas (máx ${rule.max} para ${h}).`);
+      setStatus(`2) Ahora elegí la cantidad de personas (máx ${rule.max}).`);
     }
 
     function enableDatesIfGuestsOk() {
@@ -231,9 +308,7 @@
         return;
       }
 
-      if (g > rule.max) {
-        guests.value = rule.max; // clamp
-      }
+      if (g > rule.max) guests.value = rule.max;
 
       checkin.disabled = false;
       checkout.disabled = false;
@@ -243,20 +318,33 @@
       setStatus("3) Elegí las fechas de check-in y check-out.");
     }
 
+    // ✅ sin timezone bug
     function validateDates() {
       if (!checkin.value || !checkout.value) return false;
-      const ci = new Date(checkin.value);
-      const co = new Date(checkout.value);
+      const ci = parseDate(checkin.value);
+      const co = parseDate(checkout.value);
       return co > ci;
     }
 
+    // ✅ BLOQUEO REAL: no avanza si está ocupado o si no cargó disponibilidad
     function updateContinueState() {
-      const ok = house.value && guests.value && validateDates();
-      continueBtn.disabled = !ok;
+      const base = house.value && guests.value && checkin.value && checkout.value;
 
-      if (house.value && guests.value && checkin.value && checkout.value && !validateDates()) {
+      if (!base) {
+        continueBtn.disabled = true;
+        return;
+      }
+
+      if (!validateDates()) {
+        continueBtn.disabled = true;
         setStatus("El check-out debe ser posterior al check-in.");
-      } else if (ok) {
+        return;
+      }
+
+      const okAvail = validateAgainstBlocked();
+      continueBtn.disabled = !okAvail;
+
+      if (okAvail) {
         setStatus("4) Perfecto. Continuá para ingresar los datos del huésped.");
       }
     }
@@ -267,7 +355,7 @@
       return ok;
     }
 
-    // Eventos
+    // -------- Events --------
     house.addEventListener("change", () => {
       disableStepAfterHouseChange();
 
@@ -279,6 +367,9 @@
       }
 
       enableGuestsForHouse(h);
+
+      // ✅ carga disponibilidad al elegir casa
+      loadAvailability(h);
     });
 
     guests.addEventListener("input", () => {
@@ -311,7 +402,6 @@
     });
 
     guestContinue.addEventListener("click", () => {
-      // Cargar resumen
       sumHouse.textContent = house.value;
       sumGuests.textContent = guests.value;
       sumCheckin.textContent = checkin.value;
@@ -326,18 +416,20 @@
     const params = new URLSearchParams(location.search);
     const setIf = (id, key) => { if (params.get(key)) el(id).value = params.get(key); };
 
-    // Aplicamos en orden para respetar el flujo
     if (params.get("house")) {
       setIf("house", "house");
-      // dispara setup
       house.dispatchEvent(new Event("change"));
     }
+
     if (params.get("guests")) {
       setIf("guests", "guests");
       guests.dispatchEvent(new Event("input"));
     }
+
     if (params.get("checkin")) setIf("checkin", "checkin");
     if (params.get("checkout")) setIf("checkout", "checkout");
+
+    // recalcular siempre
     updateContinueState();
 
     if (params.get("name")) setIf("name", "name");
