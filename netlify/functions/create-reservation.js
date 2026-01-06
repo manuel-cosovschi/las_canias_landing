@@ -2,7 +2,7 @@
 const { json, callN8n } = require("./_utils");
 
 exports.handler = async (event) => {
-  // Endpoint PÚBLICA para crear reservas (flujo front)
+  // Endpoint PÚBLICO para crear reservas (flujo front)
   if (event.httpMethod !== "POST") {
     return json(405, { message: "Method not allowed" });
   }
@@ -45,8 +45,7 @@ exports.handler = async (event) => {
       return json(400, { message: `Faltan campos: ${missing.join(", ")}` });
     }
 
-    // ✅ Llamada server-side a n8n (poné acá el PATH real del webhook de create-reservation)
-    // EJ: "/webhook/<TU_UUID_CREATE_RESERVATION>"
+    // ✅ Llamada server-side a n8n (PROD URL)
     const out = await callN8n("/webhook/f484ae09-f5f4-492a-b88b-918c16b5a363", {
       method: "POST",
       body,
@@ -54,7 +53,9 @@ exports.handler = async (event) => {
       secret,
     });
 
-    return json(200, out);
+    // ✅ Si n8n dijo ok:false => devolvemos 400
+    const status = out?.ok === false ? 400 : 200;
+    return json(status, out);
   } catch (e) {
     return json(500, { message: e.message || "Error" });
   }
