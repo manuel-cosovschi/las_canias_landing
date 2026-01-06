@@ -7,13 +7,12 @@
 
   <script src="https://cdn.tailwindcss.com"></script>
 
-  <!-- Flatpickr (para poder deshabilitar días en gris) -->
+  <!-- Flatpickr -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
   <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
 
   <style>
-    /* Flatpickr un poco más “app-like” */
     .flatpickr-calendar { font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; }
   </style>
 </head>
@@ -32,7 +31,6 @@
     Elegí la casa, personas y fechas. Luego completás tus datos y elegís el medio de pago.
   </p>
 
-  <!-- Status / helper -->
   <div id="statusBox" class="mb-6 p-4 rounded-lg bg-gray-100 text-sm text-gray-700">
     1) Elegí una casa para empezar.
   </div>
@@ -41,7 +39,7 @@
   <section id="staySection" class="bg-white rounded-xl shadow p-6 mb-6">
     <h2 class="text-xl font-semibold mb-4">1) Estadía</h2>
 
-    <!-- Banner: capacidad de la casa (pedido #3) -->
+    <!-- Banner capacidad -->
     <div id="capacityBanner" class="hidden mb-4 p-3 rounded-lg bg-blue-50 text-sm text-blue-900">
       <strong>Capacidad:</strong> <span id="capacityText"></span>
     </div>
@@ -69,7 +67,6 @@
 
       <div>
         <label class="block text-sm font-medium mb-1">Check-in</label>
-        <!-- usamos type=text para flatpickr -->
         <input id="checkin" type="text" disabled
           class="w-full border rounded-lg p-3 bg-gray-100"
           placeholder="Elegí una fecha">
@@ -83,7 +80,6 @@
       </div>
     </div>
 
-    <!-- Aclaración mínimo 7 noches (pedido #2) -->
     <div class="mt-4 p-4 rounded-lg bg-yellow-50 text-sm">
       <strong>Temporada alta:</strong> la estadía mínima es de <strong>7 noches</strong>.
     </div>
@@ -135,16 +131,12 @@
 </main>
 
 <script>
-  // IMPORTANTÍSIMO:
-  // - Esto tiene que responder con JSON: { blocked: [ {start:"YYYY-MM-DD", end:"YYYY-MM-DD"}, ... ] }
-  // - Usá tu ruta actual (si estás usando Netlify redirects, dejalo así)
   const AVAILABILITY_API = "/api/availability";
 
-  // Bloqueo global pedido (#1): todo ocupado hasta el 8 de marzo 2026 inclusive
-  // => primer check-in posible: 2026-03-09
+  // ✅ Bloqueo global: todo ocupado hasta 2026-03-08 inclusive => primer check-in posible 2026-03-09
   const FIRST_ALLOWED_CHECKIN = "2026-03-09";
 
-  // Mínimo 7 noches (#2)
+  // ✅ Mínimo 7 noches
   const MIN_NIGHTS = 7;
 
   const HOUSE_RULES = {
@@ -160,7 +152,6 @@
   const house = el("house");
   const houseHint = el("houseHint");
   const guests = el("guests");
-
   const checkin = el("checkin");
   const checkout = el("checkout");
 
@@ -186,7 +177,7 @@
 
   function setStatus(msg){ statusBox.textContent = msg; }
 
-  // ---- Dates helpers (sin bug timezone) ----
+  // ---- Dates helpers (sin timezone bug) ----
   function parseYMD(ymd){
     const [y,m,d] = ymd.split("-").map(Number);
     return new Date(y, m-1, d);
@@ -203,18 +194,15 @@
     return out;
   }
 
-  // blocked ranges: [{start:Date, end:Date, rawStart, rawEnd}]
-  // Convención: bloqueado [start, end] inclusive en datos humanos,
-  // pero para overlap de estadía lo tratamos como [start, end+1) para noches.
+  // blocked ranges del backend: [{start:Date, endExclusive:Date, rawStart, rawEnd}]
   let blockedRanges = [];
   let availabilityLoaded = false;
 
-  // Flatpickr instances
   let fpCheckin = null;
   let fpCheckout = null;
 
   function overlapsStay(ci, co, start, endExclusive){
-    // estadía [ci, co) y bloqueado [start, endExclusive)
+    // estadía [ci, co) vs bloqueo [start, endExclusive)
     return ci < endExclusive && co > start;
   }
 
@@ -237,71 +225,67 @@
       blockedRanges = (data.blocked || []).map(r => {
         const start = parseYMD(r.start);
         const endInclusive = parseYMD(r.end);
-        const endExclusive = addDays(endInclusive, 1);
+        const endExclusive = addDays(endInclusive, 1); // ✅ end inclusive -> exclusive
         return { start, endExclusive, rawStart: r.start, rawEnd: r.end };
       });
 
       availabilityLoaded = true;
       setStatus("2) Elegí cantidad de personas.");
-      refreshPickers();
     } catch(e){
       console.error(e);
       availabilityLoaded = false;
       setStatus("No se pudo cargar disponibilidad. Intentá más tarde.");
-      refreshPickers();
     }
 
+    refreshPickers();
     updateContinueState();
   }
 
-  // ---- Picker disable rules ----
+  // ---- Disable rules ----
+  function isPast(date){
+    const t = new Date();
+    const today0 = new Date(t.getFullYear(), t.getMonth(), t.getDate());
+    const d0 = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    return d0 < today0;
+  }
 
   function isDateBlockedForCheckin(date){
-    // no permitir fechas pasadas
-    const today = new Date();
-    const today0 = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    if (isPast(date)) return true;
+
     const d0 = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-    if(d0 < today0) return true;
 
-    // no permitir antes del 2026-03-09 (bloqueo global)
+    // bloqueo global hasta 8/3 inclusive
     const minAllowed = parseYMD(FIRST_ALLOWED_CHECKIN);
-    if(d0 < minAllowed) return true;
+    if (d0 < minAllowed) return true;
 
-    // no permitir si cae dentro de algún rango bloqueado
-    for(const r of blockedRanges){
-      // bloqueado en días: [start, endExclusive)
-      if(d0 >= r.start && d0 < r.endExclusive) return true;
+    // no permitir check-in dentro de rangos bloqueados
+    for (const r of blockedRanges){
+      if (d0 >= r.start && d0 < r.endExclusive) return true;
     }
+
     return false;
   }
 
   function isCheckoutDisabled(date){
-    // checkout depende de checkin seleccionado + min noches + no solapar bloqueos
-    const ciYmd = fpCheckin?.selectedDates?.[0] ? fmtYMD(fpCheckin.selectedDates[0]) : null;
-    if(!ciYmd) return true; // hasta que no haya check-in, no se puede elegir checkout
+    const ciDate = fpCheckin?.selectedDates?.[0];
+    if (!ciDate) return true;
 
-    const ci = parseYMD(ciYmd);
-    const d0 = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    const ci = new Date(ciDate.getFullYear(), ciDate.getMonth(), ciDate.getDate());
+    const co = new Date(date.getFullYear(), date.getMonth(), date.getDate());
 
-    // mínimo 7 noches => co >= ci + 7
+    // mínimo 7 noches
     const minCo = addDays(ci, MIN_NIGHTS);
-    if(d0 < minCo) return true;
+    if (co < minCo) return true;
 
-    // validar solape con bloqueos para la estadía [ci, co)
-    const co = d0;
-    for(const r of blockedRanges){
-      if(overlapsStay(ci, co, r.start, r.endExclusive)) return true;
+    // no solapar bloqueos
+    for (const r of blockedRanges){
+      if (overlapsStay(ci, co, r.start, r.endExclusive)) return true;
     }
-
-    // adicional: si por algún motivo el checkout cae antes del FIRST_ALLOWED_CHECKIN
-    const minAllowed = parseYMD(FIRST_ALLOWED_CHECKIN);
-    if(ci < minAllowed) return true;
 
     return false;
   }
 
   function refreshPickers(){
-    // habilitar/deshabilitar date inputs según availabilityLoaded
     const canUseDates = !!house.value && !!guests.value && availabilityLoaded;
 
     checkin.disabled = !canUseDates;
@@ -310,9 +294,8 @@
     checkin.classList.toggle("bg-gray-100", !canUseDates);
     checkout.classList.toggle("bg-gray-100", !canUseDates);
 
-    // recrear pickers (simple y robusto)
-    if(fpCheckin) fpCheckin.destroy();
-    if(fpCheckout) fpCheckout.destroy();
+    if (fpCheckin) fpCheckin.destroy();
+    if (fpCheckout) fpCheckout.destroy();
 
     fpCheckin = flatpickr(checkin, {
       locale: "es",
@@ -321,26 +304,22 @@
       allowInput: false,
       clickOpens: canUseDates,
       minDate: "today",
-      disable: [
-        function(date){ return isDateBlockedForCheckin(date); }
-      ],
+      disable: [ (date) => isDateBlockedForCheckin(date) ],
       onChange: function(selectedDates){
-        // cuando cambia checkin, limpiar checkout y forzar reglas
-        if(!selectedDates?.length){
+        // reset checkout
+        if (fpCheckout) fpCheckout.clear();
+
+        if (!selectedDates?.length){
           checkout.value = "";
           updateContinueState();
           return;
         }
 
-        // si el usuario eligió algo, reset checkout
-        if(fpCheckout) fpCheckout.clear();
-
-        // setear minDate de checkout = checkin + 7 noches
         const ci = selectedDates[0];
-        const minCo = addDays(new Date(ci.getFullYear(), ci.getMonth(), ci.getDate()), MIN_NIGHTS);
+        const ci0 = new Date(ci.getFullYear(), ci.getMonth(), ci.getDate());
+        const minCo = addDays(ci0, MIN_NIGHTS);
 
-        // reinit checkout picker con reglas dependientes del checkin
-        if(fpCheckout) fpCheckout.destroy();
+        if (fpCheckout) fpCheckout.destroy();
         fpCheckout = flatpickr(checkout, {
           locale: "es",
           dateFormat: "Y-m-d",
@@ -348,12 +327,8 @@
           allowInput: false,
           clickOpens: canUseDates,
           minDate: fmtYMD(minCo),
-          disable: [
-            function(date){ return isCheckoutDisabled(date); }
-          ],
-          onChange: function(){
-            updateContinueState();
-          }
+          disable: [ (date) => isCheckoutDisabled(date) ],
+          onChange: function(){ updateContinueState(); }
         });
 
         setStatus(`3) Elegí el check-out (mínimo ${MIN_NIGHTS} noches).`);
@@ -367,15 +342,12 @@
       disableMobile: true,
       allowInput: false,
       clickOpens: canUseDates,
-      disable: [
-        function(date){ return isCheckoutDisabled(date); }
-      ],
+      disable: [ (date) => isCheckoutDisabled(date) ],
       onChange: function(){ updateContinueState(); }
     });
   }
 
   // ---- Flow helpers ----
-
   function resetAfterHouseChange(){
     guests.value = "";
     guests.disabled = true;
@@ -393,24 +365,23 @@
     availabilityLoaded = false;
     blockedRanges = [];
 
-    // ocultar pasos siguientes
     guestSection.classList.add("hidden");
     paySection.classList.add("hidden");
 
-    // volver a mostrar botones (por si antes avanzó)
     continueBtn.classList.remove("hidden");
     continueBtn.disabled = true;
 
     guestContinue.classList.remove("hidden");
     guestContinue.disabled = true;
 
-    // banner
     capacityBanner.classList.add("hidden");
     capacityText.textContent = "";
 
-    // house hint
     houseHint.classList.add("hidden");
     houseHint.textContent = "";
+
+    // desbloquear por si el user volvió atrás cambiando casa
+    house.disabled = false;
 
     refreshPickers();
   }
@@ -426,39 +397,38 @@
     houseHint.textContent = rule.hint;
     houseHint.classList.remove("hidden");
 
-    // Pedido #3: aclaración de máximo arriba
-    capacityText.textContent = `${h}: ${rule.hint}`;
+    capacityText.textContent = `${rule.hint}`;
     capacityBanner.classList.remove("hidden");
 
     setStatus(`2) Ahora elegí la cantidad de personas (máx ${rule.max}).`);
   }
 
   function updateContinueState(){
-    // no permitir avanzar si no cargó disponibilidad
-    if(!availabilityLoaded){
+    if (!availabilityLoaded){
       continueBtn.disabled = true;
       return;
     }
 
     const baseOk = house.value && guests.value && checkin.value && checkout.value;
-    if(!baseOk){
+    if (!baseOk){
       continueBtn.disabled = true;
       return;
     }
 
-    // validar mínimo noches
     const ci = parseYMD(checkin.value);
     const co = parseYMD(checkout.value);
+
+    // mínimo 7 noches
     const minCo = addDays(ci, MIN_NIGHTS);
-    if(co < minCo){
+    if (co < minCo){
       continueBtn.disabled = true;
       setStatus(`La estadía mínima es de ${MIN_NIGHTS} noches. Elegí un check-out desde ${fmtYMD(minCo)}.`);
       return;
     }
 
-    // validar overlap (doble check por seguridad)
-    for(const r of blockedRanges){
-      if(overlapsStay(ci, co, r.start, r.endExclusive)){
+    // overlap final seguridad
+    for (const r of blockedRanges){
+      if (overlapsStay(ci, co, r.start, r.endExclusive)){
         continueBtn.disabled = true;
         setStatus(`No disponible 😕 (ocupado del ${r.rawStart} al ${r.rawEnd}). Probá otras fechas.`);
         return;
@@ -476,12 +446,11 @@
   }
 
   // ---- Events ----
-
   house.addEventListener("change", async ()=>{
     resetAfterHouseChange();
 
     const h = house.value;
-    if(!h){
+    if (!h){
       setStatus("1) Elegí una casa para empezar.");
       return;
     }
@@ -492,30 +461,28 @@
 
   guests.addEventListener("input", ()=>{
     const h = house.value;
-    if(!h) return;
+    if (!h) return;
 
     const rule = HOUSE_RULES[h];
     const g = Number(guests.value);
 
-    if(g > rule.max) guests.value = rule.max;
-    if(g < 1 && guests.value !== "") guests.value = 1;
+    if (g > rule.max) guests.value = rule.max;
+    if (g < 1 && guests.value !== "") guests.value = 1;
 
-    if(guests.value){
-      // habilita fechas recién cuando hay guests + availabilityLoaded
-      refreshPickers();
+    refreshPickers();
+
+    if (guests.value){
       setStatus("3) Elegí las fechas (los días no disponibles aparecen en gris).");
-    } else {
-      refreshPickers();
     }
 
     updateContinueState();
   });
 
   continueBtn.addEventListener("click", ()=>{
-    // Pedido #5: al pasar de estadía a datos huésped, ocultar el botón anterior
+    // ocultar botón anterior
     continueBtn.classList.add("hidden");
 
-    // “bloqueamos” los campos de estadía para evitar cambios
+    // bloquear estadía (para no cambiar después)
     house.disabled = true;
     guests.disabled = true;
     checkin.disabled = true;
@@ -528,12 +495,11 @@
 
   [name, dni, email, phone].forEach(inp=>{
     inp.addEventListener("input", ()=>{
-      if(validateGuestData()) setStatus("6) Listo. Ya podés continuar a pago.");
+      if (validateGuestData()) setStatus("6) Listo. Ya podés continuar a pago.");
     });
   });
 
   guestContinue.addEventListener("click", ()=>{
-    // Pedido #5: al pasar a pago, ocultar botón anterior
     guestContinue.classList.add("hidden");
 
     sumHouse.textContent = house.value;
@@ -546,11 +512,9 @@
     setStatus("7) Elegí el medio de pago.");
   });
 
-  // placeholders
   el("payTransfer").addEventListener("click", ()=>alert("Transferencia: en la próxima fase conectamos alias/CBU y confirmación manual."));
   el("payCard").addEventListener("click", ()=>alert("Tarjeta (Mercado Pago): en la próxima fase conectamos el checkout real."));
 
-  // init pickers disabled al inicio
   refreshPickers();
 </script>
 
