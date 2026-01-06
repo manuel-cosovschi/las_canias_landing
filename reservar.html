@@ -130,6 +130,9 @@
     <p class="mt-3 text-xs text-gray-500">
       Tarjeta: próximamente. Transferencia: ya deja asentada la reserva como “pendiente de confirmación”.
     </p>
+
+    <!-- ✅ Debug / errores del paso pago -->
+    <div id="payMsg" class="hidden mt-4 p-3 rounded-lg text-sm"></div>
   </section>
 
   <!-- CONFIRMACIÓN TRANSFERENCIA -->
@@ -209,6 +212,28 @@
   const dni = el("dni");
   const email = el("email");
   const phone = el("phone");
+
+  // Pago UI
+  const payMsg = el("payMsg");
+  function showPayMsg(msg, kind="info"){
+    if(!payMsg) return;
+    payMsg.classList.remove("hidden");
+    payMsg.textContent = msg;
+
+    payMsg.classList.remove("bg-red-50","text-red-800","bg-green-50","text-green-800","bg-gray-50","text-gray-800");
+    if (kind === "err"){
+      payMsg.classList.add("bg-red-50","text-red-800");
+    } else if (kind === "ok"){
+      payMsg.classList.add("bg-green-50","text-green-800");
+    } else {
+      payMsg.classList.add("bg-gray-50","text-gray-800");
+    }
+  }
+  function clearPayMsg(){
+    if(!payMsg) return;
+    payMsg.classList.add("hidden");
+    payMsg.textContent = "";
+  }
 
   function setStatus(msg){ statusBox.textContent = msg; }
 
@@ -406,6 +431,7 @@
 
     house.disabled = false;
 
+    clearPayMsg();
     refreshPickers();
   }
 
@@ -535,17 +561,24 @@
   const payTransferBtn = el("payTransfer");
   const payCardBtn = el("payCard");
 
+  function setPayBusy(busy){
+    payTransferBtn.disabled = busy;
+    payCardBtn.disabled = busy;
+    payTransferBtn.classList.toggle("opacity-60", busy);
+    payTransferBtn.classList.toggle("cursor-not-allowed", busy);
+  }
+
   payCardBtn.addEventListener("click", ()=>{
     alert("Tarjeta (Mercado Pago): próximamente.");
   });
 
   payTransferBtn.addEventListener("click", async ()=>{
-    payTransferBtn.disabled = true;
-    payCardBtn.disabled = true;
-    payTransferBtn.classList.add("opacity-60", "cursor-not-allowed");
+    clearPayMsg();
+    setPayBusy(true);
 
     setStatus("Enviando solicitud de reserva...");
 
+    // ✅ IMPORTANTE: mandamos en minúsculas "transfer" (y el backend normaliza)
     const payload = {
       house_code: house.value,
       guests: Number(guests.value),
@@ -555,40 +588,76 @@
       dni: dni.value.trim(),
       email: email.value.trim(),
       phone: phone.value.trim(),
-      payment_method: "TRANSFER"
+      payment_method: "transfer",
+      payment_ref: "",
+      notes: ""
     };
 
     try{
       const res = await fetch(CREATE_RESERVATION_API, {
         method: "POST",
-        headers: { "Content-Type":"application/json" },
+        headers: {
+          "Content-Type":"application/json"
+          // Si en el futuro querés forzar modo owner desde UI, podés agregar:
+          // , "x-lc-secret": "lc_owner_2026_super_secreto"
+        },
         body: JSON.stringify(payload)
       });
 
       const data = await res.json().catch(()=> ({}));
-      if(!res.ok || !data.ok){
-        const msg = data.message || "No se pudo crear la reserva";
-        throw new Error(msg);
+
+      // ❗Caso 400 (faltan campos u otro error de Netlify function)
+      if(!res.ok){
+        const msg = data.message || `No se pudo crear la reserva (HTTP ${res.status})`;
+        showPayMsg(msg, "err");
+        setStatus(`Error: ${msg}`);
+        setPayBusy(false);
+        return;
+      }
+
+      // ❗Caso: n8n devuelve {ok:false,...} (min nights / conflict)
+      if(data && data.ok === false){
+        let msg = data.message || "No se pudo crear la reserva";
+        if (Array.isArray(data.conflicts) && data.conflicts.length){
+          const c = data.conflicts[0];
+          msg += ` (ocupado ${c.check_in} → ${c.check_out})`;
+        }
+        showPayMsg(msg, "err");
+        setStatus(`Error: ${msg}`);
+        setPayBusy(false);
+        return;
+      }
+
+      // ✅ Caso OK esperado: {ok:true,row:{...}}
+      // (y por compat, también aceptamos {id,...} o {ok:true,id,...})
+      const row = (data && data.row) ? data.row : data;
+
+      if(!row || !row.id){
+        showPayMsg("Reserva creada, pero respuesta inesperada. Revisar backend (row.id faltante).", "err");
+        setStatus("Error: respuesta inesperada.");
+        setPayBusy(false);
+        return;
       }
 
       // Mostrar confirmación
-      el("resId").textContent = data.id || "-";
+      el("resId").textContent = row.id;
       el("resHouse").textContent = payload.house_code;
       el("resDates").textContent = `${payload.check_in} → ${payload.check_out}`;
       el("resGuests").textContent = String(payload.guests);
-      el("resRef").textContent = data.id || "PROXIMAMENTE";
+      el("resRef").textContent = row.id;
 
       paySection.classList.add("hidden");
       transferSection.classList.remove("hidden");
       transferSection.scrollIntoView({behavior:"smooth"});
 
+      showPayMsg("✅ Reserva registrada como pendiente de transferencia.", "ok");
       setStatus("✅ Listo. Reserva registrada como pendiente de transferencia.");
     } catch(e){
       console.error(e);
-      setStatus(`Error: ${e.message}`);
-      payTransferBtn.disabled = false;
-      payCardBtn.disabled = false;
-      payTransferBtn.classList.remove("opacity-60", "cursor-not-allowed");
+      const msg = e.message || "Error inesperado";
+      showPayMsg(msg, "err");
+      setStatus(`Error: ${msg}`);
+      setPayBusy(false);
     }
   });
 
