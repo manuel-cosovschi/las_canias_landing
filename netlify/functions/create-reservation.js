@@ -47,7 +47,7 @@ exports.handler = async (event) => {
 
     // ✅ Llamada server-side a n8n (poné acá el PATH real del webhook de create-reservation)
     // EJ: "/webhook/<TU_UUID_CREATE_RESERVATION>"
-    const out = await callN8n("/webhook/create-reservation", {
+    const out = await callN8n("/webhook/f484ae09-f5f4-492a-b88b-918c16b5a363", {
       method: "POST",
       body,
       baseUrl,
