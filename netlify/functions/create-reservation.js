@@ -1,11 +1,8 @@
-// /netlify/functions/create-reservation
+// /netlify/functions/create-reservation.js
 const { json, callN8n } = require("./_utils");
 
 exports.handler = async (event) => {
-  // Endpoint PÚBLICO para crear reservas (flujo front)
-  if (event.httpMethod !== "POST") {
-    return json(405, { message: "Method not allowed" });
-  }
+  if (event.httpMethod !== "POST") return json(405, { message: "Method not allowed" });
 
   try {
     const baseUrl = process.env.N8N_BASE_URL;
@@ -14,7 +11,7 @@ exports.handler = async (event) => {
 
     const bodyIn = JSON.parse(event.body || "{}");
 
-    // ✅ Normalizamos nombres (acepta ambas variantes)
+    // Normalizamos nombres
     const body = {
       house_code: bodyIn.house_code,
       checkin: bodyIn.checkin || bodyIn.check_in,
@@ -24,12 +21,12 @@ exports.handler = async (event) => {
       dni: bodyIn.dni,
       email: bodyIn.email,
       phone: bodyIn.phone,
-      payment_method: bodyIn.payment_method, // puede venir "TRANSFER", "transfer", etc.
+      payment_method: bodyIn.payment_method,
       payment_ref: bodyIn.payment_ref || "",
       notes: bodyIn.notes || "",
     };
 
-    // ✅ Validación mínima (con nombres normalizados)
+    // Validación mínima
     const missing = [];
     if (!body.house_code) missing.push("house_code");
     if (!body.checkin) missing.push("checkin/check_in");
@@ -41,11 +38,9 @@ exports.handler = async (event) => {
     if (!body.phone) missing.push("phone");
     if (!body.payment_method) missing.push("payment_method");
 
-    if (missing.length) {
-      return json(400, { message: `Faltan campos: ${missing.join(", ")}` });
-    }
+    if (missing.length) return json(400, { message: `Faltan campos: ${missing.join(", ")}` });
 
-    // ✅ Llamada server-side a n8n (PROD URL)
+    // Llamada a n8n (UUID REAL)
     const out = await callN8n("/webhook/f484ae09-f5f4-492a-b88b-918c16b5a363", {
       method: "POST",
       body,
@@ -53,9 +48,16 @@ exports.handler = async (event) => {
       secret,
     });
 
-    // ✅ Si n8n dijo ok:false => devolvemos 400
-    const status = out?.ok === false ? 400 : 200;
-    return json(status, out);
+    // Normalizar respuesta:
+    // - si n8n devuelve { ok: false, ... } la dejamos pasar
+    // - si devuelve "fila suelta" la wrappeamos
+    if (out && out.ok === false) return json(200, out);
+
+    // Si ya viene {ok:true,row:{...}} lo devolvemos
+    if (out && out.ok === true && out.row) return json(200, out);
+
+    // Caso actual (fila suelta)
+    return json(200, { ok: true, row: out });
   } catch (e) {
     return json(500, { message: e.message || "Error" });
   }
