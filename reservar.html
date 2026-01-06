@@ -7,17 +7,16 @@
 
   <script src="https://cdn.tailwindcss.com"></script>
 
-  <!-- Flatpickr (para deshabilitar días en gris) -->
+  <!-- Flatpickr (para poder deshabilitar días en gris) -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
   <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
 
   <style>
-    /* Flatpickr un toque más “tailwindy” */
-    .flatpickr-input[disabled] { opacity: .7; cursor: not-allowed; }
+    /* Flatpickr un poco más “app-like” */
+    .flatpickr-calendar { font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; }
   </style>
 </head>
-
 <body class="bg-gray-50 text-gray-900">
 
 <header class="bg-white shadow">
@@ -33,16 +32,19 @@
     Elegí la casa, personas y fechas. Luego completás tus datos y elegís el medio de pago.
   </p>
 
-  <div id="statusBox" class="mb-6 p-4 rounded-lg bg-gray-100 text-sm">
+  <!-- Status / helper -->
+  <div id="statusBox" class="mb-6 p-4 rounded-lg bg-gray-100 text-sm text-gray-700">
     1) Elegí una casa para empezar.
   </div>
 
   <!-- PASO 1 -->
   <section id="staySection" class="bg-white rounded-xl shadow p-6 mb-6">
-    <h2 class="text-xl font-semibold mb-2">1) Estadía</h2>
+    <h2 class="text-xl font-semibold mb-4">1) Estadía</h2>
 
-    <!-- Banner de capacidad -->
-    <div id="capacityBanner" class="hidden mb-4 p-3 rounded-lg bg-blue-50 text-sm text-blue-900"></div>
+    <!-- Banner: capacidad de la casa (pedido #3) -->
+    <div id="capacityBanner" class="hidden mb-4 p-3 rounded-lg bg-blue-50 text-sm text-blue-900">
+      <strong>Capacidad:</strong> <span id="capacityText"></span>
+    </div>
 
     <div class="grid sm:grid-cols-2 gap-4">
       <div>
@@ -60,32 +62,34 @@
 
       <div>
         <label class="block text-sm font-medium mb-1">Personas</label>
-        <input id="guests" type="number" disabled min="1"
+        <input id="guests" type="number" disabled
           class="w-full border rounded-lg p-3 bg-gray-100"
-          placeholder="Elegí casa primero">
+          placeholder="Elegí casa primero" min="1">
       </div>
 
       <div>
         <label class="block text-sm font-medium mb-1">Check-in</label>
+        <!-- usamos type=text para flatpickr -->
         <input id="checkin" type="text" disabled
           class="w-full border rounded-lg p-3 bg-gray-100"
-          placeholder="Seleccioná check-in">
+          placeholder="Elegí una fecha">
       </div>
 
       <div>
         <label class="block text-sm font-medium mb-1">Check-out</label>
         <input id="checkout" type="text" disabled
           class="w-full border rounded-lg p-3 bg-gray-100"
-          placeholder="Seleccioná check-out">
+          placeholder="Elegí una fecha">
       </div>
     </div>
 
-    <p class="mt-3 text-xs text-gray-600">
-      * Mínimo de estadía en temporada alta: <strong>7 noches</strong>.
-    </p>
+    <!-- Aclaración mínimo 7 noches (pedido #2) -->
+    <div class="mt-4 p-4 rounded-lg bg-yellow-50 text-sm">
+      <strong>Temporada alta:</strong> la estadía mínima es de <strong>7 noches</strong>.
+    </div>
 
     <button id="continue" disabled
-      class="mt-5 w-full py-3 rounded-lg bg-blue-600 text-white font-semibold disabled:opacity-40">
+      class="mt-5 w-full py-3 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 transition disabled:opacity-40 disabled:cursor-not-allowed">
       Continuar
     </button>
   </section>
@@ -102,7 +106,7 @@
     </div>
 
     <button id="guestContinue" disabled
-      class="mt-5 w-full py-3 rounded-lg bg-blue-600 text-white font-semibold disabled:opacity-40">
+      class="mt-5 w-full py-3 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 transition disabled:opacity-40 disabled:cursor-not-allowed">
       Continuar a pago
     </button>
   </section>
@@ -111,450 +115,443 @@
   <section id="paySection" class="bg-white rounded-xl shadow p-6 hidden">
     <h2 class="text-xl font-semibold mb-4">3) Pago</h2>
 
-    <div class="bg-gray-50 p-4 rounded-lg text-sm">
-      <div><strong>Casa:</strong> <span id="sumHouse"></span></div>
-      <div><strong>Personas:</strong> <span id="sumGuests"></span></div>
-      <div><strong>Check-in:</strong> <span id="sumCheckin"></span></div>
-      <div><strong>Check-out:</strong> <span id="sumCheckout"></span></div>
-
-      <div class="mt-3 p-3 rounded-lg bg-yellow-50">
-        <strong>Horarios:</strong> check-in 14:00 hs · check-out 10:00 hs.
-      </div>
+    <div class="bg-gray-50 p-4 rounded-lg text-sm text-gray-700">
+      <div><strong>Casa:</strong> <span id="sumHouse">-</span></div>
+      <div><strong>Personas:</strong> <span id="sumGuests">-</span></div>
+      <div><strong>Check-in:</strong> <span id="sumCheckin">-</span> (14:00)</div>
+      <div><strong>Check-out:</strong> <span id="sumCheckout">-</span> (10:00)</div>
+      <div class="mt-2"><strong>Importante:</strong> Reserva con seña del <strong>50%</strong>. Tarjeta (10% recargo) o transferencia (confirmación manual).</div>
     </div>
 
     <div class="mt-6 grid sm:grid-cols-2 gap-3">
-      <button class="py-3 rounded-lg border">Transferencia</button>
-      <button class="py-3 rounded-lg bg-green-600 text-white">Tarjeta</button>
+      <button id="payTransfer" class="py-3 rounded-lg border font-semibold hover:bg-gray-50">
+        Transferencia (confirmación manual)
+      </button>
+      <button id="payCard" class="py-3 rounded-lg bg-green-600 text-white font-semibold hover:bg-green-700">
+        Pagar con tarjeta (Mercado Pago)
+      </button>
     </div>
   </section>
 </main>
 
 <script>
-/* ===========================
-   CONFIG
-=========================== */
-const AVAILABILITY_API = "/api/availability";
+  // IMPORTANTÍSIMO:
+  // - Esto tiene que responder con JSON: { blocked: [ {start:"YYYY-MM-DD", end:"YYYY-MM-DD"}, ... ] }
+  // - Usá tu ruta actual (si estás usando Netlify redirects, dejalo así)
+  const AVAILABILITY_API = "/api/availability";
 
-// Bloqueo global: no reservar antes del 09/03/2026
-const GLOBAL_MIN_CHECKIN_ISO = "2026-03-09";
+  // Bloqueo global pedido (#1): todo ocupado hasta el 8 de marzo 2026 inclusive
+  // => primer check-in posible: 2026-03-09
+  const FIRST_ALLOWED_CHECKIN = "2026-03-09";
 
-// Mínimo 7 noches
-const MIN_NIGHTS = 7;
+  // Mínimo 7 noches (#2)
+  const MIN_NIGHTS = 7;
 
-const HOUSE_RULES = {
-  LC1:{max:5,hint:"Máx 4 (excepción 5 con colchón extra)."},
-  LC2:{max:4,hint:"Máx 4. Ideal 2 adultos + 2 niños/adolescentes."},
-  LC3:{max:6,hint:"Máx 4 adultos + 1 joven + 1 niño."},
-  LC4:{max:4,hint:"Máx 3 adultos o 2 adultos + 2 niños pequeños."},
-  LC5:{max:3,hint:"Máx 2 adultos + 1 niño."}
-};
+  const HOUSE_RULES = {
+    LC1:{max:5,hint:"Máx 4 (excepción 5 con colchón extra). Ideal familiar."},
+    LC2:{max:4,hint:"Máx 4. Ideal 2 adultos + 2 niños/adolescentes."},
+    LC3:{max:6,hint:"Máx 4 adultos + 1 joven + 1 niño (según disposición)."},
+    LC4:{max:4,hint:"Máx 3 adultos o 2 adultos + 2 niños pequeños."},
+    LC5:{max:3,hint:"Máx 2 adultos + 1 niño."}
+  };
 
-const $ = (id) => document.getElementById(id);
+  const el = (id)=>document.getElementById(id);
 
-const house = $("house");
-const guests = $("guests");
-const checkinEl = $("checkin");
-const checkoutEl = $("checkout");
-const cont = $("continue");
-const status = $("statusBox");
+  const house = el("house");
+  const houseHint = el("houseHint");
+  const guests = el("guests");
 
-const capacityBanner = $("capacityBanner");
-const houseHint = $("houseHint");
+  const checkin = el("checkin");
+  const checkout = el("checkout");
 
-const guestSection = $("guestSection");
-const paySection = $("paySection");
+  const continueBtn = el("continue");
+  const statusBox = el("statusBox");
 
-/* ===========================
-   HELPERS FECHAS
-=========================== */
-function parseISO(d){
-  const [y,m,day] = d.split("-").map(Number);
-  return new Date(y, m-1, day);
-}
-function toISO(date){
-  const y = date.getFullYear();
-  const m = String(date.getMonth()+1).padStart(2,"0");
-  const d = String(date.getDate()).padStart(2,"0");
-  return `${y}-${m}-${d}`;
-}
-function addDaysISO(iso, days){
-  const dt = parseISO(iso);
-  dt.setDate(dt.getDate()+days);
-  return toISO(dt);
-}
-function overlaps(ci, co, start, end){
-  // [ci,co) solapa con [start,end)
-  return ci < end && co > start;
-}
+  const guestSection = el("guestSection");
+  const guestContinue = el("guestContinue");
+  const paySection = el("paySection");
 
-/* ===========================
-   DISPONIBILIDAD
-=========================== */
-let blockedRanges = []; // [{startISO,endISO,startDate,endDate}]
-let availabilityLoaded = false;
+  const capacityBanner = el("capacityBanner");
+  const capacityText = el("capacityText");
 
-async function loadAvailability(houseCode){
-  availabilityLoaded = false;
-  blockedRanges = [];
-  status.textContent = "Cargando disponibilidad…";
+  const sumHouse = el("sumHouse");
+  const sumGuests = el("sumGuests");
+  const sumCheckin = el("sumCheckin");
+  const sumCheckout = el("sumCheckout");
 
-  try {
-    const r = await fetch(AVAILABILITY_API,{
-      method:"POST",
-      headers:{"Content-Type":"application/json"},
-      body: JSON.stringify({house_code: houseCode})
+  const name = el("name");
+  const dni = el("dni");
+  const email = el("email");
+  const phone = el("phone");
+
+  function setStatus(msg){ statusBox.textContent = msg; }
+
+  // ---- Dates helpers (sin bug timezone) ----
+  function parseYMD(ymd){
+    const [y,m,d] = ymd.split("-").map(Number);
+    return new Date(y, m-1, d);
+  }
+  function fmtYMD(date){
+    const y = date.getFullYear();
+    const m = String(date.getMonth()+1).padStart(2,"0");
+    const d = String(date.getDate()).padStart(2,"0");
+    return `${y}-${m}-${d}`;
+  }
+  function addDays(date, days){
+    const out = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    out.setDate(out.getDate() + days);
+    return out;
+  }
+
+  // blocked ranges: [{start:Date, end:Date, rawStart, rawEnd}]
+  // Convención: bloqueado [start, end] inclusive en datos humanos,
+  // pero para overlap de estadía lo tratamos como [start, end+1) para noches.
+  let blockedRanges = [];
+  let availabilityLoaded = false;
+
+  // Flatpickr instances
+  let fpCheckin = null;
+  let fpCheckout = null;
+
+  function overlapsStay(ci, co, start, endExclusive){
+    // estadía [ci, co) y bloqueado [start, endExclusive)
+    return ci < endExclusive && co > start;
+  }
+
+  async function loadAvailability(houseCode){
+    availabilityLoaded = false;
+    blockedRanges = [];
+    setStatus("Cargando disponibilidad...");
+
+    try{
+      const res = await fetch(AVAILABILITY_API, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ house_code: houseCode })
+      });
+
+      if(!res.ok) throw new Error("No se pudo cargar disponibilidad");
+
+      const data = await res.json();
+
+      blockedRanges = (data.blocked || []).map(r => {
+        const start = parseYMD(r.start);
+        const endInclusive = parseYMD(r.end);
+        const endExclusive = addDays(endInclusive, 1);
+        return { start, endExclusive, rawStart: r.start, rawEnd: r.end };
+      });
+
+      availabilityLoaded = true;
+      setStatus("2) Elegí cantidad de personas.");
+      refreshPickers();
+    } catch(e){
+      console.error(e);
+      availabilityLoaded = false;
+      setStatus("No se pudo cargar disponibilidad. Intentá más tarde.");
+      refreshPickers();
+    }
+
+    updateContinueState();
+  }
+
+  // ---- Picker disable rules ----
+
+  function isDateBlockedForCheckin(date){
+    // no permitir fechas pasadas
+    const today = new Date();
+    const today0 = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const d0 = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    if(d0 < today0) return true;
+
+    // no permitir antes del 2026-03-09 (bloqueo global)
+    const minAllowed = parseYMD(FIRST_ALLOWED_CHECKIN);
+    if(d0 < minAllowed) return true;
+
+    // no permitir si cae dentro de algún rango bloqueado
+    for(const r of blockedRanges){
+      // bloqueado en días: [start, endExclusive)
+      if(d0 >= r.start && d0 < r.endExclusive) return true;
+    }
+    return false;
+  }
+
+  function isCheckoutDisabled(date){
+    // checkout depende de checkin seleccionado + min noches + no solapar bloqueos
+    const ciYmd = fpCheckin?.selectedDates?.[0] ? fmtYMD(fpCheckin.selectedDates[0]) : null;
+    if(!ciYmd) return true; // hasta que no haya check-in, no se puede elegir checkout
+
+    const ci = parseYMD(ciYmd);
+    const d0 = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+
+    // mínimo 7 noches => co >= ci + 7
+    const minCo = addDays(ci, MIN_NIGHTS);
+    if(d0 < minCo) return true;
+
+    // validar solape con bloqueos para la estadía [ci, co)
+    const co = d0;
+    for(const r of blockedRanges){
+      if(overlapsStay(ci, co, r.start, r.endExclusive)) return true;
+    }
+
+    // adicional: si por algún motivo el checkout cae antes del FIRST_ALLOWED_CHECKIN
+    const minAllowed = parseYMD(FIRST_ALLOWED_CHECKIN);
+    if(ci < minAllowed) return true;
+
+    return false;
+  }
+
+  function refreshPickers(){
+    // habilitar/deshabilitar date inputs según availabilityLoaded
+    const canUseDates = !!house.value && !!guests.value && availabilityLoaded;
+
+    checkin.disabled = !canUseDates;
+    checkout.disabled = !canUseDates;
+
+    checkin.classList.toggle("bg-gray-100", !canUseDates);
+    checkout.classList.toggle("bg-gray-100", !canUseDates);
+
+    // recrear pickers (simple y robusto)
+    if(fpCheckin) fpCheckin.destroy();
+    if(fpCheckout) fpCheckout.destroy();
+
+    fpCheckin = flatpickr(checkin, {
+      locale: "es",
+      dateFormat: "Y-m-d",
+      disableMobile: true,
+      allowInput: false,
+      clickOpens: canUseDates,
+      minDate: "today",
+      disable: [
+        function(date){ return isDateBlockedForCheckin(date); }
+      ],
+      onChange: function(selectedDates){
+        // cuando cambia checkin, limpiar checkout y forzar reglas
+        if(!selectedDates?.length){
+          checkout.value = "";
+          updateContinueState();
+          return;
+        }
+
+        // si el usuario eligió algo, reset checkout
+        if(fpCheckout) fpCheckout.clear();
+
+        // setear minDate de checkout = checkin + 7 noches
+        const ci = selectedDates[0];
+        const minCo = addDays(new Date(ci.getFullYear(), ci.getMonth(), ci.getDate()), MIN_NIGHTS);
+
+        // reinit checkout picker con reglas dependientes del checkin
+        if(fpCheckout) fpCheckout.destroy();
+        fpCheckout = flatpickr(checkout, {
+          locale: "es",
+          dateFormat: "Y-m-d",
+          disableMobile: true,
+          allowInput: false,
+          clickOpens: canUseDates,
+          minDate: fmtYMD(minCo),
+          disable: [
+            function(date){ return isCheckoutDisabled(date); }
+          ],
+          onChange: function(){
+            updateContinueState();
+          }
+        });
+
+        setStatus(`3) Elegí el check-out (mínimo ${MIN_NIGHTS} noches).`);
+        updateContinueState();
+      }
     });
 
-    const j = await r.json().catch(()=> ({}));
-    if(!r.ok) throw new Error(j?.message || "Error cargando disponibilidad");
+    fpCheckout = flatpickr(checkout, {
+      locale: "es",
+      dateFormat: "Y-m-d",
+      disableMobile: true,
+      allowInput: false,
+      clickOpens: canUseDates,
+      disable: [
+        function(date){ return isCheckoutDisabled(date); }
+      ],
+      onChange: function(){ updateContinueState(); }
+    });
+  }
 
-    blockedRanges = (j.blocked||[]).map(b => ({
-      startISO: b.start,
-      endISO: b.end,
-      startDate: parseISO(b.start),
-      endDate: parseISO(b.end),
-    }));
+  // ---- Flow helpers ----
 
-    availabilityLoaded = true;
-    status.textContent = "2) Elegí cantidad de personas.";
-  } catch (e) {
-    console.error(e);
+  function resetAfterHouseChange(){
+    guests.value = "";
+    guests.disabled = true;
+    guests.classList.add("bg-gray-100");
+    guests.placeholder = "Elegí casa primero";
+    guests.removeAttribute("max");
+
+    checkin.value = "";
+    checkout.value = "";
+    checkin.disabled = true;
+    checkout.disabled = true;
+    checkin.classList.add("bg-gray-100");
+    checkout.classList.add("bg-gray-100");
+
     availabilityLoaded = false;
-    status.textContent = "No se pudo cargar disponibilidad. Intentá más tarde.";
+    blockedRanges = [];
+
+    // ocultar pasos siguientes
+    guestSection.classList.add("hidden");
+    paySection.classList.add("hidden");
+
+    // volver a mostrar botones (por si antes avanzó)
+    continueBtn.classList.remove("hidden");
+    continueBtn.disabled = true;
+
+    guestContinue.classList.remove("hidden");
+    guestContinue.disabled = true;
+
+    // banner
+    capacityBanner.classList.add("hidden");
+    capacityText.textContent = "";
+
+    // house hint
+    houseHint.classList.add("hidden");
+    houseHint.textContent = "";
+
+    refreshPickers();
   }
 
-  rebuildPickers(); // IMPORTANTÍSIMO: recalcular días bloqueados en el calendario
-  updateContinue();
-}
+  function enableGuestsForHouse(h){
+    const rule = HOUSE_RULES[h];
 
-// ¿Este día está bloqueado?
-function isDayBlocked(date){
-  // bloqueo global hasta el 08/03/2026 inclusive => min 09/03/2026
-  const globalMin = parseISO(GLOBAL_MIN_CHECKIN_ISO);
-  if(date < globalMin) return true;
+    guests.disabled = false;
+    guests.classList.remove("bg-gray-100");
+    guests.placeholder = `1 a ${rule.max}`;
+    guests.max = rule.max;
 
-  // bloqueos por rangos (cada día dentro de [start, end) queda deshabilitado)
-  for(const r of blockedRanges){
-    // si date >= startDate y date < endDate => bloqueado
-    if(date >= r.startDate && date < r.endDate) return true;
+    houseHint.textContent = rule.hint;
+    houseHint.classList.remove("hidden");
+
+    // Pedido #3: aclaración de máximo arriba
+    capacityText.textContent = `${h}: ${rule.hint}`;
+    capacityBanner.classList.remove("hidden");
+
+    setStatus(`2) Ahora elegí la cantidad de personas (máx ${rule.max}).`);
   }
-  return false;
-}
 
-// ¿El rango checkin->checkout pisa un bloque?
-function rangeHitsBlocked(checkinISO, checkoutISO){
-  const ci = parseISO(checkinISO);
-  const co = parseISO(checkoutISO);
-  for(const r of blockedRanges){
-    if(overlaps(ci, co, r.startDate, r.endDate)) return true;
-  }
-  return false;
-}
-
-/* ===========================
-   FLATPICKR
-=========================== */
-let fpCheckin = null;
-let fpCheckout = null;
-
-function destroyPickers(){
-  if(fpCheckin){ fpCheckin.destroy(); fpCheckin = null; }
-  if(fpCheckout){ fpCheckout.destroy(); fpCheckout = null; }
-}
-
-function rebuildPickers(){
-  destroyPickers();
-
-  // Si no hay casa o no cargó, no armamos nada todavía
-  if(!house.value || !availabilityLoaded) return;
-
-  // check-in picker
-  fpCheckin = flatpickr(checkinEl, {
-    locale: "es",
-    dateFormat: "Y-m-d",
-    disableMobile: true,
-    minDate: GLOBAL_MIN_CHECKIN_ISO,
-    disable: [
-      (date) => isDayBlocked(date)
-    ],
-    onChange: function(selectedDates, dateStr){
-      if(!dateStr) return;
-
-      // Cuando elige check-in, habilitamos check-out
-      enableCheckout();
-
-      // Mínimo checkout = checkin + 7 noches
-      const minCheckout = addDaysISO(dateStr, MIN_NIGHTS);
-      fpCheckout.set("minDate", minCheckout);
-
-      // Si ya había un checkout inválido, lo limpiamos
-      if(checkoutEl.value && checkoutEl.value < minCheckout){
-        fpCheckout.clear();
-      }
-
-      status.textContent = "3) Elegí el check-out (mínimo 7 noches).";
-      updateContinue();
-
-      // Abrir el calendario del checkout automáticamente (más fácil para el usuario)
-      fpCheckout.open();
+  function updateContinueState(){
+    // no permitir avanzar si no cargó disponibilidad
+    if(!availabilityLoaded){
+      continueBtn.disabled = true;
+      return;
     }
-  });
 
-  // checkout picker
-  fpCheckout = flatpickr(checkoutEl, {
-    locale: "es",
-    dateFormat: "Y-m-d",
-    disableMobile: true,
-    // se setea cuando eligen checkin
-    minDate: addDaysISO(GLOBAL_MIN_CHECKIN_ISO, MIN_NIGHTS),
-    disable: [
-      (date) => isDayBlocked(date)
-    ],
-    onChange: function(selectedDates, dateStr){
-      if(!dateStr) return;
-
-      // Validación extra: aunque el día sea clickeable, el rango completo no puede pisar bloqueos
-      const ci = checkinEl.value;
-      const co = dateStr;
-
-      if(ci && co){
-        // check-out debe ser > check-in
-        if(co <= ci){
-          fpCheckout.clear();
-          status.textContent = "El check-out debe ser posterior al check-in.";
-          updateContinue();
-          return;
-        }
-
-        // mínimo 7 noches real
-        const minCo = addDaysISO(ci, MIN_NIGHTS);
-        if(co < minCo){
-          fpCheckout.clear();
-          status.textContent = `El mínimo en temporada alta es ${MIN_NIGHTS} noches.`;
-          updateContinue();
-          return;
-        }
-
-        // rango no debe solapar bloqueos
-        if(rangeHitsBlocked(ci, co)){
-          fpCheckout.clear();
-          status.textContent = "Ese rango incluye días ocupados. Elegí otras fechas.";
-          updateContinue();
-          return;
-        }
-      }
-
-      updateContinue();
+    const baseOk = house.value && guests.value && checkin.value && checkout.value;
+    if(!baseOk){
+      continueBtn.disabled = true;
+      return;
     }
+
+    // validar mínimo noches
+    const ci = parseYMD(checkin.value);
+    const co = parseYMD(checkout.value);
+    const minCo = addDays(ci, MIN_NIGHTS);
+    if(co < minCo){
+      continueBtn.disabled = true;
+      setStatus(`La estadía mínima es de ${MIN_NIGHTS} noches. Elegí un check-out desde ${fmtYMD(minCo)}.`);
+      return;
+    }
+
+    // validar overlap (doble check por seguridad)
+    for(const r of blockedRanges){
+      if(overlapsStay(ci, co, r.start, r.endExclusive)){
+        continueBtn.disabled = true;
+        setStatus(`No disponible 😕 (ocupado del ${r.rawStart} al ${r.rawEnd}). Probá otras fechas.`);
+        return;
+      }
+    }
+
+    continueBtn.disabled = false;
+    setStatus("4) Perfecto. Continuá para ingresar los datos del huésped.");
+  }
+
+  function validateGuestData(){
+    const ok = name.value.trim() && dni.value.trim() && email.value.trim() && phone.value.trim();
+    guestContinue.disabled = !ok;
+    return ok;
+  }
+
+  // ---- Events ----
+
+  house.addEventListener("change", async ()=>{
+    resetAfterHouseChange();
+
+    const h = house.value;
+    if(!h){
+      setStatus("1) Elegí una casa para empezar.");
+      return;
+    }
+
+    enableGuestsForHouse(h);
+    await loadAvailability(h);
   });
-}
 
-/* ===========================
-   UI FLOW
-=========================== */
-function resetAfterHouseChange(){
-  // reset valores
-  guests.value = "";
-  checkinEl.value = "";
-  checkoutEl.value = "";
+  guests.addEventListener("input", ()=>{
+    const h = house.value;
+    if(!h) return;
 
-  // disable inputs
-  guests.disabled = true;
-  guests.classList.add("bg-gray-100");
-  guests.placeholder = "Elegí casa primero";
-  guests.removeAttribute("max");
+    const rule = HOUSE_RULES[h];
+    const g = Number(guests.value);
 
-  checkinEl.disabled = true;
-  checkoutEl.disabled = true;
-  checkinEl.classList.add("bg-gray-100");
-  checkoutEl.classList.add("bg-gray-100");
+    if(g > rule.max) guests.value = rule.max;
+    if(g < 1 && guests.value !== "") guests.value = 1;
 
-  cont.disabled = true;
-  cont.classList.remove("hidden");
+    if(guests.value){
+      // habilita fechas recién cuando hay guests + availabilityLoaded
+      refreshPickers();
+      setStatus("3) Elegí las fechas (los días no disponibles aparecen en gris).");
+    } else {
+      refreshPickers();
+    }
 
-  // hide next sections
-  guestSection.classList.add("hidden");
-  paySection.classList.add("hidden");
-  $("guestContinue").classList.remove("hidden");
-
-  // banners
-  capacityBanner.classList.add("hidden");
-  houseHint.classList.add("hidden");
-
-  // availability
-  availabilityLoaded = false;
-  blockedRanges = [];
-  destroyPickers();
-
-  status.textContent = "1) Elegí una casa para empezar.";
-}
-
-function setupForHouse(h){
-  const rule = HOUSE_RULES[h];
-
-  guests.disabled = false;
-  guests.classList.remove("bg-gray-100");
-  guests.max = rule.max;
-  guests.placeholder = `1 a ${rule.max}`;
-
-  capacityBanner.textContent = `Capacidad ${h}: ${rule.hint} (Máximo ${rule.max} personas).`;
-  capacityBanner.classList.remove("hidden");
-
-  houseHint.textContent = rule.hint;
-  houseHint.classList.remove("hidden");
-}
-
-function enableCheckin(){
-  checkinEl.disabled = false;
-  checkinEl.classList.remove("bg-gray-100");
-}
-
-function enableCheckout(){
-  checkoutEl.disabled = false;
-  checkoutEl.classList.remove("bg-gray-100");
-}
-
-function clampGuests(){
-  if(!house.value) return;
-  const max = HOUSE_RULES[house.value].max;
-  let g = Number(guests.value);
-  if(!g) return;
-  if(g < 1) g = 1;
-  if(g > max) g = max;
-  guests.value = g;
-}
-
-/* ===========================
-   VALIDACIONES PARA CONTINUAR
-=========================== */
-function validateAll(){
-  if(!house.value) return false;
-  if(!guests.value) return false;
-  if(!availabilityLoaded) return false;
-  if(!checkinEl.value || !checkoutEl.value) return false;
-
-  const ci = checkinEl.value;
-  const co = checkoutEl.value;
-
-  // antes del global min
-  if(ci < GLOBAL_MIN_CHECKIN_ISO) return false;
-
-  // check-out > check-in
-  if(co <= ci) return false;
-
-  // mínimo 7 noches
-  const minCo = addDaysISO(ci, MIN_NIGHTS);
-  if(co < minCo) return false;
-
-  // rango no pisa bloqueos
-  if(rangeHitsBlocked(ci, co)) return false;
-
-  return true;
-}
-
-function updateContinue(){
-  const ok = validateAll();
-  cont.disabled = !ok;
-
-  if(!house.value){
-    status.textContent = "1) Elegí una casa para empezar.";
-    return;
-  }
-
-  if(house.value && !availabilityLoaded){
-    status.textContent = "Cargando disponibilidad…";
-    return;
-  }
-
-  if(house.value && !guests.value){
-    status.textContent = "2) Elegí cantidad de personas.";
-    return;
-  }
-
-  if(house.value && guests.value && !checkinEl.value){
-    status.textContent = "3) Elegí el check-in.";
-    return;
-  }
-
-  if(checkinEl.value && !checkoutEl.value){
-    status.textContent = `3) Elegí el check-out (mínimo ${MIN_NIGHTS} noches).`;
-    return;
-  }
-
-  if(!ok){
-    // si no ok, dejamos el mensaje que ya se setea en onChange (cuando corresponde)
-    return;
-  }
-
-  status.textContent = "4) Perfecto. Continuá para ingresar los datos del huésped.";
-}
-
-/* ===========================
-   EVENTOS
-=========================== */
-resetAfterHouseChange();
-
-house.addEventListener("change", async () => {
-  resetAfterHouseChange();
-
-  if(!house.value) return;
-
-  setupForHouse(house.value);
-
-  // cargar disponibilidad y luego armar calendarios
-  await loadAvailability(house.value);
-
-  // habilitamos el check-in recién cuando ya hay personas válidas (como querías en el flujo)
-  // el picker se construye igual para poder “deshabilitar días”, pero el input queda disabled hasta guests ok
-});
-
-guests.addEventListener("input", () => {
-  if(!house.value) return;
-  clampGuests();
-
-  if(Number(guests.value) >= 1){
-    enableCheckin();
-
-    // armamos pickers si ya está cargada la disponibilidad
-    // (si ya están armados, no hace nada; si no, los crea)
-    rebuildPickers();
-    status.textContent = "3) Elegí el check-in.";
-  }
-
-  updateContinue();
-});
-
-cont.addEventListener("click", () => {
-  cont.classList.add("hidden");
-  guestSection.classList.remove("hidden");
-  guestSection.scrollIntoView({behavior:"smooth"});
-  status.textContent = "4) Completá los datos del huésped para habilitar el pago.";
-});
-
-// Datos huésped
-["name","dni","email","phone"].forEach(i=>{
-  $(i).addEventListener("input", () => {
-    $("guestContinue").disabled = !(
-      $("name").value.trim() &&
-      $("dni").value.trim() &&
-      $("email").value.trim() &&
-      $("phone").value.trim()
-    );
+    updateContinueState();
   });
-});
 
-$("guestContinue").addEventListener("click", () => {
-  $("guestContinue").classList.add("hidden");
+  continueBtn.addEventListener("click", ()=>{
+    // Pedido #5: al pasar de estadía a datos huésped, ocultar el botón anterior
+    continueBtn.classList.add("hidden");
 
-  $("sumHouse").textContent = house.value;
-  $("sumGuests").textContent = guests.value;
-  $("sumCheckin").textContent = checkinEl.value;
-  $("sumCheckout").textContent = checkoutEl.value;
+    // “bloqueamos” los campos de estadía para evitar cambios
+    house.disabled = true;
+    guests.disabled = true;
+    checkin.disabled = true;
+    checkout.disabled = true;
 
-  paySection.classList.remove("hidden");
-  paySection.scrollIntoView({behavior:"smooth"});
-  status.textContent = "5) Elegí el medio de pago.";
-});
+    guestSection.classList.remove("hidden");
+    guestSection.scrollIntoView({behavior:"smooth"});
+    setStatus("5) Completá los datos del huésped para habilitar el pago.");
+  });
+
+  [name, dni, email, phone].forEach(inp=>{
+    inp.addEventListener("input", ()=>{
+      if(validateGuestData()) setStatus("6) Listo. Ya podés continuar a pago.");
+    });
+  });
+
+  guestContinue.addEventListener("click", ()=>{
+    // Pedido #5: al pasar a pago, ocultar botón anterior
+    guestContinue.classList.add("hidden");
+
+    sumHouse.textContent = house.value;
+    sumGuests.textContent = guests.value;
+    sumCheckin.textContent = checkin.value;
+    sumCheckout.textContent = checkout.value;
+
+    paySection.classList.remove("hidden");
+    paySection.scrollIntoView({behavior:"smooth"});
+    setStatus("7) Elegí el medio de pago.");
+  });
+
+  // placeholders
+  el("payTransfer").addEventListener("click", ()=>alert("Transferencia: en la próxima fase conectamos alias/CBU y confirmación manual."));
+  el("payCard").addEventListener("click", ()=>alert("Tarjeta (Mercado Pago): en la próxima fase conectamos el checkout real."));
+
+  // init pickers disabled al inicio
+  refreshPickers();
 </script>
 
 </body>
