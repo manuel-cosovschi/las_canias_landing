@@ -1,1 +1,3 @@
-/api/*  /.netlify/functions/:splat  200
+/api/availability        /.netlify/functions/availability     200
+/api/create-reservation  /.netlify/functions/create-reservation  200
+/api/*                   /.netlify/functions/:splat           200

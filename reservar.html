@@ -39,7 +39,6 @@
   <section id="staySection" class="bg-white rounded-xl shadow p-6 mb-6">
     <h2 class="text-xl font-semibold mb-4">1) Estadía</h2>
 
-    <!-- Banner capacidad -->
     <div id="capacityBanner" class="hidden mb-4 p-3 rounded-lg bg-blue-50 text-sm text-blue-900">
       <strong>Capacidad:</strong> <span id="capacityText"></span>
     </div>
@@ -127,16 +126,49 @@
         Pagar con tarjeta (Mercado Pago)
       </button>
     </div>
+
+    <p class="mt-3 text-xs text-gray-500">
+      Tarjeta: próximamente. Transferencia: ya deja asentada la reserva como “pendiente de confirmación”.
+    </p>
+  </section>
+
+  <!-- CONFIRMACIÓN TRANSFERENCIA -->
+  <section id="transferSection" class="bg-white rounded-xl shadow p-6 hidden">
+    <h2 class="text-xl font-semibold mb-2">✅ Solicitud de reserva recibida</h2>
+    <p class="text-gray-700 text-sm mb-4">
+      Te reservamos el lugar <strong>pendiente de confirmación de transferencia</strong>.
+    </p>
+
+    <div class="bg-gray-50 p-4 rounded-lg text-sm text-gray-700">
+      <div><strong>ID de reserva:</strong> <span id="resId">-</span></div>
+      <div class="mt-2"><strong>Casa:</strong> <span id="resHouse">-</span></div>
+      <div><strong>Fechas:</strong> <span id="resDates">-</span></div>
+      <div><strong>Personas:</strong> <span id="resGuests">-</span></div>
+    </div>
+
+    <div class="mt-4 p-4 rounded-lg bg-yellow-50 text-sm text-gray-800">
+      <div class="font-semibold mb-1">Transferencia (seña 50%)</div>
+      <div><strong>Alias:</strong> PROXIMAMENTE</div>
+      <div><strong>CBU:</strong> PROXIMAMENTE</div>
+      <div class="mt-2">
+        <strong>Referencia / concepto:</strong> <span id="resRef">-</span>
+      </div>
+      <div class="mt-2">
+        Cuando esté hecha la transferencia, enviá el comprobante por WhatsApp para confirmar.
+      </div>
+    </div>
+
+    <button id="transferDone" class="mt-5 w-full py-3 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 transition">
+      Volver al inicio
+    </button>
   </section>
 </main>
 
 <script>
   const AVAILABILITY_API = "/api/availability";
+  const CREATE_RESERVATION_API = "/api/create-reservation";
 
-  // ✅ Bloqueo global: todo ocupado hasta 2026-03-08 inclusive => primer check-in posible 2026-03-09
   const FIRST_ALLOWED_CHECKIN = "2026-03-09";
-
-  // ✅ Mínimo 7 noches
   const MIN_NIGHTS = 7;
 
   const HOUSE_RULES = {
@@ -161,6 +193,9 @@
   const guestSection = el("guestSection");
   const guestContinue = el("guestContinue");
   const paySection = el("paySection");
+  const staySection = el("staySection");
+
+  const transferSection = el("transferSection");
 
   const capacityBanner = el("capacityBanner");
   const capacityText = el("capacityText");
@@ -177,7 +212,6 @@
 
   function setStatus(msg){ statusBox.textContent = msg; }
 
-  // ---- Dates helpers (sin timezone bug) ----
   function parseYMD(ymd){
     const [y,m,d] = ymd.split("-").map(Number);
     return new Date(y, m-1, d);
@@ -194,7 +228,6 @@
     return out;
   }
 
-  // blocked ranges del backend: [{start:Date, endExclusive:Date, rawStart, rawEnd}]
   let blockedRanges = [];
   let availabilityLoaded = false;
 
@@ -202,7 +235,6 @@
   let fpCheckout = null;
 
   function overlapsStay(ci, co, start, endExclusive){
-    // estadía [ci, co) vs bloqueo [start, endExclusive)
     return ci < endExclusive && co > start;
   }
 
@@ -225,7 +257,7 @@
       blockedRanges = (data.blocked || []).map(r => {
         const start = parseYMD(r.start);
         const endInclusive = parseYMD(r.end);
-        const endExclusive = addDays(endInclusive, 1); // ✅ end inclusive -> exclusive
+        const endExclusive = addDays(endInclusive, 1);
         return { start, endExclusive, rawStart: r.start, rawEnd: r.end };
       });
 
@@ -241,7 +273,6 @@
     updateContinueState();
   }
 
-  // ---- Disable rules ----
   function isPast(date){
     const t = new Date();
     const today0 = new Date(t.getFullYear(), t.getMonth(), t.getDate());
@@ -254,15 +285,12 @@
 
     const d0 = new Date(date.getFullYear(), date.getMonth(), date.getDate());
 
-    // bloqueo global hasta 8/3 inclusive
     const minAllowed = parseYMD(FIRST_ALLOWED_CHECKIN);
     if (d0 < minAllowed) return true;
 
-    // no permitir check-in dentro de rangos bloqueados
     for (const r of blockedRanges){
       if (d0 >= r.start && d0 < r.endExclusive) return true;
     }
-
     return false;
   }
 
@@ -273,15 +301,12 @@
     const ci = new Date(ciDate.getFullYear(), ciDate.getMonth(), ciDate.getDate());
     const co = new Date(date.getFullYear(), date.getMonth(), date.getDate());
 
-    // mínimo 7 noches
     const minCo = addDays(ci, MIN_NIGHTS);
     if (co < minCo) return true;
 
-    // no solapar bloqueos
     for (const r of blockedRanges){
       if (overlapsStay(ci, co, r.start, r.endExclusive)) return true;
     }
-
     return false;
   }
 
@@ -306,7 +331,6 @@
       minDate: "today",
       disable: [ (date) => isDateBlockedForCheckin(date) ],
       onChange: function(selectedDates){
-        // reset checkout
         if (fpCheckout) fpCheckout.clear();
 
         if (!selectedDates?.length){
@@ -347,7 +371,6 @@
     });
   }
 
-  // ---- Flow helpers ----
   function resetAfterHouseChange(){
     guests.value = "";
     guests.disabled = true;
@@ -367,6 +390,7 @@
 
     guestSection.classList.add("hidden");
     paySection.classList.add("hidden");
+    transferSection.classList.add("hidden");
 
     continueBtn.classList.remove("hidden");
     continueBtn.disabled = true;
@@ -380,7 +404,6 @@
     houseHint.classList.add("hidden");
     houseHint.textContent = "";
 
-    // desbloquear por si el user volvió atrás cambiando casa
     house.disabled = false;
 
     refreshPickers();
@@ -418,7 +441,6 @@
     const ci = parseYMD(checkin.value);
     const co = parseYMD(checkout.value);
 
-    // mínimo 7 noches
     const minCo = addDays(ci, MIN_NIGHTS);
     if (co < minCo){
       continueBtn.disabled = true;
@@ -426,7 +448,6 @@
       return;
     }
 
-    // overlap final seguridad
     for (const r of blockedRanges){
       if (overlapsStay(ci, co, r.start, r.endExclusive)){
         continueBtn.disabled = true;
@@ -479,10 +500,8 @@
   });
 
   continueBtn.addEventListener("click", ()=>{
-    // ocultar botón anterior
     continueBtn.classList.add("hidden");
 
-    // bloquear estadía (para no cambiar después)
     house.disabled = true;
     guests.disabled = true;
     checkin.disabled = true;
@@ -512,9 +531,72 @@
     setStatus("7) Elegí el medio de pago.");
   });
 
-  el("payTransfer").addEventListener("click", ()=>alert("Transferencia: en la próxima fase conectamos alias/CBU y confirmación manual."));
-  el("payCard").addEventListener("click", ()=>alert("Tarjeta (Mercado Pago): en la próxima fase conectamos el checkout real."));
+  // ---- Pago ----
+  const payTransferBtn = el("payTransfer");
+  const payCardBtn = el("payCard");
 
+  payCardBtn.addEventListener("click", ()=>{
+    alert("Tarjeta (Mercado Pago): próximamente.");
+  });
+
+  payTransferBtn.addEventListener("click", async ()=>{
+    payTransferBtn.disabled = true;
+    payCardBtn.disabled = true;
+    payTransferBtn.classList.add("opacity-60", "cursor-not-allowed");
+
+    setStatus("Enviando solicitud de reserva...");
+
+    const payload = {
+      house_code: house.value,
+      guests: Number(guests.value),
+      check_in: checkin.value,
+      check_out: checkout.value,
+      guest_name: name.value.trim(),
+      dni: dni.value.trim(),
+      email: email.value.trim(),
+      phone: phone.value.trim(),
+      payment_method: "TRANSFER"
+    };
+
+    try{
+      const res = await fetch(CREATE_RESERVATION_API, {
+        method: "POST",
+        headers: { "Content-Type":"application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await res.json().catch(()=> ({}));
+      if(!res.ok || !data.ok){
+        const msg = data.message || "No se pudo crear la reserva";
+        throw new Error(msg);
+      }
+
+      // Mostrar confirmación
+      el("resId").textContent = data.id || "-";
+      el("resHouse").textContent = payload.house_code;
+      el("resDates").textContent = `${payload.check_in} → ${payload.check_out}`;
+      el("resGuests").textContent = String(payload.guests);
+      el("resRef").textContent = data.id || "PROXIMAMENTE";
+
+      paySection.classList.add("hidden");
+      transferSection.classList.remove("hidden");
+      transferSection.scrollIntoView({behavior:"smooth"});
+
+      setStatus("✅ Listo. Reserva registrada como pendiente de transferencia.");
+    } catch(e){
+      console.error(e);
+      setStatus(`Error: ${e.message}`);
+      payTransferBtn.disabled = false;
+      payCardBtn.disabled = false;
+      payTransferBtn.classList.remove("opacity-60", "cursor-not-allowed");
+    }
+  });
+
+  el("transferDone").addEventListener("click", ()=>{
+    window.location.href = "index.html";
+  });
+
+  // init
   refreshPickers();
 </script>
 
