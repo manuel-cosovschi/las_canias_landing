@@ -28,7 +28,7 @@
 <main class="max-w-3xl mx-auto px-4 py-10">
   <h1 class="text-3xl font-bold mb-2">Reservar</h1>
   <p class="text-gray-600 mb-8">
-    Elegí la casa, personas y fechas. Luego completás tus datos y elegís el medio de pago.
+    Elegí la casa, personas y fechas. Luego completás tus datos y solicitás la reserva.
   </p>
 
   <div id="statusBox" class="mb-6 p-4 rounded-lg bg-gray-100 text-sm text-gray-700">
@@ -79,8 +79,8 @@
       </div>
     </div>
 
-    <div class="mt-4 p-4 rounded-lg bg-yellow-50 text-sm">
-      <strong>Temporada alta:</strong> la estadía mínima es de <strong>7 noches</strong>.
+    <div id="minNightsBanner" class="mt-4 p-4 rounded-lg bg-yellow-50 text-sm">
+      <strong>Mínimo:</strong> <span id="minNightsText">7 noches</span>.
     </div>
 
     <button id="continue" disabled
@@ -102,7 +102,7 @@
 
     <button id="guestContinue" disabled
       class="mt-5 w-full py-3 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 transition disabled:opacity-40 disabled:cursor-not-allowed">
-      Continuar a pago
+      Continuar
     </button>
   </section>
 
@@ -115,23 +115,21 @@
       <div><strong>Personas:</strong> <span id="sumGuests">-</span></div>
       <div><strong>Check-in:</strong> <span id="sumCheckin">-</span> (14:00)</div>
       <div><strong>Check-out:</strong> <span id="sumCheckout">-</span> (10:00)</div>
-      <div class="mt-2"><strong>Importante:</strong> Reserva con seña del <strong>50%</strong>. Tarjeta (10% recargo) o transferencia (confirmación manual).</div>
+      <div class="mt-2">
+        <strong>Importante:</strong> Por el momento aceptamos <strong>solo transferencia bancaria</strong>.
+      </div>
     </div>
 
-    <div class="mt-6 grid sm:grid-cols-2 gap-3">
-      <button id="payTransfer" class="py-3 rounded-lg border font-semibold hover:bg-gray-50">
-        Transferencia (confirmación manual)
-      </button>
-      <button id="payCard" class="py-3 rounded-lg bg-green-600 text-white font-semibold hover:bg-green-700">
-        Pagar con tarjeta (Mercado Pago)
+    <div class="mt-6">
+      <button id="payTransfer" class="w-full py-3 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700">
+        Solicitar reserva por transferencia
       </button>
     </div>
 
     <p class="mt-3 text-xs text-gray-500">
-      Tarjeta: próximamente. Transferencia: ya deja asentada la reserva como “pendiente de confirmación”.
+      La solicitud queda en “HOLD” por 6 horas y luego expira automáticamente si no se confirma.
     </p>
 
-    <!-- ✅ Debug / errores del paso pago -->
     <div id="payMsg" class="hidden mt-4 p-3 rounded-lg text-sm"></div>
   </section>
 
@@ -139,21 +137,39 @@
   <section id="transferSection" class="bg-white rounded-xl shadow p-6 hidden">
     <h2 class="text-xl font-semibold mb-2">✅ Solicitud de reserva recibida</h2>
     <p class="text-gray-700 text-sm mb-4">
-      Te reservamos el lugar <strong>pendiente de confirmación de transferencia</strong>.
+      Te reservamos el lugar <strong>por 6 horas</strong> (pendiente de transferencia).
     </p>
 
     <div class="bg-gray-50 p-4 rounded-lg text-sm text-gray-700">
       <div><strong>ID de reserva:</strong> <span id="resId">-</span></div>
+      <div><strong>Vence:</strong> <span id="resExpires">-</span></div>
       <div class="mt-2"><strong>Casa:</strong> <span id="resHouse">-</span></div>
       <div><strong>Fechas:</strong> <span id="resDates">-</span></div>
       <div><strong>Personas:</strong> <span id="resGuests">-</span></div>
     </div>
 
     <div class="mt-4 p-4 rounded-lg bg-yellow-50 text-sm text-gray-800">
-      <div class="font-semibold mb-1">Transferencia (seña 50%)</div>
-      <div><strong>Alias:</strong> PROXIMAMENTE</div>
-      <div><strong>CBU:</strong> PROXIMAMENTE</div>
-      <div class="mt-2">
+      <div class="font-semibold mb-2">Transferencia bancaria (seña 50%)</div>
+
+      <div class="mb-3">
+        <div class="font-semibold">Titular:</div>
+        <div>Ana Carla Fernandez</div>
+        <div>DNI: 23887759</div>
+        <div>CUIL: 27238877593</div>
+      </div>
+
+      <div class="mb-3">
+        <div class="font-semibold">Banco Macro SA</div>
+        <div>Alias: <strong>Anacobo8</strong></div>
+        <div>CBU: <strong>2850684140095901049508</strong></div>
+        <div>CTA: CA ARS 468409590104950</div>
+      </div>
+
+      <div class="text-xs text-gray-600">
+        (Dato extra que te pasaron: “Titular cuenta Lemon / Alias Anacarla74”. Si querés lo agrego como alternativa, pero por ahora dejo Macro como principal.)
+      </div>
+
+      <div class="mt-3">
         <strong>Referencia / concepto:</strong> <span id="resRef">-</span>
       </div>
       <div class="mt-2">
@@ -171,11 +187,27 @@
   const AVAILABILITY_API = "/api/availability";
   const CREATE_RESERVATION_API = "/api/create-reservation";
 
-  const FIRST_ALLOWED_CHECKIN = "2026-03-09";
-  const MIN_NIGHTS = 7;
+  // Reglas de disponibilidad por casa
+  const FIRST_ALLOWED_BY_HOUSE = {
+    LC1: "2026-03-01",
+    LC2: "2026-03-01",
+    LC3: "2026-03-01",
+    LC4: "2026-03-01",
+    LC5: "2026-03-07",
+  };
+
+  // Ventanas donde el mínimo es 7 noches
+  // - hasta 15/03 inclusive
+  const MIN7_UNTIL = "2026-03-15";
+  // - Semana Santa / pico hasta 05/04 inclusive (según dueños)
+  const MIN7_EASTER_START = "2026-03-29";
+  const MIN7_EASTER_END = "2026-04-05";
+
+  const DEFAULT_MIN_NIGHTS = 2;  // fuera de esas ventanas, por defecto permitimos 2+
+  const MIN_NIGHTS_STRICT = 7;
 
   const HOUSE_RULES = {
-    LC1:{max:5,hint:"Máx 4 (excepción 5 con colchón extra). Ideal familiar."},
+    LC1:{max:4,hint:"Máx 4 personas."},
     LC2:{max:4,hint:"Máx 4. Ideal 2 adultos + 2 niños/adolescentes."},
     LC3:{max:6,hint:"Máx 4 adultos + 1 joven + 1 niño (según disposición)."},
     LC4:{max:4,hint:"Máx 3 adultos o 2 adultos + 2 niños pequeños."},
@@ -197,7 +229,6 @@
   const guestContinue = el("guestContinue");
   const paySection = el("paySection");
   const staySection = el("staySection");
-
   const transferSection = el("transferSection");
 
   const capacityBanner = el("capacityBanner");
@@ -213,28 +244,21 @@
   const email = el("email");
   const phone = el("phone");
 
-  // Pago UI
+  const minNightsText = el("minNightsText");
+
   const payMsg = el("payMsg");
   function showPayMsg(msg, kind="info"){
-    if(!payMsg) return;
     payMsg.classList.remove("hidden");
     payMsg.textContent = msg;
-
     payMsg.classList.remove("bg-red-50","text-red-800","bg-green-50","text-green-800","bg-gray-50","text-gray-800");
-    if (kind === "err"){
-      payMsg.classList.add("bg-red-50","text-red-800");
-    } else if (kind === "ok"){
-      payMsg.classList.add("bg-green-50","text-green-800");
-    } else {
-      payMsg.classList.add("bg-gray-50","text-gray-800");
-    }
+    if (kind === "err") payMsg.classList.add("bg-red-50","text-red-800");
+    else if (kind === "ok") payMsg.classList.add("bg-green-50","text-green-800");
+    else payMsg.classList.add("bg-gray-50","text-gray-800");
   }
   function clearPayMsg(){
-    if(!payMsg) return;
     payMsg.classList.add("hidden");
     payMsg.textContent = "";
   }
-
   function setStatus(msg){ statusBox.textContent = msg; }
 
   function parseYMD(ymd){
@@ -252,10 +276,45 @@
     out.setDate(out.getDate() + days);
     return out;
   }
+  function ymdLE(a, b){ return parseYMD(a).getTime() <= parseYMD(b).getTime(); }
+  function ymdGE(a, b){ return parseYMD(a).getTime() >= parseYMD(b).getTime(); }
+
+  function getFirstAllowedCheckin(){
+    return FIRST_ALLOWED_BY_HOUSE[house.value] || "2026-03-01";
+  }
+
+  // Define mínimo por fechas (reglas dueños)
+  function getMinNightsForSelectedDates(ciYmd, coYmd){
+    // si no hay fechas aún, mostramos 7 por defecto
+    if (!ciYmd || !coYmd) return MIN_NIGHTS_STRICT;
+
+    // Regla 1: hasta 15/03 inclusive => 7 noches
+    if (ymdLE(ciYmd, MIN7_UNTIL)) return MIN_NIGHTS_STRICT;
+
+    // Regla 2: semana santa / pico hasta 05/04 inclusive
+    // Aplicamos 7 si el check-in cae dentro de [29/03, 05/04] o si la estadía toca ese rango.
+    const ci = parseYMD(ciYmd);
+    const co = parseYMD(coYmd);
+
+    const rStart = parseYMD(MIN7_EASTER_START);
+    const rEndInc = parseYMD(MIN7_EASTER_END);
+    const rEndEx = addDays(rEndInc, 1);
+
+    const overlaps = (ci < rEndEx && co > rStart);
+    if (overlaps) return MIN_NIGHTS_STRICT;
+
+    return DEFAULT_MIN_NIGHTS;
+  }
+
+  function updateMinBanner(){
+    const ci = checkin.value;
+    const co = checkout.value;
+    const mn = getMinNightsForSelectedDates(ci, co);
+    minNightsText.textContent = `${mn} noches`;
+  }
 
   let blockedRanges = [];
   let availabilityLoaded = false;
-
   let fpCheckin = null;
   let fpCheckout = null;
 
@@ -310,7 +369,7 @@
 
     const d0 = new Date(date.getFullYear(), date.getMonth(), date.getDate());
 
-    const minAllowed = parseYMD(FIRST_ALLOWED_CHECKIN);
+    const minAllowed = parseYMD(getFirstAllowedCheckin());
     if (d0 < minAllowed) return true;
 
     for (const r of blockedRanges){
@@ -326,7 +385,11 @@
     const ci = new Date(ciDate.getFullYear(), ciDate.getMonth(), ciDate.getDate());
     const co = new Date(date.getFullYear(), date.getMonth(), date.getDate());
 
-    const minCo = addDays(ci, MIN_NIGHTS);
+    const ciYmd = fmtYMD(ci);
+    const coYmd = fmtYMD(co);
+
+    const mn = getMinNightsForSelectedDates(ciYmd, coYmd);
+    const minCo = addDays(ci, mn);
     if (co < minCo) return true;
 
     for (const r of blockedRanges){
@@ -357,6 +420,7 @@
       disable: [ (date) => isDateBlockedForCheckin(date) ],
       onChange: function(selectedDates){
         if (fpCheckout) fpCheckout.clear();
+        updateMinBanner();
 
         if (!selectedDates?.length){
           checkout.value = "";
@@ -366,7 +430,9 @@
 
         const ci = selectedDates[0];
         const ci0 = new Date(ci.getFullYear(), ci.getMonth(), ci.getDate());
-        const minCo = addDays(ci0, MIN_NIGHTS);
+
+        const mn = getMinNightsForSelectedDates(fmtYMD(ci0), fmtYMD(addDays(ci0, 1)));
+        const minCo = addDays(ci0, mn);
 
         if (fpCheckout) fpCheckout.destroy();
         fpCheckout = flatpickr(checkout, {
@@ -377,10 +443,13 @@
           clickOpens: canUseDates,
           minDate: fmtYMD(minCo),
           disable: [ (date) => isCheckoutDisabled(date) ],
-          onChange: function(){ updateContinueState(); }
+          onChange: function(){
+            updateMinBanner();
+            updateContinueState();
+          }
         });
 
-        setStatus(`3) Elegí el check-out (mínimo ${MIN_NIGHTS} noches).`);
+        setStatus(`3) Elegí el check-out (mínimo variable según fecha).`);
         updateContinueState();
       }
     });
@@ -392,7 +461,10 @@
       allowInput: false,
       clickOpens: canUseDates,
       disable: [ (date) => isCheckoutDisabled(date) ],
-      onChange: function(){ updateContinueState(); }
+      onChange: function(){
+        updateMinBanner();
+        updateContinueState();
+      }
     });
   }
 
@@ -432,6 +504,7 @@
     house.disabled = false;
 
     clearPayMsg();
+    updateMinBanner();
     refreshPickers();
   }
 
@@ -443,10 +516,10 @@
     guests.placeholder = `1 a ${rule.max}`;
     guests.max = rule.max;
 
-    houseHint.textContent = rule.hint;
+    houseHint.textContent = rule.hint + ` Disponible desde ${getFirstAllowedCheckin()}.`;
     houseHint.classList.remove("hidden");
 
-    capacityText.textContent = `${rule.hint}`;
+    capacityText.textContent = `${rule.hint} Disponible desde ${getFirstAllowedCheckin()}.`;
     capacityBanner.classList.remove("hidden");
 
     setStatus(`2) Ahora elegí la cantidad de personas (máx ${rule.max}).`);
@@ -467,10 +540,12 @@
     const ci = parseYMD(checkin.value);
     const co = parseYMD(checkout.value);
 
-    const minCo = addDays(ci, MIN_NIGHTS);
+    const mn = getMinNightsForSelectedDates(checkin.value, checkout.value);
+    const minCo = addDays(ci, mn);
+
     if (co < minCo){
       continueBtn.disabled = true;
-      setStatus(`La estadía mínima es de ${MIN_NIGHTS} noches. Elegí un check-out desde ${fmtYMD(minCo)}.`);
+      setStatus(`La estadía mínima para esas fechas es de ${mn} noches. Probá un check-out desde ${fmtYMD(minCo)}.`);
       return;
     }
 
@@ -504,6 +579,7 @@
 
     enableGuestsForHouse(h);
     await loadAvailability(h);
+    updateMinBanner();
   });
 
   guests.addEventListener("input", ()=>{
@@ -522,6 +598,7 @@
       setStatus("3) Elegí las fechas (los días no disponibles aparecen en gris).");
     }
 
+    updateMinBanner();
     updateContinueState();
   });
 
@@ -535,12 +612,12 @@
 
     guestSection.classList.remove("hidden");
     guestSection.scrollIntoView({behavior:"smooth"});
-    setStatus("5) Completá los datos del huésped para habilitar el pago.");
+    setStatus("5) Completá los datos del huésped para habilitar la solicitud.");
   });
 
   [name, dni, email, phone].forEach(inp=>{
     inp.addEventListener("input", ()=>{
-      if (validateGuestData()) setStatus("6) Listo. Ya podés continuar a pago.");
+      if (validateGuestData()) setStatus("6) Listo. Ya podés continuar.");
     });
   });
 
@@ -554,23 +631,17 @@
 
     paySection.classList.remove("hidden");
     paySection.scrollIntoView({behavior:"smooth"});
-    setStatus("7) Elegí el medio de pago.");
+    setStatus("7) Solicitá la reserva por transferencia.");
   });
 
-  // ---- Pago ----
+  // ---- Pago (solo transferencia) ----
   const payTransferBtn = el("payTransfer");
-  const payCardBtn = el("payCard");
 
   function setPayBusy(busy){
     payTransferBtn.disabled = busy;
-    payCardBtn.disabled = busy;
     payTransferBtn.classList.toggle("opacity-60", busy);
     payTransferBtn.classList.toggle("cursor-not-allowed", busy);
   }
-
-  payCardBtn.addEventListener("click", ()=>{
-    alert("Tarjeta (Mercado Pago): próximamente.");
-  });
 
   payTransferBtn.addEventListener("click", async ()=>{
     clearPayMsg();
@@ -578,7 +649,6 @@
 
     setStatus("Enviando solicitud de reserva...");
 
-    // ✅ IMPORTANTE: mandamos en minúsculas "transfer" (y el backend normaliza)
     const payload = {
       house_code: house.value,
       guests: Number(guests.value),
@@ -596,17 +666,12 @@
     try{
       const res = await fetch(CREATE_RESERVATION_API, {
         method: "POST",
-        headers: {
-          "Content-Type":"application/json"
-          // Si en el futuro querés forzar modo owner desde UI, podés agregar:
-          // , "x-lc-secret": "lc_owner_2026_super_secreto"
-        },
+        headers: { "Content-Type":"application/json" },
         body: JSON.stringify(payload)
       });
 
       const data = await res.json().catch(()=> ({}));
 
-      // ❗Caso 400 (faltan campos u otro error de Netlify function)
       if(!res.ok){
         const msg = data.message || `No se pudo crear la reserva (HTTP ${res.status})`;
         showPayMsg(msg, "err");
@@ -615,7 +680,6 @@
         return;
       }
 
-      // ❗Caso: n8n devuelve {ok:false,...} (min nights / conflict)
       if(data && data.ok === false){
         let msg = data.message || "No se pudo crear la reserva";
         if (Array.isArray(data.conflicts) && data.conflicts.length){
@@ -628,30 +692,30 @@
         return;
       }
 
-      // ✅ Caso OK esperado: {ok:true,row:{...}}
-      // (y por compat, también aceptamos {id,...} o {ok:true,id,...})
       const row = (data && data.row) ? data.row : data;
 
       if(!row || !row.id){
-        showPayMsg("Reserva creada, pero respuesta inesperada. Revisar backend (row.id faltante).", "err");
+        showPayMsg("Reserva creada, pero respuesta inesperada (falta row.id).", "err");
         setStatus("Error: respuesta inesperada.");
         setPayBusy(false);
         return;
       }
 
-      // Mostrar confirmación
       el("resId").textContent = row.id;
       el("resHouse").textContent = payload.house_code;
       el("resDates").textContent = `${payload.check_in} → ${payload.check_out}`;
       el("resGuests").textContent = String(payload.guests);
       el("resRef").textContent = row.id;
 
+      // expires_at si viene del backend (HOLD 6h)
+      el("resExpires").textContent = row.expires_at ? row.expires_at : "-";
+
       paySection.classList.add("hidden");
       transferSection.classList.remove("hidden");
       transferSection.scrollIntoView({behavior:"smooth"});
 
-      showPayMsg("✅ Reserva registrada como pendiente de transferencia.", "ok");
-      setStatus("✅ Listo. Reserva registrada como pendiente de transferencia.");
+      showPayMsg("✅ Reserva registrada (HOLD por 6 horas).", "ok");
+      setStatus("✅ Listo. Reserva registrada (HOLD por 6 horas).");
     } catch(e){
       console.error(e);
       const msg = e.message || "Error inesperado";
@@ -665,8 +729,8 @@
     window.location.href = "index.html";
   });
 
-  // init
   refreshPickers();
+  updateMinBanner();
 </script>
 
 </body>
