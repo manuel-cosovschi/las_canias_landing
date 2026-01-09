@@ -28,8 +28,17 @@
 <main class="max-w-3xl mx-auto px-4 py-10">
   <h1 class="text-3xl font-bold mb-2">Reservar</h1>
   <p class="text-gray-600 mb-8">
-    Elegí la casa, personas y fechas. Luego completás tus datos y solicitás la reserva.
+    Elegí la casa, personas y fechas. Luego completás tus datos y solicitás la reserva por transferencia.
   </p>
+
+  <!-- NOTA GRANDE (excepciones) -->
+  <div class="mb-6 p-4 rounded-xl bg-yellow-50 text-sm text-gray-800 border border-yellow-200">
+    <div class="font-semibold mb-1">📌 Importante</div>
+    <div>
+      Si necesitás una excepción (menos días o ajustar un día más/menos), consultanos por <strong>WhatsApp</strong>.
+      <div class="mt-2 font-semibold">👉 ANOTAR EN GRANDE: PARA EXCEPCIONES DE ESTADÍAS MENORES CONSULTAR POR WHATSAPP.</div>
+    </div>
+  </div>
 
   <div id="statusBox" class="mb-6 p-4 rounded-lg bg-gray-100 text-sm text-gray-700">
     1) Elegí una casa para empezar.
@@ -79,8 +88,11 @@
       </div>
     </div>
 
-    <div id="minNightsBanner" class="mt-4 p-4 rounded-lg bg-yellow-50 text-sm">
-      <strong>Mínimo:</strong> <span id="minNightsText">7 noches</span>.
+    <div id="minNightsBanner" class="mt-4 p-4 rounded-lg bg-yellow-50 text-sm text-gray-800">
+      <div><strong>Mínimo:</strong> <span id="minNightsText">-</span>.</div>
+      <div class="mt-1 text-xs text-gray-600">
+        Si el sistema no habilita tu caso, consultá por WhatsApp (excepciones).
+      </div>
     </div>
 
     <button id="continue" disabled
@@ -115,8 +127,33 @@
       <div><strong>Personas:</strong> <span id="sumGuests">-</span></div>
       <div><strong>Check-in:</strong> <span id="sumCheckin">-</span> (14:00)</div>
       <div><strong>Check-out:</strong> <span id="sumCheckout">-</span> (10:00)</div>
-      <div class="mt-2">
-        <strong>Importante:</strong> Por el momento aceptamos <strong>solo transferencia bancaria</strong>.
+      <div class="mt-2"><strong>Importante:</strong> Por el momento aceptamos <strong>solo transferencia bancaria</strong>.</div>
+    </div>
+
+    <!-- INFO DE PAGO (VISIBLE ACÁ) -->
+    <div class="mt-4 p-4 rounded-lg bg-yellow-50 text-sm text-gray-800 border border-yellow-200">
+      <div class="font-semibold mb-2">Transferencia bancaria (seña 50%)</div>
+
+      <div class="mb-3">
+        <div class="font-semibold">Banco Macro SA</div>
+        <div>Titular: Ana Carla Fernandez</div>
+        <div>CUIT/CUIL: 27238877593</div>
+        <div>CBU: <strong>2850684140095901049508</strong></div>
+        <div>Alias: <strong>Anacobo8</strong></div>
+        <div>CTA: CA ARS 468409590104950</div>
+        <div>Entidad: Banco Macro SA</div>
+      </div>
+
+      <hr class="my-3">
+
+      <div class="mb-1 font-semibold">Titular de cuenta Lemon</div>
+      <div>Ana Carla Fernandez</div>
+      <div>DNI: 23887759</div>
+      <div>CUIL: 27238877593</div>
+      <div>Alias: <strong>Anacarla74</strong></div>
+
+      <div class="mt-3 text-xs text-gray-600">
+        En el concepto poné el <strong>ID de reserva</strong> que te aparece al enviar la solicitud.
       </div>
     </div>
 
@@ -130,10 +167,17 @@
       La solicitud queda en “HOLD” por 6 horas y luego expira automáticamente si no se confirma.
     </p>
 
+    <!-- ✅ Debug / errores del paso pago -->
     <div id="payMsg" class="hidden mt-4 p-3 rounded-lg text-sm"></div>
+
+    <!-- ✅ DEBUG opcional para ver respuesta cruda -->
+    <details class="mt-3 text-xs text-gray-500">
+      <summary class="cursor-pointer">Ver respuesta técnica (debug)</summary>
+      <pre id="debugRaw" class="mt-2 p-3 bg-gray-900 text-gray-100 rounded-lg overflow-auto"></pre>
+    </details>
   </section>
 
-  <!-- CONFIRMACIÓN TRANSFERENCIA -->
+  <!-- CONFIRMACIÓN -->
   <section id="transferSection" class="bg-white rounded-xl shadow p-6 hidden">
     <h2 class="text-xl font-semibold mb-2">✅ Solicitud de reserva recibida</h2>
     <p class="text-gray-700 text-sm mb-4">
@@ -148,33 +192,53 @@
       <div><strong>Personas:</strong> <span id="resGuests">-</span></div>
     </div>
 
-    <div class="mt-4 p-4 rounded-lg bg-yellow-50 text-sm text-gray-800">
+    <!-- INFO DE PAGO TAMBIÉN ACÁ -->
+    <div class="mt-4 p-4 rounded-lg bg-yellow-50 text-sm text-gray-800 border border-yellow-200">
       <div class="font-semibold mb-2">Transferencia bancaria (seña 50%)</div>
 
       <div class="mb-3">
-        <div class="font-semibold">Titular:</div>
-        <div>Ana Carla Fernandez</div>
-        <div>DNI: 23887759</div>
-        <div>CUIL: 27238877593</div>
-      </div>
-
-      <div class="mb-3">
         <div class="font-semibold">Banco Macro SA</div>
-        <div>Alias: <strong>Anacobo8</strong></div>
+        <div>Titular: Ana Carla Fernandez</div>
+        <div>CUIT/CUIL: 27238877593</div>
         <div>CBU: <strong>2850684140095901049508</strong></div>
+        <div>Alias: <strong>Anacobo8</strong></div>
         <div>CTA: CA ARS 468409590104950</div>
+        <div>Entidad: Banco Macro SA</div>
       </div>
 
-      <div class="text-xs text-gray-600">
-        (Dato extra que te pasaron: “Titular cuenta Lemon / Alias Anacarla74”. Si querés lo agrego como alternativa, pero por ahora dejo Macro como principal.)
-      </div>
+      <hr class="my-3">
+
+      <div class="mb-1 font-semibold">Titular de cuenta Lemon</div>
+      <div>Ana Carla Fernandez</div>
+      <div>DNI: 23887759</div>
+      <div>CUIL: 27238877593</div>
+      <div>Alias: <strong>Anacarla74</strong></div>
 
       <div class="mt-3">
         <strong>Referencia / concepto:</strong> <span id="resRef">-</span>
       </div>
-      <div class="mt-2">
-        Cuando esté hecha la transferencia, enviá el comprobante por WhatsApp para confirmar.
-      </div>
+    </div>
+
+    <!-- SUBIR COMPROBANTE -->
+    <div class="mt-4 p-4 rounded-lg bg-white border">
+      <div class="font-semibold mb-2">📎 Subir comprobante de transferencia</div>
+      <p class="text-sm text-gray-600 mb-3">
+        Subí el comprobante para que le llegue a los dueños junto con la información de tu reserva.
+      </p>
+
+      <input id="proofFile" type="file" accept="image/*,application/pdf"
+             class="block w-full text-sm text-gray-700 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-gray-100 file:text-gray-800 hover:file:bg-gray-200">
+
+      <button id="sendProofBtn"
+        class="mt-3 w-full py-3 rounded-lg bg-green-600 text-white font-semibold hover:bg-green-700 disabled:opacity-40 disabled:cursor-not-allowed">
+        Enviar comprobante
+      </button>
+
+      <div id="proofMsg" class="hidden mt-3 p-3 rounded-lg text-sm"></div>
+
+      <p class="mt-3 text-xs text-gray-500">
+        Si tenés problemas para subirlo, envialo por WhatsApp indicando el ID de reserva.
+      </p>
     </div>
 
     <button id="transferDone" class="mt-5 w-full py-3 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 transition">
@@ -186,8 +250,11 @@
 <script>
   const AVAILABILITY_API = "/api/availability";
   const CREATE_RESERVATION_API = "/api/create-reservation";
+  const SUBMIT_PROOF_API = "/api/submit-proof";
 
-  // Reglas de disponibilidad por casa
+  // Disponibilidad por casa:
+  // - Todas desde 01/03
+  // - LC5 desde 07/03
   const FIRST_ALLOWED_BY_HOUSE = {
     LC1: "2026-03-01",
     LC2: "2026-03-01",
@@ -196,18 +263,46 @@
     LC5: "2026-03-07",
   };
 
-  // Ventanas donde el mínimo es 7 noches
-  // - hasta 15/03 inclusive
-  const MIN7_UNTIL = "2026-03-15";
-  // - Semana Santa / pico hasta 05/04 inclusive (según dueños)
-  const MIN7_EASTER_START = "2026-03-29";
-  const MIN7_EASTER_END = "2026-04-05";
+  // Reglas de mínimos 2026:
+  // - Hasta el 04 de abril: 7 noches mínimo.
+  const MIN7_UNTIL = "2026-04-04";
 
-  const DEFAULT_MIN_NIGHTS = 2;  // fuera de esas ventanas, por defecto permitimos 2+
+  // Fechas fijas / findes que “se reserva así” (exacto)
+  // Interpretación: se permite SOLO esa ventana completa (checkin exacto -> checkout exacto).
+  const FIXED_WINDOWS = [
+    // noches 30,31,01,02 de mayo => 30/05 al 03/06 (4 noches)
+    { checkin:"2026-05-30", checkout:"2026-06-03", label:"Finde fijo (30/05 a 03/06)" },
+
+    // noches 22,23,24 de mayo => 22/05 al 25/05 (3 noches)
+    { checkin:"2026-05-22", checkout:"2026-05-25", label:"Finde fijo (22/05 a 25/05)" },
+
+    // 12,13,14 de junio => 12/06 al 15/06
+    { checkin:"2026-06-12", checkout:"2026-06-15", label:"Finde fijo (12/06 a 15/06)" },
+
+    // 19,20,21 junio => 19/06 al 22/06
+    { checkin:"2026-06-19", checkout:"2026-06-22", label:"Finde fijo (19/06 a 22/06)" },
+
+    // 8,9,10,11 julio => 08/07 al 12/07
+    { checkin:"2026-07-08", checkout:"2026-07-12", label:"Finde fijo (08/07 a 12/07)" },
+
+    // 14,15,16 agosto => 14/08 al 17/08
+    { checkin:"2026-08-14", checkout:"2026-08-17", label:"Finde fijo (14/08 a 17/08)" },
+
+    // 9,10,11 octubre => 09/10 al 12/10
+    { checkin:"2026-10-09", checkout:"2026-10-12", label:"Finde fijo (09/10 a 12/10)" },
+
+    // 20,21,22 noviembre => 20/11 al 23/11
+    { checkin:"2026-11-20", checkout:"2026-11-23", label:"Finde fijo (20/11 a 23/11)" },
+
+    // 4,5,6,7 diciembre => 04/12 al 08/12
+    { checkin:"2026-12-04", checkout:"2026-12-08", label:"Finde fijo (04/12 a 08/12)" },
+  ];
+
+  const DEFAULT_MIN_NIGHTS = 2;
   const MIN_NIGHTS_STRICT = 7;
 
   const HOUSE_RULES = {
-    LC1:{max:4,hint:"Máx 4 personas."},
+    LC1:{max:4,hint:"Máximo 4 personas, ideal 2 adultos y 2 niños, ideal familiar."},
     LC2:{max:4,hint:"Máx 4. Ideal 2 adultos + 2 niños/adolescentes."},
     LC3:{max:6,hint:"Máx 4 adultos + 1 joven + 1 niño (según disposición)."},
     LC4:{max:4,hint:"Máx 3 adultos o 2 adultos + 2 niños pequeños."},
@@ -228,7 +323,6 @@
   const guestSection = el("guestSection");
   const guestContinue = el("guestContinue");
   const paySection = el("paySection");
-  const staySection = el("staySection");
   const transferSection = el("transferSection");
 
   const capacityBanner = el("capacityBanner");
@@ -245,8 +339,14 @@
   const phone = el("phone");
 
   const minNightsText = el("minNightsText");
-
   const payMsg = el("payMsg");
+  const debugRaw = el("debugRaw");
+
+  const payTransferBtn = el("payTransfer");
+  const proofFile = el("proofFile");
+  const sendProofBtn = el("sendProofBtn");
+  const proofMsg = el("proofMsg");
+
   function showPayMsg(msg, kind="info"){
     payMsg.classList.remove("hidden");
     payMsg.textContent = msg;
@@ -258,7 +358,21 @@
   function clearPayMsg(){
     payMsg.classList.add("hidden");
     payMsg.textContent = "";
+    if (debugRaw) debugRaw.textContent = "";
   }
+  function showProofMsg(msg, kind="info"){
+    proofMsg.classList.remove("hidden");
+    proofMsg.textContent = msg;
+    proofMsg.classList.remove("bg-red-50","text-red-800","bg-green-50","text-green-800","bg-gray-50","text-gray-800");
+    if (kind === "err") proofMsg.classList.add("bg-red-50","text-red-800");
+    else if (kind === "ok") proofMsg.classList.add("bg-green-50","text-green-800");
+    else proofMsg.classList.add("bg-gray-50","text-gray-800");
+  }
+  function clearProofMsg(){
+    proofMsg.classList.add("hidden");
+    proofMsg.textContent = "";
+  }
+
   function setStatus(msg){ statusBox.textContent = msg; }
 
   function parseYMD(ymd){
@@ -277,40 +391,39 @@
     return out;
   }
   function ymdLE(a, b){ return parseYMD(a).getTime() <= parseYMD(b).getTime(); }
-  function ymdGE(a, b){ return parseYMD(a).getTime() >= parseYMD(b).getTime(); }
 
   function getFirstAllowedCheckin(){
     return FIRST_ALLOWED_BY_HOUSE[house.value] || "2026-03-01";
   }
 
-  // Define mínimo por fechas (reglas dueños)
-  function getMinNightsForSelectedDates(ciYmd, coYmd){
-    // si no hay fechas aún, mostramos 7 por defecto
-    if (!ciYmd || !coYmd) return MIN_NIGHTS_STRICT;
+  function getFixedWindowForCheckin(ciYmd){
+    return FIXED_WINDOWS.find(w => w.checkin === ciYmd) || null;
+  }
 
-    // Regla 1: hasta 15/03 inclusive => 7 noches
-    if (ymdLE(ciYmd, MIN7_UNTIL)) return MIN_NIGHTS_STRICT;
+  // Min nights:
+  // - Si checkin <= 04/04 => 7 noches
+  // - Si checkin está en un finde fijo => obligamos a su checkout exacto (duración fija)
+  // - Sino => mínimo 2
+  function getMinRule(ciYmd){
+    if (!ciYmd) return { type:"default", min: MIN_NIGHTS_STRICT, label:`${MIN_NIGHTS_STRICT} noches` };
 
-    // Regla 2: semana santa / pico hasta 05/04 inclusive
-    // Aplicamos 7 si el check-in cae dentro de [29/03, 05/04] o si la estadía toca ese rango.
-    const ci = parseYMD(ciYmd);
-    const co = parseYMD(coYmd);
+    const fixed = getFixedWindowForCheckin(ciYmd);
+    if (fixed){
+      const nights = Math.round((parseYMD(fixed.checkout) - parseYMD(fixed.checkin)) / 86400000);
+      return { type:"fixed", min: nights, fixed, label:`Fechas fijas: ${fixed.checkin} → ${fixed.checkout} (${nights} noches)` };
+    }
 
-    const rStart = parseYMD(MIN7_EASTER_START);
-    const rEndInc = parseYMD(MIN7_EASTER_END);
-    const rEndEx = addDays(rEndInc, 1);
+    if (ymdLE(ciYmd, MIN7_UNTIL)){
+      return { type:"min7", min: MIN_NIGHTS_STRICT, label:`${MIN_NIGHTS_STRICT} noches mínimo (hasta ${MIN7_UNTIL})` };
+    }
 
-    const overlaps = (ci < rEndEx && co > rStart);
-    if (overlaps) return MIN_NIGHTS_STRICT;
-
-    return DEFAULT_MIN_NIGHTS;
+    return { type:"min2", min: DEFAULT_MIN_NIGHTS, label:`${DEFAULT_MIN_NIGHTS} noches mínimo` };
   }
 
   function updateMinBanner(){
     const ci = checkin.value;
-    const co = checkout.value;
-    const mn = getMinNightsForSelectedDates(ci, co);
-    minNightsText.textContent = `${mn} noches`;
+    const rule = getMinRule(ci);
+    minNightsText.textContent = rule.label;
   }
 
   let blockedRanges = [];
@@ -388,8 +501,14 @@
     const ciYmd = fmtYMD(ci);
     const coYmd = fmtYMD(co);
 
-    const mn = getMinNightsForSelectedDates(ciYmd, coYmd);
-    const minCo = addDays(ci, mn);
+    const rule = getMinRule(ciYmd);
+
+    // si es “fijo”, solo permitimos checkout EXACTO
+    if (rule.type === "fixed"){
+      return coYmd !== rule.fixed.checkout;
+    }
+
+    const minCo = addDays(ci, rule.min);
     if (co < minCo) return true;
 
     for (const r of blockedRanges){
@@ -430,26 +549,44 @@
 
         const ci = selectedDates[0];
         const ci0 = new Date(ci.getFullYear(), ci.getMonth(), ci.getDate());
+        const ciYmd = fmtYMD(ci0);
 
-        const mn = getMinNightsForSelectedDates(fmtYMD(ci0), fmtYMD(addDays(ci0, 1)));
-        const minCo = addDays(ci0, mn);
+        const rule = getMinRule(ciYmd);
 
         if (fpCheckout) fpCheckout.destroy();
-        fpCheckout = flatpickr(checkout, {
-          locale: "es",
-          dateFormat: "Y-m-d",
-          disableMobile: true,
-          allowInput: false,
-          clickOpens: canUseDates,
-          minDate: fmtYMD(minCo),
-          disable: [ (date) => isCheckoutDisabled(date) ],
-          onChange: function(){
-            updateMinBanner();
-            updateContinueState();
-          }
-        });
 
-        setStatus(`3) Elegí el check-out (mínimo variable según fecha).`);
+        // si es fijo => minDate y maxDate iguales al checkout fijo
+        if (rule.type === "fixed"){
+          fpCheckout = flatpickr(checkout, {
+            locale: "es",
+            dateFormat: "Y-m-d",
+            disableMobile: true,
+            allowInput: false,
+            clickOpens: canUseDates,
+            minDate: rule.fixed.checkout,
+            maxDate: rule.fixed.checkout,
+            disable: [ (date) => isCheckoutDisabled(date) ],
+            onChange: function(){ updateContinueState(); }
+          });
+
+          setStatus(`3) Estas fechas son fijas: check-out debe ser ${rule.fixed.checkout}.`);
+        } else {
+          const minCo = addDays(ci0, rule.min);
+
+          fpCheckout = flatpickr(checkout, {
+            locale: "es",
+            dateFormat: "Y-m-d",
+            disableMobile: true,
+            allowInput: false,
+            clickOpens: canUseDates,
+            minDate: fmtYMD(minCo),
+            disable: [ (date) => isCheckoutDisabled(date) ],
+            onChange: function(){ updateContinueState(); }
+          });
+
+          setStatus(`3) Elegí el check-out (mínimo ${rule.min} noches).`);
+        }
+
         updateContinueState();
       }
     });
@@ -461,10 +598,7 @@
       allowInput: false,
       clickOpens: canUseDates,
       disable: [ (date) => isCheckoutDisabled(date) ],
-      onChange: function(){
-        updateMinBanner();
-        updateContinueState();
-      }
+      onChange: function(){ updateContinueState(); }
     });
   }
 
@@ -504,8 +638,13 @@
     house.disabled = false;
 
     clearPayMsg();
+    clearProofMsg();
     updateMinBanner();
     refreshPickers();
+
+    // reset proof UI
+    if (proofFile) proofFile.value = "";
+    if (sendProofBtn) sendProofBtn.disabled = true;
   }
 
   function enableGuestsForHouse(h){
@@ -516,7 +655,7 @@
     guests.placeholder = `1 a ${rule.max}`;
     guests.max = rule.max;
 
-    houseHint.textContent = rule.hint + ` Disponible desde ${getFirstAllowedCheckin()}.`;
+    houseHint.textContent = `${rule.hint} Disponible desde ${getFirstAllowedCheckin()}.`;
     houseHint.classList.remove("hidden");
 
     capacityText.textContent = `${rule.hint} Disponible desde ${getFirstAllowedCheckin()}.`;
@@ -540,12 +679,19 @@
     const ci = parseYMD(checkin.value);
     const co = parseYMD(checkout.value);
 
-    const mn = getMinNightsForSelectedDates(checkin.value, checkout.value);
-    const minCo = addDays(ci, mn);
+    const rule = getMinRule(checkin.value);
 
+    // fijo => checkout debe ser exacto (ya lo valida el picker, pero por seguridad)
+    if (rule.type === "fixed" && checkout.value !== rule.fixed.checkout){
+      continueBtn.disabled = true;
+      setStatus(`Estas fechas son fijas: check-out debe ser ${rule.fixed.checkout}.`);
+      return;
+    }
+
+    const minCo = addDays(ci, rule.min);
     if (co < minCo){
       continueBtn.disabled = true;
-      setStatus(`La estadía mínima para esas fechas es de ${mn} noches. Probá un check-out desde ${fmtYMD(minCo)}.`);
+      setStatus(`La estadía mínima para esas fechas es de ${rule.min} noches.`);
       return;
     }
 
@@ -565,6 +711,26 @@
     const ok = name.value.trim() && dni.value.trim() && email.value.trim() && phone.value.trim();
     guestContinue.disabled = !ok;
     return ok;
+  }
+
+  // Extrae row/id de cualquier formato
+  function extractReservation(data){
+    // formatos posibles
+    const candidates = [
+      data?.row,
+      data,
+      data?.data,
+      data?.result,
+      data?.reservation,
+      data?.body?.row,
+      data?.body
+    ].filter(Boolean);
+
+    for (const c of candidates){
+      if (c?.id) return c;
+      if (c?.row?.id) return c.row;
+    }
+    return null;
   }
 
   // ---- Events ----
@@ -593,11 +759,6 @@
     if (g < 1 && guests.value !== "") guests.value = 1;
 
     refreshPickers();
-
-    if (guests.value){
-      setStatus("3) Elegí las fechas (los días no disponibles aparecen en gris).");
-    }
-
     updateMinBanner();
     updateContinueState();
   });
@@ -612,7 +773,7 @@
 
     guestSection.classList.remove("hidden");
     guestSection.scrollIntoView({behavior:"smooth"});
-    setStatus("5) Completá los datos del huésped para habilitar la solicitud.");
+    setStatus("5) Completá los datos del huésped para continuar.");
   });
 
   [name, dni, email, phone].forEach(inp=>{
@@ -634,9 +795,6 @@
     setStatus("7) Solicitá la reserva por transferencia.");
   });
 
-  // ---- Pago (solo transferencia) ----
-  const payTransferBtn = el("payTransfer");
-
   function setPayBusy(busy){
     payTransferBtn.disabled = busy;
     payTransferBtn.classList.toggle("opacity-60", busy);
@@ -646,7 +804,6 @@
   payTransferBtn.addEventListener("click", async ()=>{
     clearPayMsg();
     setPayBusy(true);
-
     setStatus("Enviando solicitud de reserva...");
 
     const payload = {
@@ -672,6 +829,9 @@
 
       const data = await res.json().catch(()=> ({}));
 
+      // debug crudo
+      if (debugRaw) debugRaw.textContent = JSON.stringify(data, null, 2);
+
       if(!res.ok){
         const msg = data.message || `No se pudo crear la reserva (HTTP ${res.status})`;
         showPayMsg(msg, "err");
@@ -692,23 +852,27 @@
         return;
       }
 
-      const row = (data && data.row) ? data.row : data;
+      const row = extractReservation(data);
 
       if(!row || !row.id){
-        showPayMsg("Reserva creada, pero respuesta inesperada (falta row.id).", "err");
+        showPayMsg("Reserva creada, pero respuesta inesperada (no pude obtener el ID). Abrí el debug para ver el JSON.", "err");
         setStatus("Error: respuesta inesperada.");
         setPayBusy(false);
         return;
       }
 
+      // Mostrar confirmación
       el("resId").textContent = row.id;
       el("resHouse").textContent = payload.house_code;
       el("resDates").textContent = `${payload.check_in} → ${payload.check_out}`;
       el("resGuests").textContent = String(payload.guests);
       el("resRef").textContent = row.id;
-
-      // expires_at si viene del backend (HOLD 6h)
       el("resExpires").textContent = row.expires_at ? row.expires_at : "-";
+
+      // Habilitar envío comprobante
+      if (sendProofBtn) sendProofBtn.disabled = true;
+      if (proofFile) proofFile.value = "";
+      clearProofMsg();
 
       paySection.classList.add("hidden");
       transferSection.classList.remove("hidden");
@@ -716,6 +880,18 @@
 
       showPayMsg("✅ Reserva registrada (HOLD por 6 horas).", "ok");
       setStatus("✅ Listo. Reserva registrada (HOLD por 6 horas).");
+
+      // guardar ID para submit-proof
+      transferSection.dataset.reservationId = row.id;
+      transferSection.dataset.guestEmail = payload.email;
+      transferSection.dataset.guestName = payload.guest_name;
+      transferSection.dataset.houseCode = payload.house_code;
+      transferSection.dataset.checkIn = payload.check_in;
+      transferSection.dataset.checkOut = payload.check_out;
+      transferSection.dataset.phone = payload.phone;
+      transferSection.dataset.guests = String(payload.guests);
+
+      setPayBusy(false);
     } catch(e){
       console.error(e);
       const msg = e.message || "Error inesperado";
@@ -725,10 +901,69 @@
     }
   });
 
+  // Enable sendProof only when file selected
+  proofFile?.addEventListener("change", ()=>{
+    const hasFile = proofFile.files && proofFile.files.length > 0;
+    sendProofBtn.disabled = !hasFile;
+  });
+
+  // Submit proof
+  sendProofBtn?.addEventListener("click", async ()=>{
+    clearProofMsg();
+
+    const reservationId = transferSection.dataset.reservationId;
+    if (!reservationId){
+      showProofMsg("No se encontró el ID de reserva. Volvé atrás y generá la reserva.", "err");
+      return;
+    }
+
+    const file = proofFile.files?.[0];
+    if (!file){
+      showProofMsg("Seleccioná un archivo (imagen o PDF).", "err");
+      return;
+    }
+
+    // payload multipart
+    const fd = new FormData();
+    fd.append("id", reservationId);
+    fd.append("guest_name", transferSection.dataset.guestName || "");
+    fd.append("email", transferSection.dataset.guestEmail || "");
+    fd.append("phone", transferSection.dataset.phone || "");
+    fd.append("house_code", transferSection.dataset.houseCode || "");
+    fd.append("check_in", transferSection.dataset.checkIn || "");
+    fd.append("check_out", transferSection.dataset.checkOut || "");
+    fd.append("guests", transferSection.dataset.guests || "");
+    fd.append("proof", file, file.name);
+
+    sendProofBtn.disabled = true;
+    sendProofBtn.classList.add("opacity-60","cursor-not-allowed");
+
+    try{
+      const res = await fetch(SUBMIT_PROOF_API, { method:"POST", body: fd });
+      const data = await res.json().catch(()=> ({}));
+
+      if(!res.ok || data.ok === false){
+        const msg = data.message || `No se pudo enviar el comprobante (HTTP ${res.status})`;
+        showProofMsg(msg, "err");
+        sendProofBtn.disabled = false;
+        sendProofBtn.classList.remove("opacity-60","cursor-not-allowed");
+        return;
+      }
+
+      showProofMsg("✅ Comprobante enviado. En breve te confirmamos la reserva.", "ok");
+    } catch(e){
+      console.error(e);
+      showProofMsg(e.message || "Error inesperado", "err");
+      sendProofBtn.disabled = false;
+      sendProofBtn.classList.remove("opacity-60","cursor-not-allowed");
+    }
+  });
+
   el("transferDone").addEventListener("click", ()=>{
     window.location.href = "index.html";
   });
 
+  // init
   refreshPickers();
   updateMinBanner();
 </script>
