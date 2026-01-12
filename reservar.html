@@ -270,33 +270,33 @@
   // Fechas fijas / findes que “se reserva así” (exacto)
   // Interpretación: se permite SOLO esa ventana completa (checkin exacto -> checkout exacto).
   const FIXED_WINDOWS = [
-  // noches 30/4, 1/5, 2/5 => check-in 2026-04-30, check-out 2026-05-03 (4 noches)
-  { checkin:"2026-04-30", checkout:"2026-05-03", label:"Finde fijo (30/04 a 03/05)" },
+    // 30/04 → 03/05 (3 noches)
+    { checkin:"2026-04-30", checkout:"2026-05-03", label:"Finde fijo (30/04 a 03/05)" },
 
-  // noches 22,23,24 de mayo => 22/05 al 25/05 (3 noches)
-  { checkin:"2026-05-22", checkout:"2026-05-25", label:"Finde fijo (22/05 a 25/05)" },
+    // 22/05 → 25/05 (3 noches)
+    { checkin:"2026-05-22", checkout:"2026-05-25", label:"Finde fijo (22/05 a 25/05)" },
 
-  // 12,13,14 de junio => 12/06 al 15/06 (3 noches)
-  { checkin:"2026-06-12", checkout:"2026-06-15", label:"Finde fijo (12/06 a 15/06)" },
+    // 12/06 → 15/06 (3 noches)
+    { checkin:"2026-06-12", checkout:"2026-06-15", label:"Finde fijo (12/06 a 15/06)" },
 
-  // 19,20,21 junio => 19/06 al 22/06 (3 noches)
-  { checkin:"2026-06-19", checkout:"2026-06-22", label:"Finde fijo (19/06 a 22/06)" },
+    // 19/06 → 22/06 (3 noches)
+    { checkin:"2026-06-19", checkout:"2026-06-22", label:"Finde fijo (19/06 a 22/06)" },
 
-  // 8,9,10,11 julio => 08/07 al 12/07 (4 noches)
-  { checkin:"2026-07-08", checkout:"2026-07-12", label:"Finde fijo (08/07 a 12/07)" },
+    // 08/07 → 12/07 (4 noches)
+    { checkin:"2026-07-08", checkout:"2026-07-12", label:"Finde fijo (08/07 a 12/07)" },
 
-  // 14,15,16 agosto => 14/08 al 17/08 (3 noches)
-  { checkin:"2026-08-14", checkout:"2026-08-17", label:"Finde fijo (14/08 a 17/08)" },
+    // 14/08 → 17/08 (3 noches)
+    { checkin:"2026-08-14", checkout:"2026-08-17", label:"Finde fijo (14/08 a 17/08)" },
 
-  // 9,10,11 octubre => 09/10 al 12/10 (3 noches)
-  { checkin:"2026-10-09", checkout:"2026-10-12", label:"Finde fijo (09/10 a 12/10)" },
+    // 09/10 → 12/10 (3 noches)
+    { checkin:"2026-10-09", checkout:"2026-10-12", label:"Finde fijo (09/10 a 12/10)" },
 
-  // 20,21,22 noviembre => 20/11 al 23/11 (3 noches)
-  { checkin:"2026-11-20", checkout:"2026-11-23", label:"Finde fijo (20/11 a 23/11)" },
+    // 20/11 → 23/11 (3 noches)
+    { checkin:"2026-11-20", checkout:"2026-11-23", label:"Finde fijo (20/11 a 23/11)" },
 
-  // 4,5,6,7 diciembre => 04/12 al 08/12 (4 noches)
-  { checkin:"2026-12-04", checkout:"2026-12-08", label:"Finde fijo (04/12 a 08/12)" },
-];
+    // 04/12 → 08/12 (4 noches)
+    { checkin:"2026-12-04", checkout:"2026-12-08", label:"Finde fijo (04/12 a 08/12)" },
+  ];
 
   const DEFAULT_MIN_NIGHTS = 2;
   const MIN_NIGHTS_STRICT = 7;
@@ -396,72 +396,73 @@
     return FIRST_ALLOWED_BY_HOUSE[house.value] || "2026-03-01";
   }
 
+  function overlapsStay(ci, co, start, endExclusive){
+    return ci < endExclusive && co > start;
+  }
+
   function getFixedWindowForCheckin(ciYmd){
     return FIXED_WINDOWS.find(w => w.checkin === ciYmd) || null;
   }
 
   function getFixedWindowOverlapping(ciYmd, coYmd){
-  if (!ciYmd || !coYmd) return null;
-  const ci = parseYMD(ciYmd);
-  const co = parseYMD(coYmd);
-  return FIXED_WINDOWS.find(w => {
-    const wStart = parseYMD(w.checkin);
-    const wEnd = parseYMD(w.checkout); // checkout es EXCLUSIVO
-    return overlapsStay(ci, co, wStart, wEnd);
-  }) || null;
-}
-
-function isDateInsideAnyFixedWindow(date){
-  // date: Date local 00:00
-  for (const w of FIXED_WINDOWS){
-    const s = parseYMD(w.checkin);
-    const e = parseYMD(w.checkout); // exclusivo
-    if (date >= s && date < e) return w;
+    if (!ciYmd || !coYmd) return null;
+    const ci = parseYMD(ciYmd);
+    const co = parseYMD(coYmd);
+    return FIXED_WINDOWS.find(w => {
+      const wStart = parseYMD(w.checkin);
+      const wEnd = parseYMD(w.checkout); // checkout exclusivo
+      return overlapsStay(ci, co, wStart, wEnd);
+    }) || null;
   }
-  return null;
-}
+
+  function isDateInsideAnyFixedWindow(date){
+    for (const w of FIXED_WINDOWS){
+      const s = parseYMD(w.checkin);
+      const e = parseYMD(w.checkout); // exclusivo
+      if (date >= s && date < e) return w;
+    }
+    return null;
+  }
 
   // Min nights:
+  // - Si el rango toca una ventana fija y NO es exacto => fixed_block (WhatsApp)
+  // - Si check-in es el de una ventana fija => fixed (checkout exacto)
   // - Si checkin <= 04/04 => 7 noches
-  // - Si checkin está en un finde fijo => obligamos a su checkout exacto (duración fija)
-  // - Sino => mínimo 2
+  // - Sino => 2 noches
   function getMinRule(ciYmd, coYmd){
-  if (!ciYmd) return { type:"min7", min: MIN_NIGHTS_STRICT, label:`${MIN_NIGHTS_STRICT} noches` };
+    if (!ciYmd) return { type:"min7", min: MIN_NIGHTS_STRICT, label:`${MIN_NIGHTS_STRICT} noches` };
 
-  // ✅ Si hay rango seleccionado y toca una ventana fija pero no es EXACTA, bloquear y mandar a WhatsApp
-  if (coYmd){
-    const overlap = getFixedWindowOverlapping(ciYmd, coYmd);
-    if (overlap){
-      const isExact = (ciYmd === overlap.checkin && coYmd === overlap.checkout);
-      if (!isExact){
-        return {
-          type:"fixed_block",
-          min: null,
-          fixed: overlap,
-          label: `Fechas fijas: ${overlap.checkin} → ${overlap.checkout}. Para excepciones consultá por WhatsApp.`
-        };
+    if (coYmd){
+      const overlap = getFixedWindowOverlapping(ciYmd, coYmd);
+      if (overlap){
+        const isExact = (ciYmd === overlap.checkin && coYmd === overlap.checkout);
+        if (!isExact){
+          return {
+            type:"fixed_block",
+            min: null,
+            fixed: overlap,
+            label: `Fechas fijas: ${overlap.checkin} → ${overlap.checkout}. Para excepciones consultá por WhatsApp.`
+          };
+        }
+        const nights = Math.round((parseYMD(overlap.checkout) - parseYMD(overlap.checkin)) / 86400000);
+        return { type:"fixed", min: nights, fixed: overlap, label:`Fechas fijas: ${overlap.checkin} → ${overlap.checkout} (${nights} noches)` };
       }
-      const nights = Math.round((parseYMD(overlap.checkout) - parseYMD(overlap.checkin)) / 86400000);
-      return { type:"fixed", min: nights, fixed: overlap, label:`Fechas fijas: ${overlap.checkin} → ${overlap.checkout} (${nights} noches)` };
     }
-  }
 
-  // ✅ check-in exacto de una ventana fija => forzar checkout exacto
-  const fixed = getFixedWindowForCheckin(ciYmd);
-  if (fixed){
-    const nights = Math.round((parseYMD(fixed.checkout) - parseYMD(fixed.checkin)) / 86400000);
-    return { type:"fixed", min: nights, fixed, label:`Fechas fijas: ${fixed.checkin} → ${fixed.checkout} (${nights} noches)` };
-  }
+    const fixed = getFixedWindowForCheckin(ciYmd);
+    if (fixed){
+      const nights = Math.round((parseYMD(fixed.checkout) - parseYMD(fixed.checkin)) / 86400000);
+      return { type:"fixed", min: nights, fixed, label:`Fechas fijas: ${fixed.checkin} → ${fixed.checkout} (${nights} noches)` };
+    }
 
-  if (ymdLE(ciYmd, MIN7_UNTIL)){
-    return { type:"min7", min: MIN_NIGHTS_STRICT, label:`${MIN_NIGHTS_STRICT} noches mínimo (hasta ${MIN7_UNTIL})` };
-  }
+    if (ymdLE(ciYmd, MIN7_UNTIL)){
+      return { type:"min7", min: MIN_NIGHTS_STRICT, label:`${MIN_NIGHTS_STRICT} noches mínimo (hasta ${MIN7_UNTIL})` };
+    }
 
-  return { type:"min2", min: DEFAULT_MIN_NIGHTS, label:`${DEFAULT_MIN_NIGHTS} noches mínimo` };
-}
+    return { type:"min2", min: DEFAULT_MIN_NIGHTS, label:`${DEFAULT_MIN_NIGHTS} noches mínimo` };
+  }
 
   function updateMinBanner(){
-    const ci = checkin.value;
     const rule = getMinRule(checkin.value, checkout.value);
     minNightsText.textContent = rule.label;
   }
@@ -470,10 +471,6 @@ function isDateInsideAnyFixedWindow(date){
   let availabilityLoaded = false;
   let fpCheckin = null;
   let fpCheckout = null;
-
-  function overlapsStay(ci, co, start, endExclusive){
-    return ci < endExclusive && co > start;
-  }
 
   async function loadAvailability(houseCode){
     availabilityLoaded = false;
@@ -518,25 +515,25 @@ function isDateInsideAnyFixedWindow(date){
   }
 
   function isDateBlockedForCheckin(date){
-  if (isPast(date)) return true;
+    if (isPast(date)) return true;
 
-  const d0 = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    const d0 = new Date(date.getFullYear(), date.getMonth(), date.getDate());
 
-  const minAllowed = parseYMD(getFirstAllowedCheckin());
-  if (d0 < minAllowed) return true;
+    const minAllowed = parseYMD(getFirstAllowedCheckin());
+    if (d0 < minAllowed) return true;
 
-  // ✅ Si está dentro de una ventana fija, solo permitimos el día exacto de check-in de esa ventana
-  const fixed = isDateInsideAnyFixedWindow(d0);
-  if (fixed){
-    const ymd = fmtYMD(d0);
-    if (ymd !== fixed.checkin) return true;
+    // Si está dentro de una ventana fija, solo permitimos el día exacto de check-in
+    const fixed = isDateInsideAnyFixedWindow(d0);
+    if (fixed){
+      const ymd = fmtYMD(d0);
+      if (ymd !== fixed.checkin) return true;
+    }
+
+    for (const r of blockedRanges){
+      if (d0 >= r.start && d0 < r.endExclusive) return true;
+    }
+    return false;
   }
-
-  for (const r of blockedRanges){
-    if (d0 >= r.start && d0 < r.endExclusive) return true;
-  }
-  return false;
-}
 
   function isCheckoutDisabled(date){
     const ciDate = fpCheckin?.selectedDates?.[0];
@@ -548,12 +545,10 @@ function isDateInsideAnyFixedWindow(date){
     const ciYmd = fmtYMD(ci);
     const coYmd = fmtYMD(co);
 
-    const rule = getMinRule(ciYmd);
+    const rule = getMinRule(ciYmd, coYmd);
 
-    // si es “fijo”, solo permitimos checkout EXACTO
-    if (rule.type === "fixed"){
-      return coYmd !== rule.fixed.checkout;
-    }
+    if (rule.type === "fixed_block") return true;
+    if (rule.type === "fixed") return coYmd !== rule.fixed.checkout;
 
     const minCo = addDays(ci, rule.min);
     if (co < minCo) return true;
@@ -586,10 +581,10 @@ function isDateInsideAnyFixedWindow(date){
       disable: [ (date) => isDateBlockedForCheckin(date) ],
       onChange: function(selectedDates){
         if (fpCheckout) fpCheckout.clear();
+        checkout.value = "";
         updateMinBanner();
 
         if (!selectedDates?.length){
-          checkout.value = "";
           updateContinueState();
           return;
         }
@@ -598,11 +593,10 @@ function isDateInsideAnyFixedWindow(date){
         const ci0 = new Date(ci.getFullYear(), ci.getMonth(), ci.getDate());
         const ciYmd = fmtYMD(ci0);
 
-        const rule = getMinRule(ciYmd);
+        const rule = getMinRule(ciYmd, ""); // sin checkout todavía
 
         if (fpCheckout) fpCheckout.destroy();
 
-        // si es fijo => minDate y maxDate iguales al checkout fijo
         if (rule.type === "fixed"){
           fpCheckout = flatpickr(checkout, {
             locale: "es",
@@ -613,7 +607,10 @@ function isDateInsideAnyFixedWindow(date){
             minDate: rule.fixed.checkout,
             maxDate: rule.fixed.checkout,
             disable: [ (date) => isCheckoutDisabled(date) ],
-            onChange: function(){ updateContinueState(); }
+            onChange: function(){
+              updateMinBanner();
+              updateContinueState();
+            }
           });
 
           setStatus(`3) Estas fechas son fijas: check-out debe ser ${rule.fixed.checkout}.`);
@@ -628,7 +625,10 @@ function isDateInsideAnyFixedWindow(date){
             clickOpens: canUseDates,
             minDate: fmtYMD(minCo),
             disable: [ (date) => isCheckoutDisabled(date) ],
-            onChange: function(){ updateContinueState(); }
+            onChange: function(){
+              updateMinBanner();
+              updateContinueState();
+            }
           });
 
           setStatus(`3) Elegí el check-out (mínimo ${rule.min} noches).`);
@@ -645,7 +645,10 @@ function isDateInsideAnyFixedWindow(date){
       allowInput: false,
       clickOpens: canUseDates,
       disable: [ (date) => isCheckoutDisabled(date) ],
-      onChange: function(){ updateContinueState(); }
+      onChange: function(){
+        updateMinBanner();
+        updateContinueState();
+      }
     });
   }
 
@@ -689,7 +692,6 @@ function isDateInsideAnyFixedWindow(date){
     updateMinBanner();
     refreshPickers();
 
-    // reset proof UI
     if (proofFile) proofFile.value = "";
     if (sendProofBtn) sendProofBtn.disabled = true;
   }
@@ -733,7 +735,6 @@ function isDateInsideAnyFixedWindow(date){
       return;
     }
 
-    // fijo => checkout debe ser exacto (ya lo valida el picker, pero por seguridad)
     if (rule.type === "fixed" && checkout.value !== rule.fixed.checkout){
       continueBtn.disabled = true;
       setStatus(`Estas fechas son fijas: check-out debe ser ${rule.fixed.checkout}.`);
@@ -765,9 +766,7 @@ function isDateInsideAnyFixedWindow(date){
     return ok;
   }
 
-  // Extrae row/id de cualquier formato
   function extractReservation(data){
-    // formatos posibles
     const candidates = [
       data?.row,
       data,
@@ -880,8 +879,6 @@ function isDateInsideAnyFixedWindow(date){
       });
 
       const data = await res.json().catch(()=> ({}));
-
-      // debug crudo
       if (debugRaw) debugRaw.textContent = JSON.stringify(data, null, 2);
 
       if(!res.ok){
@@ -913,7 +910,6 @@ function isDateInsideAnyFixedWindow(date){
         return;
       }
 
-      // Mostrar confirmación
       el("resId").textContent = row.id;
       el("resHouse").textContent = payload.house_code;
       el("resDates").textContent = `${payload.check_in} → ${payload.check_out}`;
@@ -921,7 +917,6 @@ function isDateInsideAnyFixedWindow(date){
       el("resRef").textContent = row.id;
       el("resExpires").textContent = row.expires_at ? row.expires_at : "-";
 
-      // Habilitar envío comprobante
       if (sendProofBtn) sendProofBtn.disabled = true;
       if (proofFile) proofFile.value = "";
       clearProofMsg();
@@ -933,7 +928,6 @@ function isDateInsideAnyFixedWindow(date){
       showPayMsg("✅ Reserva registrada (HOLD por 6 horas).", "ok");
       setStatus("✅ Listo. Reserva registrada (HOLD por 6 horas).");
 
-      // guardar ID para submit-proof
       transferSection.dataset.reservationId = row.id;
       transferSection.dataset.guestEmail = payload.email;
       transferSection.dataset.guestName = payload.guest_name;
@@ -953,13 +947,11 @@ function isDateInsideAnyFixedWindow(date){
     }
   });
 
-  // Enable sendProof only when file selected
   proofFile?.addEventListener("change", ()=>{
     const hasFile = proofFile.files && proofFile.files.length > 0;
     sendProofBtn.disabled = !hasFile;
   });
 
-  // Submit proof
   sendProofBtn?.addEventListener("click", async ()=>{
     clearProofMsg();
 
@@ -975,7 +967,6 @@ function isDateInsideAnyFixedWindow(date){
       return;
     }
 
-    // payload multipart
     const fd = new FormData();
     fd.append("id", reservationId);
     fd.append("guest_name", transferSection.dataset.guestName || "");
