@@ -1,3 +1,4 @@
+// availability.js (FINAL) — /netlify/functions/availability.js
 const { json, callN8n } = require("./_utils");
 
 exports.handler = async (event) => {
@@ -14,7 +15,7 @@ exports.handler = async (event) => {
     const body = JSON.parse(event.body || "{}");
     if (!body.house_code) return json(400, { message: "Falta house_code" });
 
-    // ✅ IMPORTANTE: Production URL de n8n (NO webhook-test)
+    // ✅ Production webhook (NO webhook-test)
     const out = await callN8n("/webhook/762ab856-f304-447f-8267-aef78e72609f", {
       method: "POST",
       body: { house_code: body.house_code },
@@ -22,7 +23,7 @@ exports.handler = async (event) => {
       secret,
     });
 
-    // Esperado: { house_code, blocked:[{start,end},...] }
+    // Esperado: { ok:true, house_code, blocked:[{start,end},...] }
     return json(200, out);
   } catch (e) {
     return json(500, { message: e.message || "Error" });

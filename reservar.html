@@ -1,3 +1,4 @@
+<!-- reservar.html (FINAL) — copiar y pegar entero -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -470,12 +471,23 @@
 
       if(!res.ok) throw new Error("No se pudo cargar disponibilidad");
 
-      const data = await res.json();
+      const data = await res.json().catch(()=> ({}));
 
+      // ✅ IMPORTANTE (fix):
+      // El API de availability devuelve rangos como:
+      //   start = check_in (inclusive)
+      //   end   = check_out (EXCLUSIVO)
       blockedRanges = (data.blocked || []).map(r => {
         const start = parseYMD(r.start);
-        const endInclusive = parseYMD(r.end);
-        const endExclusive = addDays(endInclusive, 1);
+
+        // compat: si algún día mandaras end_inclusive, acá lo soportamos:
+        if (r.end_inclusive){
+          const endInclusive = parseYMD(r.end_inclusive);
+          const endExclusive = addDays(endInclusive, 1);
+          return { start, endExclusive, rawStart: r.start, rawEnd: r.end_inclusive };
+        }
+
+        const endExclusive = parseYMD(r.end);
         return { start, endExclusive, rawStart: r.start, rawEnd: r.end };
       });
 
@@ -869,7 +881,6 @@
       });
 
       const data = await res.json().catch(()=> ({}));
-
       if (debugRaw) debugRaw.textContent = JSON.stringify(data, null, 2);
 
       if(!res.ok){
