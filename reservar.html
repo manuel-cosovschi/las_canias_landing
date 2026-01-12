@@ -270,31 +270,14 @@
   // Fechas fijas / findes que “se reserva así” (exacto)
   // Interpretación: se permite SOLO esa ventana completa (checkin exacto -> checkout exacto).
   const FIXED_WINDOWS = [
-    // 30/04 → 03/05 (3 noches)
     { checkin:"2026-04-30", checkout:"2026-05-03", label:"Finde fijo (30/04 a 03/05)" },
-
-    // 22/05 → 25/05 (3 noches)
     { checkin:"2026-05-22", checkout:"2026-05-25", label:"Finde fijo (22/05 a 25/05)" },
-
-    // 12/06 → 15/06 (3 noches)
     { checkin:"2026-06-12", checkout:"2026-06-15", label:"Finde fijo (12/06 a 15/06)" },
-
-    // 19/06 → 22/06 (3 noches)
     { checkin:"2026-06-19", checkout:"2026-06-22", label:"Finde fijo (19/06 a 22/06)" },
-
-    // 08/07 → 12/07 (4 noches)
     { checkin:"2026-07-08", checkout:"2026-07-12", label:"Finde fijo (08/07 a 12/07)" },
-
-    // 14/08 → 17/08 (3 noches)
     { checkin:"2026-08-14", checkout:"2026-08-17", label:"Finde fijo (14/08 a 17/08)" },
-
-    // 09/10 → 12/10 (3 noches)
     { checkin:"2026-10-09", checkout:"2026-10-12", label:"Finde fijo (09/10 a 12/10)" },
-
-    // 20/11 → 23/11 (3 noches)
     { checkin:"2026-11-20", checkout:"2026-11-23", label:"Finde fijo (20/11 a 23/11)" },
-
-    // 04/12 → 08/12 (4 noches)
     { checkin:"2026-12-04", checkout:"2026-12-08", label:"Finde fijo (04/12 a 08/12)" },
   ];
 
@@ -376,7 +359,7 @@
   function setStatus(msg){ statusBox.textContent = msg; }
 
   function parseYMD(ymd){
-    const [y,m,d] = ymd.split("-").map(Number);
+    const [y,m,d] = String(ymd).split("-").map(Number);
     return new Date(y, m-1, d);
   }
   function fmtYMD(date){
@@ -392,12 +375,12 @@
   }
   function ymdLE(a, b){ return parseYMD(a).getTime() <= parseYMD(b).getTime(); }
 
-  function getFirstAllowedCheckin(){
-    return FIRST_ALLOWED_BY_HOUSE[house.value] || "2026-03-01";
-  }
-
   function overlapsStay(ci, co, start, endExclusive){
     return ci < endExclusive && co > start;
+  }
+
+  function getFirstAllowedCheckin(){
+    return FIRST_ALLOWED_BY_HOUSE[house.value] || "2026-03-01";
   }
 
   function getFixedWindowForCheckin(ciYmd){
@@ -410,7 +393,7 @@
     const co = parseYMD(coYmd);
     return FIXED_WINDOWS.find(w => {
       const wStart = parseYMD(w.checkin);
-      const wEnd = parseYMD(w.checkout); // checkout exclusivo
+      const wEnd = parseYMD(w.checkout); // checkout EXCLUSIVO
       return overlapsStay(ci, co, wStart, wEnd);
     }) || null;
   }
@@ -425,13 +408,13 @@
   }
 
   // Min nights:
-  // - Si el rango toca una ventana fija y NO es exacto => fixed_block (WhatsApp)
-  // - Si check-in es el de una ventana fija => fixed (checkout exacto)
   // - Si checkin <= 04/04 => 7 noches
-  // - Sino => 2 noches
+  // - Si toca ventana fija => SOLO exacta (sino fixed_block)
+  // - Sino => mínimo 2
   function getMinRule(ciYmd, coYmd){
-    if (!ciYmd) return { type:"min7", min: MIN_NIGHTS_STRICT, label:`${MIN_NIGHTS_STRICT} noches` };
+    if (!ciYmd) return { type:"none", min: null, label:"-" };
 
+    // Si hay rango y toca una ventana fija pero no es EXACTA => bloquear
     if (coYmd){
       const overlap = getFixedWindowOverlapping(ciYmd, coYmd);
       if (overlap){
@@ -449,6 +432,7 @@
       }
     }
 
+    // Check-in exacto de una ventana fija => forzar checkout exacto
     const fixed = getFixedWindowForCheckin(ciYmd);
     if (fixed){
       const nights = Math.round((parseYMD(fixed.checkout) - parseYMD(fixed.checkin)) / 86400000);
@@ -522,7 +506,7 @@
     const minAllowed = parseYMD(getFirstAllowedCheckin());
     if (d0 < minAllowed) return true;
 
-    // Si está dentro de una ventana fija, solo permitimos el día exacto de check-in
+    // Si está dentro de una ventana fija, solo permitimos el día exacto de check-in de esa ventana
     const fixed = isDateInsideAnyFixedWindow(d0);
     if (fixed){
       const ymd = fmtYMD(d0);
@@ -581,10 +565,10 @@
       disable: [ (date) => isDateBlockedForCheckin(date) ],
       onChange: function(selectedDates){
         if (fpCheckout) fpCheckout.clear();
-        checkout.value = "";
         updateMinBanner();
 
         if (!selectedDates?.length){
+          checkout.value = "";
           updateContinueState();
           return;
         }
@@ -593,10 +577,12 @@
         const ci0 = new Date(ci.getFullYear(), ci.getMonth(), ci.getDate());
         const ciYmd = fmtYMD(ci0);
 
-        const rule = getMinRule(ciYmd, ""); // sin checkout todavía
+        // Acá todavía no hay checkout, pasamos solo ci
+        const rule = getMinRule(ciYmd, "");
 
         if (fpCheckout) fpCheckout.destroy();
 
+        // si es fijo => minDate y maxDate iguales al checkout fijo
         if (rule.type === "fixed"){
           fpCheckout = flatpickr(checkout, {
             locale: "es",
@@ -634,6 +620,7 @@
           setStatus(`3) Elegí el check-out (mínimo ${rule.min} noches).`);
         }
 
+        updateMinBanner();
         updateContinueState();
       }
     });
@@ -692,6 +679,7 @@
     updateMinBanner();
     refreshPickers();
 
+    // reset proof UI
     if (proofFile) proofFile.value = "";
     if (sendProofBtn) sendProofBtn.disabled = true;
   }
@@ -735,6 +723,7 @@
       return;
     }
 
+    // fijo => checkout debe ser exacto
     if (rule.type === "fixed" && checkout.value !== rule.fixed.checkout){
       continueBtn.disabled = true;
       setStatus(`Estas fechas son fijas: check-out debe ser ${rule.fixed.checkout}.`);
@@ -766,6 +755,7 @@
     return ok;
   }
 
+  // Extrae row/id de cualquier formato
   function extractReservation(data){
     const candidates = [
       data?.row,
@@ -879,6 +869,7 @@
       });
 
       const data = await res.json().catch(()=> ({}));
+
       if (debugRaw) debugRaw.textContent = JSON.stringify(data, null, 2);
 
       if(!res.ok){
@@ -910,6 +901,7 @@
         return;
       }
 
+      // Mostrar confirmación
       el("resId").textContent = row.id;
       el("resHouse").textContent = payload.house_code;
       el("resDates").textContent = `${payload.check_in} → ${payload.check_out}`;
@@ -917,6 +909,7 @@
       el("resRef").textContent = row.id;
       el("resExpires").textContent = row.expires_at ? row.expires_at : "-";
 
+      // Habilitar envío comprobante
       if (sendProofBtn) sendProofBtn.disabled = true;
       if (proofFile) proofFile.value = "";
       clearProofMsg();
@@ -928,6 +921,7 @@
       showPayMsg("✅ Reserva registrada (HOLD por 6 horas).", "ok");
       setStatus("✅ Listo. Reserva registrada (HOLD por 6 horas).");
 
+      // guardar ID para submit-proof
       transferSection.dataset.reservationId = row.id;
       transferSection.dataset.guestEmail = payload.email;
       transferSection.dataset.guestName = payload.guest_name;
@@ -947,11 +941,13 @@
     }
   });
 
+  // Enable sendProof only when file selected
   proofFile?.addEventListener("change", ()=>{
     const hasFile = proofFile.files && proofFile.files.length > 0;
     sendProofBtn.disabled = !hasFile;
   });
 
+  // Submit proof
   sendProofBtn?.addEventListener("click", async ()=>{
     clearProofMsg();
 
