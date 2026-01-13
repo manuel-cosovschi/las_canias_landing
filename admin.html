@@ -233,7 +233,16 @@
     tabTransfers.classList.toggle("bg-white", isBlock);
   }
   tabBlock.onclick = () => showTab("block");
-  tabTransfers.onclick = () => showTab("transfers");
+  tabTransfers.onclick = async () => {
+    showTab("transfers");
+    try {
+        setStatus("Cargando...");
+        await loadPending();
+        setStatus("✅ Lista actualizada.");
+    } catch (e) {
+        setStatus(`❌ ${e.message}`);
+    }
+};
   showTab("block");
 
   /* =====================
