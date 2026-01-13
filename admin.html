@@ -65,12 +65,12 @@
 
           <div>
             <label class="block text-sm font-medium mb-1">Check-in</label>
-            <input id="checkin" class="w-full border rounded-lg p-3 bg-white" placeholder="Elegí fecha" />
+            <input id="checkin" type="text" class="w-full border rounded-lg p-3 bg-white" placeholder="Elegí fecha" />
           </div>
 
           <div>
             <label class="block text-sm font-medium mb-1">Check-out</label>
-            <input id="checkout" class="w-full border rounded-lg p-3 bg-white" placeholder="Elegí fecha" />
+            <input id="checkout" type="text" class="w-full border rounded-lg p-3 bg-white" placeholder="Elegí fecha" />
           </div>
         </div>
 
@@ -175,10 +175,6 @@
   function getAuth() {
     return localStorage.getItem(AUTH_KEY);
   }
-  function setAuthBasic(user, pass) {
-    const basic = btoa(`${user}:${pass}`);
-    localStorage.setItem(AUTH_KEY, basic);
-  }
   function clearAuth() {
     localStorage.removeItem(AUTH_KEY);
   }
@@ -213,63 +209,73 @@
   tabTransfers.onclick = () => showTab("transfers");
   showTab("block");
 
-  // Flatpickr setup (con minDate hoy)
+  /* =====================
+     FLATPICKR (RANGO + NO PASADO + LOCALE ES)
+  ===================== */
   let fpIn = null;
   let fpOut = null;
 
-  function toISODate(d) {
+  function parseDMY(dmy) {
+    const parts = String(dmy || "").split("/");
+    if (parts.length !== 3) return null;
+    const [dd, mm, yy] = parts;
+    const d = new Date(Number(yy), Number(mm) - 1, Number(dd));
+    if (Number.isNaN(d.getTime())) return null;
+    d.setHours(0,0,0,0);
+    return d;
+  }
+
+  function toISO(d) {
     const pad = (n) => String(n).padStart(2, "0");
     return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
   }
 
   function initPickers(disabledRanges = []) {
-    // Deshabilitar rangos: flatpickr usa { from: 'YYYY-MM-DD', to: 'YYYY-MM-DD' }
-    const disable = disabledRanges;
+    const disable = (disabledRanges || [])
+      .map(r => ({
+        from: r.from || r.start || r.check_in || r.begin,
+        to: r.to || r.end || r.check_out || r.finish
+      }))
+      .filter(r => r.from && r.to);
 
     if (fpIn) fpIn.destroy();
     if (fpOut) fpOut.destroy();
 
     fpIn = flatpickr(el("checkin"), {
-      locale: "es",
+      locale: flatpickr.l10ns.es,
       dateFormat: "d/m/Y",
       minDate: "today",
+      disableMobile: true,
       disable,
       onChange: (selectedDates) => {
-        if (!selectedDates?.length) return;
-        const inDate = selectedDates[0];
-        // checkout mínimo: día siguiente
+        const inDate = selectedDates?.[0];
+        if (!inDate) return;
+
         const minOut = new Date(inDate);
         minOut.setDate(minOut.getDate() + 1);
         fpOut.set("minDate", minOut);
 
-        // Si checkout ya existe y quedó inválido, lo borramos
-        const outDates = fpOut.selectedDates || [];
-        if (outDates.length && outDates[0] <= inDate) {
-          fpOut.clear();
-        }
+        const outDate = fpOut.selectedDates?.[0];
+        if (outDate && outDate < minOut) fpOut.clear();
       }
     });
 
     fpOut = flatpickr(el("checkout"), {
-      locale: "es",
+      locale: flatpickr.l10ns.es,
       dateFormat: "d/m/Y",
       minDate: "today",
+      disableMobile: true,
       disable,
     });
   }
 
-  // (Opcional) traer disponibilidad para deshabilitar fechas ocupadas.
-  // Si tu endpoint /api/availability devuelve rangos, los usamos.
+  // Si tenés endpoint availability, lo usa. Si no existe, no rompe.
   async function loadAvailabilityAndUpdatePickers() {
     try {
       const house = el("house").value;
-      const res = await fetch(`/api/availability?house_code=${encodeURIComponent(house)}`, { method: "GET" });
+      const res = await fetch(`/.netlify/functions/availability?house_code=${encodeURIComponent(house)}`, { method: "GET" });
       const data = await res.json().catch(() => ({}));
 
-      // Buscamos rangos en formatos comunes:
-      // 1) data.blocked = [{start:'YYYY-MM-DD', end:'YYYY-MM-DD'}]
-      // 2) data.ranges = [{from:'YYYY-MM-DD', to:'YYYY-MM-DD'}]
-      // 3) data.blocked = [{from,to}]
       const ranges = []
         .concat(data.blocked || [])
         .concat(data.ranges || [])
@@ -281,7 +287,6 @@
 
       initPickers(ranges);
     } catch {
-      // Si falla availability, igual inicializamos con minDate hoy
       initPickers([]);
     }
   }
@@ -291,32 +296,33 @@
   // BLOQUEAR
   el("btnBlock").onclick = async () => {
     try {
-      const inStr = el("checkin").value;
-      const outStr = el("checkout").value;
+      const inD = parseDMY(el("checkin").value);
+      const outD = parseDMY(el("checkout").value);
 
-      if (!inStr || !outStr) {
+      if (!inD || !outD) {
         setStatus("Elegí check-in y check-out.");
         return;
       }
-
-      // Convertimos de d/m/Y a YYYY-MM-DD para backend
-      const [di, mi, yi] = inStr.split("/");
-      const [do_, mo, yo] = outStr.split("/");
-      const checkinISO = `${yi}-${mi}-${di}`;
-      const checkoutISO = `${yo}-${mo}-${do_}`;
+      if (outD <= inD) {
+        setStatus("Check-out debe ser posterior al check-in.");
+        return;
+      }
 
       setStatus("Bloqueando...");
       const out = await apiFetch("/.netlify/functions/owner-blocks", {
+        method: "POST",
         body: {
           house_code: el("house").value,
-          checkin: checkinISO,
-          checkout: checkoutISO,
+          checkin: toISO(inD),
+          checkout: toISO(outD),
           note: el("note").value || "",
         }
       });
 
       setStatus(`✅ Bloqueado (${out.id || "OK"})`);
-      // refrescar rangos deshabilitados
+      el("note").value = "";
+      fpIn && fpIn.clear();
+      fpOut && fpOut.clear();
       await loadAvailabilityAndUpdatePickers();
     } catch (e) {
       setStatus(`❌ ${e.message}`);
@@ -357,7 +363,10 @@
       btn.onclick = async () => {
         try {
           setStatus("Confirmando...");
-          await apiFetch("/.netlify/functions/confirm-transfer", { body: { id: btn.dataset.id } });
+          await apiFetch("/.netlify/functions/confirm-transfer", {
+            method: "POST",
+            body: { id: btn.dataset.id }
+          });
           setStatus(`✅ Confirmada: ${btn.dataset.id}`);
           await loadPending();
         } catch (e) {
@@ -370,7 +379,10 @@
       btn.onclick = async () => {
         try {
           setStatus("Cancelando...");
-          await apiFetch("/.netlify/functions/cancel-reservation", { body: { id: btn.dataset.id } });
+          await apiFetch("/.netlify/functions/cancel-reservation", {
+            method: "POST",
+            body: { id: btn.dataset.id, reason: "Cancelado por dueño" }
+          });
           setStatus(`✅ Cancelada: ${btn.dataset.id}`);
           await loadPending();
         } catch (e) {
@@ -382,24 +394,24 @@
 
   async function loadPending() {
     const out = await apiFetch("/.netlify/functions/list-pending", { method: "GET" });
-
-    // tu workflow devuelve { ok, count, holds } según el JSON
-    // así que normalizamos a items
     const items = out.items || out.holds || [];
+    const count = out.count ?? items.length;
     renderPending(items);
+    if (typeof out.ok === "boolean") {
+      setStatus(`✅ Pendientes: ${count}`);
+    }
   }
 
   el("btnRefresh").onclick = async () => {
     try {
       setStatus("Cargando...");
       await loadPending();
-      setStatus("✅ Lista actualizada.");
     } catch (e) {
       setStatus(`❌ ${e.message}`);
     }
   };
 
-  // LOGIN FLOW: validamos en backend con /admin-login
+  // LOGIN FLOW: validamos con /.netlify/functions/admin-login (Basic Auth)
   async function tryLogin(user, pass) {
     const basic = btoa(`${user}:${pass}`);
 
@@ -415,7 +427,6 @@
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(data.message || "Usuario/contraseña inválidos");
 
-    // ok
     localStorage.setItem(AUTH_KEY, basic);
   }
 
@@ -425,8 +436,8 @@
       btnAuth.textContent = "Cerrar sesión";
       app.classList.remove("hidden");
       setStatus("Panel habilitado ✅");
-      // inicializo calendarios
       loadAvailabilityAndUpdatePickers();
+      loadPending().catch(() => {});
     } else {
       btnAuth.textContent = "Iniciar sesión";
       app.classList.add("hidden");
