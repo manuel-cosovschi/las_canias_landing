@@ -6,29 +6,22 @@ exports.handler = async (event) => {
 
   try {
     const baseUrl = process.env.N8N_BASE_URL;
-    const secret = process.env.N8N_SECRET;
+    const ownerSecret = process.env.LC_OWNER_SECRET;
     const path = process.env.N8N_OWNER_LIST_PENDING_PATH;
 
-    if (!baseUrl || !secret || !path) {
-      return json(500, { message: "Faltan env vars: N8N_BASE_URL / N8N_SECRET / N8N_OWNER_LIST_PENDING_PATH" });
+    if (!baseUrl || !ownerSecret || !path) {
+      return json(500, {
+        message: "Faltan env vars: N8N_BASE_URL / LC_OWNER_SECRET / N8N_OWNER_LIST_PENDING_PATH",
+      });
     }
 
-    // OJO: tu workflow es GET, pero callN8n hoy siempre manda JSON.
-    // Para mantenerlo simple: hacemos fetch directo GET.
-    const url = `${baseUrl}${path}`;
-    const res = await fetch(url, {
+    const out = await callN8n(path, {
       method: "GET",
-      headers: { "x-lc-secret": secret },
+      baseUrl,
+      secret: ownerSecret,
     });
 
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      throw new Error(JSON.stringify({ message: data?.message || "Error list-pending", url, status: res.status, data }));
-    }
-
-    // Normalizamos para el dashboard:
-    const holds = data.holds || [];
-    return json(200, { ok: true, items: holds });
+    return json(200, out);
   } catch (e) {
     return json(500, { message: e.message || "Error" });
   }
