@@ -179,22 +179,40 @@
     localStorage.removeItem(AUTH_KEY);
   }
 
-  // ✅ Base64 UTF-8 (soporta ñ, tildes, etc.). Evita el bug de btoa() con caracteres no ASCII.
+  // ✅ Base64 UTF-8 REAL (soporta ñ, tildes, etc.)
+  // Evita el bug típico del navegador con btoa() + caracteres no ASCII.
   function b64utf8(str) {
-    return btoa(String.fromCharCode(...new TextEncoder().encode(str)));
+    const bytes = new TextEncoder().encode(str);
+    let bin = "";
+    for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+    return btoa(bin);
   }
+
+  // ✅ Si quedó guardado un Basic viejo (hecho con btoa roto), lo limpiamos.
+  // Heurística: si el decode no contiene ":" o da error → lo borramos.
+  (function purgeBadAuth() {
+    const stored = getAuth();
+    if (!stored) return;
+    try {
+      const decoded = atob(stored);
+      if (!decoded.includes(":")) clearAuth();
+    } catch {
+      clearAuth();
+    }
+  })();
 
   async function apiFetch(url, { method="POST", body=null } = {}) {
     const auth = getAuth();
     if (!auth) throw new Error("No autorizado. Iniciá sesión.");
 
+    const headers = {};
+    if (body !== null) headers["Content-Type"] = "application/json";
+    headers["Authorization"] = `Basic ${auth}`;
+
     const res = await fetch(url, {
       method,
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Basic ${auth}`,
-      },
-      body: body ? JSON.stringify(body) : null,
+      headers,
+      body: body !== null ? JSON.stringify(body) : null,
     });
 
     const data = await res.json().catch(() => ({}));
@@ -207,8 +225,12 @@
     const isBlock = which === "block";
     viewBlock.classList.toggle("hidden", !isBlock);
     viewTransfers.classList.toggle("hidden", isBlock);
+
     tabBlock.classList.toggle("bg-gray-100", isBlock);
     tabTransfers.classList.toggle("bg-gray-100", !isBlock);
+
+    tabBlock.classList.toggle("bg-white", !isBlock);
+    tabTransfers.classList.toggle("bg-white", isBlock);
   }
   tabBlock.onclick = () => showTab("block");
   tabTransfers.onclick = () => showTab("transfers");
@@ -370,7 +392,7 @@
           setStatus("Confirmando...");
           await apiFetch("/.netlify/functions/confirm-transfer", {
             method: "POST",
-            body: { id: btn.dataset.id }
+            body: { id: btn.dataset.id, payment_ref: "Confirmado por dueño" }
           });
           setStatus(`✅ Confirmada: ${btn.dataset.id}`);
           await loadPending();
@@ -398,19 +420,16 @@
   }
 
   async function loadPending() {
-    const out = await apiFetch("/.netlify/functions/list-pending", { method: "GET" });
+    const out = await apiFetch("/.netlify/functions/list-pending", { method: "GET", body: null });
     const items = out.items || out.holds || [];
-    const count = out.count ?? items.length;
     renderPending(items);
-    if (typeof out.ok === "boolean") {
-      setStatus(`✅ Pendientes: ${count}`);
-    }
   }
 
   el("btnRefresh").onclick = async () => {
     try {
       setStatus("Cargando...");
       await loadPending();
+      setStatus("✅ Lista actualizada.");
     } catch (e) {
       setStatus(`❌ ${e.message}`);
     }
@@ -430,7 +449,12 @@
     });
 
     const data = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(data.message || "Usuario/contraseña inválidos");
+
+    // Debug útil (no rompe nada)
+    if (!res.ok) {
+      console.warn("admin-login failed", { status: res.status, data });
+      throw new Error(data.message || "Usuario/contraseña inválidos");
+    }
 
     localStorage.setItem(AUTH_KEY, basic);
   }
