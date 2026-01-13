@@ -4,228 +4,206 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Admin - Las Cañas</title>
+
   <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Flatpickr -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
 </head>
 
 <body class="bg-gray-50 text-gray-900">
-
-<header class="bg-white shadow">
-  <div class="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
-    <a href="index.html" class="font-bold text-xl">← Las Cañas</a>
-    <button id="btnLogout" class="hidden px-4 py-2 rounded-lg bg-gray-900 text-white font-semibold">
-      Cerrar sesión
-    </button>
-  </div>
-</header>
-
-<main class="max-w-4xl mx-auto px-4 py-10">
-
-  <!-- LOGIN -->
-  <section id="loginView" class="max-w-md mx-auto">
-    <div class="bg-white rounded-2xl shadow p-6 border">
-      <h1 class="text-2xl font-bold">Panel de Dueños</h1>
-      <p class="text-gray-600 mt-1">Ingresá con tu usuario y contraseña.</p>
-
-      <div class="mt-6 space-y-3">
-        <div>
-          <label class="block text-sm font-medium mb-1">Usuario</label>
-          <input id="username" class="w-full border rounded-lg p-3" placeholder="admin" autocomplete="username" />
-        </div>
-
-        <div>
-          <label class="block text-sm font-medium mb-1">Contraseña</label>
-          <input id="password" type="password" class="w-full border rounded-lg p-3" placeholder="••••••••" autocomplete="current-password" />
-        </div>
-
-        <p id="loginErr" class="hidden text-sm text-red-600"></p>
-
-        <button id="btnLogin" class="w-full py-3 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700">
-          Iniciar sesión
-        </button>
-
-        <p class="text-xs text-gray-500 mt-2">
-          (Login simple, sin Netlify Identity)
-        </p>
-      </div>
-    </div>
-  </section>
-
-  <!-- APP -->
-  <section id="appView" class="hidden">
-    <div id="status" class="mb-6 p-4 rounded-lg bg-gray-100 text-sm text-gray-700">
-      Panel habilitado.
-    </div>
-
-    <!-- Tabs -->
-    <div class="flex gap-2 mb-6">
-      <button id="tabBlock" class="px-4 py-2 rounded-lg bg-gray-100 border font-semibold">Bloquear fechas</button>
-      <button id="tabTransfers" class="px-4 py-2 rounded-lg bg-white border font-semibold">Transferencias</button>
-    </div>
-
-    <!-- BLOQUEAR -->
-    <div id="viewBlock" class="bg-white rounded-xl shadow p-6">
-      <h2 class="text-xl font-semibold mb-4">Bloqueo manual</h2>
-
-      <div class="grid sm:grid-cols-2 gap-4">
-        <div>
-          <label class="block text-sm font-medium mb-1">Casa</label>
-          <select id="house" class="w-full border rounded-lg p-3">
-            <option value="LC1">Las Cañas 1</option>
-            <option value="LC2">Las Cañas 2</option>
-            <option value="LC3">Las Cañas 3</option>
-            <option value="LC4">Las Cañas 4</option>
-            <option value="LC5">Las Cañas 5</option>
-          </select>
-        </div>
-
-        <div>
-          <label class="block text-sm font-medium mb-1">Motivo</label>
-          <input id="note" class="w-full border rounded-lg p-3" placeholder="Ej: mantenimiento" />
-        </div>
-
-        <div>
-          <label class="block text-sm font-medium mb-1">Check-in</label>
-          <input id="checkin" type="date" class="w-full border rounded-lg p-3" />
-        </div>
-
-        <div>
-          <label class="block text-sm font-medium mb-1">Check-out</label>
-          <input id="checkout" type="date" class="w-full border rounded-lg p-3" />
-        </div>
-      </div>
-
-      <button id="btnBlock" class="mt-5 w-full py-3 rounded-lg bg-red-600 text-white font-semibold hover:bg-red-700">
-        Bloquear fechas
+  <header class="bg-white shadow">
+    <div class="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
+      <a href="index.html" class="font-bold text-xl">← Las Cañas</a>
+      <button id="btnAuth" class="px-4 py-2 rounded-lg bg-slate-900 text-white font-semibold">
+        Iniciar sesión
       </button>
     </div>
+  </header>
 
-    <!-- TRANSFERENCIAS -->
-    <div id="viewTransfers" class="bg-white rounded-xl shadow p-6 hidden">
-      <div class="flex items-center justify-between gap-3 mb-4">
-        <h2 class="text-xl font-semibold">Transferencias pendientes</h2>
-        <button id="btnRefresh" class="px-4 py-2 rounded-lg bg-blue-600 text-white font-semibold">
-          Actualizar lista
+  <main class="max-w-4xl mx-auto px-4 py-8">
+    <h1 class="text-2xl font-bold mb-2">Panel de Dueños</h1>
+    <p class="text-gray-600 mb-6">Confirmar transferencias y bloquear fechas.</p>
+
+    <div id="status" class="mb-6 p-4 rounded-lg bg-gray-100 text-sm text-gray-700">
+      Iniciá sesión para continuar.
+    </div>
+
+    <section id="app" class="hidden">
+      <!-- Tabs -->
+      <div class="flex gap-2 mb-6">
+        <button id="tabBlock" class="px-4 py-2 rounded-lg bg-gray-100 border font-semibold">
+          Bloquear fechas
+        </button>
+        <button id="tabTransfers" class="px-4 py-2 rounded-lg bg-white border font-semibold">
+          Transferencias
         </button>
       </div>
 
-      <div id="pendingList" class="space-y-3 text-sm"></div>
+      <!-- BLOQUEAR FECHAS -->
+      <div id="viewBlock" class="bg-white rounded-xl shadow p-6">
+        <h2 class="text-xl font-semibold mb-4">Bloqueo manual</h2>
+
+        <div class="grid sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium mb-1">Casa</label>
+            <select id="house" class="w-full border rounded-lg p-3 bg-white">
+              <option value="LC1">Las Cañas 1</option>
+              <option value="LC2">Las Cañas 2</option>
+              <option value="LC3">Las Cañas 3</option>
+              <option value="LC4">Las Cañas 4</option>
+              <option value="LC5">Las Cañas 5</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium mb-1">Motivo</label>
+            <input id="note" class="w-full border rounded-lg p-3" placeholder="Ej: mantenimiento" />
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium mb-1">Check-in</label>
+            <input id="checkin" class="w-full border rounded-lg p-3 bg-white" placeholder="Elegí fecha" />
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium mb-1">Check-out</label>
+            <input id="checkout" class="w-full border rounded-lg p-3 bg-white" placeholder="Elegí fecha" />
+          </div>
+        </div>
+
+        <button id="btnBlock"
+          class="mt-5 w-full py-3 rounded-lg bg-red-600 text-white font-semibold hover:bg-red-700">
+          Bloquear fechas
+        </button>
+
+        <p class="mt-3 text-xs text-gray-500">
+          Tip: Check-out debe ser posterior al check-in.
+        </p>
+      </div>
+
+      <!-- TRANSFERENCIAS -->
+      <div id="viewTransfers" class="bg-white rounded-xl shadow p-6 hidden">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-xl font-semibold">Transferencias pendientes</h2>
+          <button id="btnRefresh"
+            class="px-4 py-2 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700">
+            Actualizar
+          </button>
+        </div>
+
+        <div id="pendingList" class="space-y-3 text-sm"></div>
+      </div>
+    </section>
+  </main>
+
+  <!-- LOGIN MODAL -->
+  <div id="loginModal" class="fixed inset-0 hidden items-center justify-center bg-black/50 p-4">
+    <div class="w-full max-w-md rounded-2xl bg-white shadow-xl p-6">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="text-lg font-bold">Ingresar</h3>
+        <button id="btnCloseModal" class="text-gray-500 hover:text-gray-800">✕</button>
+      </div>
+
+      <p class="text-sm text-gray-600 mb-4">
+        Acceso solo para dueños.
+      </p>
+
+      <div class="space-y-3">
+        <div>
+          <label class="block text-sm font-medium mb-1">Usuario</label>
+          <input id="loginUser" class="w-full border rounded-lg p-3" placeholder="admin_cañas" autocomplete="username" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium mb-1">Contraseña</label>
+          <input id="loginPass" type="password" class="w-full border rounded-lg p-3" placeholder="••••••••" autocomplete="current-password" />
+        </div>
+
+        <button id="btnDoLogin" class="w-full py-3 rounded-lg bg-slate-900 text-white font-semibold">
+          Entrar
+        </button>
+
+        <div id="loginErr" class="hidden text-sm text-red-600"></div>
+      </div>
     </div>
-
-  </section>
-
-</main>
+  </div>
 
 <script>
-  // Guardamos la LC_OWNER_SECRET que devuelve el server si login ok
-  const STORAGE_KEY = "lc_owner_secret";
   const el = (id) => document.getElementById(id);
 
-  const loginView = el("loginView");
-  const appView = el("appView");
-  const btnLogout = el("btnLogout");
-  const loginErr = el("loginErr");
   const statusBox = el("status");
+  const app = el("app");
+  const btnAuth = el("btnAuth");
 
-  function setStatus(msg) { statusBox.textContent = msg; }
-  function showErr(msg) { loginErr.textContent = msg; loginErr.classList.remove("hidden"); }
-  function clearErr() { loginErr.textContent = ""; loginErr.classList.add("hidden"); }
-
-  function getSecret() { return localStorage.getItem(STORAGE_KEY); }
-  function setSecret(s) { localStorage.setItem(STORAGE_KEY, s); }
-  function clearSecret() { localStorage.removeItem(STORAGE_KEY); }
-
-  function showApp() {
-    loginView.classList.add("hidden");
-    appView.classList.remove("hidden");
-    btnLogout.classList.remove("hidden");
-  }
-
-  function showLogin() {
-    loginView.classList.remove("hidden");
-    appView.classList.add("hidden");
-    btnLogout.classList.add("hidden");
-  }
-
-  async function apiFetch(url, { method="POST", body=null } = {}) {
-    const secret = getSecret();
-    if (!secret) throw new Error("No autorizado");
-
-    const res = await fetch(url, {
-      method,
-      headers: {
-        "Content-Type": "application/json",
-        "x-lc-secret": secret,
-      },
-      body: body ? JSON.stringify(body) : null,
-    });
-
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(data.message || `Error (${res.status})`);
-    return data;
-  }
-
-  async function validateSession() {
-    // Probamos un endpoint real protegido. Si falla, cerramos sesión.
-    try {
-      await apiFetch("/.netlify/functions/list-pending", { method: "GET" });
-      return true;
-    } catch {
-      clearSecret();
-      return false;
-    }
-  }
-
-  // LOGIN
-  el("btnLogin").addEventListener("click", async () => {
-    try {
-      clearErr();
-      const username = el("username").value.trim();
-      const password = el("password").value;
-
-      if (!username || !password) {
-        showErr("Completá usuario y contraseña.");
-        return;
-      }
-
-      const res = await fetch("/.netlify/functions/auth-login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password })
-      });
-
-      const data = await res.json().catch(() => ({}));
-
-      if (!res.ok) {
-        showErr(data.message || "Login inválido");
-        return;
-      }
-
-      setSecret(data.owner_secret);
-      showApp();
-      setStatus("✅ Panel habilitado.");
-    } catch (e) {
-      showErr(e.message || "Error");
-    }
-  });
-
-  el("password").addEventListener("keydown", (e) => {
-    if (e.key === "Enter") el("btnLogin").click();
-  });
-
-  // LOGOUT
-  btnLogout.addEventListener("click", () => {
-    clearSecret();
-    showLogin();
-  });
-
-  // TABS
   const tabBlock = el("tabBlock");
   const tabTransfers = el("tabTransfers");
   const viewBlock = el("viewBlock");
   const viewTransfers = el("viewTransfers");
 
-  function showTab(tab) {
-    const isBlock = tab === "block";
+  const loginModal = el("loginModal");
+  const btnCloseModal = el("btnCloseModal");
+  const btnDoLogin = el("btnDoLogin");
+  const loginUser = el("loginUser");
+  const loginPass = el("loginPass");
+  const loginErr = el("loginErr");
+
+  const AUTH_KEY = "lc_admin_basic";
+
+  function setStatus(msg) { statusBox.textContent = msg; }
+  function showLoginError(msg) {
+    loginErr.textContent = msg;
+    loginErr.classList.remove("hidden");
+  }
+  function clearLoginError() {
+    loginErr.textContent = "";
+    loginErr.classList.add("hidden");
+  }
+
+  function openModal() {
+    clearLoginError();
+    loginModal.classList.remove("hidden");
+    loginModal.classList.add("flex");
+    setTimeout(() => loginUser.focus(), 50);
+  }
+  function closeModal() {
+    loginModal.classList.add("hidden");
+    loginModal.classList.remove("flex");
+  }
+
+  function getAuth() {
+    return localStorage.getItem(AUTH_KEY);
+  }
+  function setAuthBasic(user, pass) {
+    const basic = btoa(`${user}:${pass}`);
+    localStorage.setItem(AUTH_KEY, basic);
+  }
+  function clearAuth() {
+    localStorage.removeItem(AUTH_KEY);
+  }
+
+  async function apiFetch(url, { method="POST", body=null } = {}) {
+    const auth = getAuth();
+    if (!auth) throw new Error("No autorizado. Iniciá sesión.");
+
+    const res = await fetch(url, {
+      method,
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Basic ${auth}`,
+      },
+      body: body ? JSON.stringify(body) : null,
+    });
+
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.message || "Error");
+    return data;
+  }
+
+  // Tabs
+  function showTab(which) {
+    const isBlock = which === "block";
     viewBlock.classList.toggle("hidden", !isBlock);
     viewTransfers.classList.toggle("hidden", isBlock);
     tabBlock.classList.toggle("bg-gray-100", isBlock);
@@ -235,91 +213,258 @@
   tabTransfers.onclick = () => showTab("transfers");
   showTab("block");
 
+  // Flatpickr setup (con minDate hoy)
+  let fpIn = null;
+  let fpOut = null;
+
+  function toISODate(d) {
+    const pad = (n) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+  }
+
+  function initPickers(disabledRanges = []) {
+    // Deshabilitar rangos: flatpickr usa { from: 'YYYY-MM-DD', to: 'YYYY-MM-DD' }
+    const disable = disabledRanges;
+
+    if (fpIn) fpIn.destroy();
+    if (fpOut) fpOut.destroy();
+
+    fpIn = flatpickr(el("checkin"), {
+      locale: "es",
+      dateFormat: "d/m/Y",
+      minDate: "today",
+      disable,
+      onChange: (selectedDates) => {
+        if (!selectedDates?.length) return;
+        const inDate = selectedDates[0];
+        // checkout mínimo: día siguiente
+        const minOut = new Date(inDate);
+        minOut.setDate(minOut.getDate() + 1);
+        fpOut.set("minDate", minOut);
+
+        // Si checkout ya existe y quedó inválido, lo borramos
+        const outDates = fpOut.selectedDates || [];
+        if (outDates.length && outDates[0] <= inDate) {
+          fpOut.clear();
+        }
+      }
+    });
+
+    fpOut = flatpickr(el("checkout"), {
+      locale: "es",
+      dateFormat: "d/m/Y",
+      minDate: "today",
+      disable,
+    });
+  }
+
+  // (Opcional) traer disponibilidad para deshabilitar fechas ocupadas.
+  // Si tu endpoint /api/availability devuelve rangos, los usamos.
+  async function loadAvailabilityAndUpdatePickers() {
+    try {
+      const house = el("house").value;
+      const res = await fetch(`/api/availability?house_code=${encodeURIComponent(house)}`, { method: "GET" });
+      const data = await res.json().catch(() => ({}));
+
+      // Buscamos rangos en formatos comunes:
+      // 1) data.blocked = [{start:'YYYY-MM-DD', end:'YYYY-MM-DD'}]
+      // 2) data.ranges = [{from:'YYYY-MM-DD', to:'YYYY-MM-DD'}]
+      // 3) data.blocked = [{from,to}]
+      const ranges = []
+        .concat(data.blocked || [])
+        .concat(data.ranges || [])
+        .map(r => ({
+          from: r.from || r.start || r.check_in || r.begin,
+          to: r.to || r.end || r.check_out || r.finish
+        }))
+        .filter(r => r.from && r.to);
+
+      initPickers(ranges);
+    } catch {
+      // Si falla availability, igual inicializamos con minDate hoy
+      initPickers([]);
+    }
+  }
+
+  el("house").addEventListener("change", loadAvailabilityAndUpdatePickers);
+
   // BLOQUEAR
   el("btnBlock").onclick = async () => {
     try {
-      const payload = {
-        house_code: el("house").value,
-        checkin: el("checkin").value,
-        checkout: el("checkout").value,
-        note: el("note").value || "",
-      };
-      if (!payload.checkin || !payload.checkout) {
-        setStatus("Elegí check-in y check-out");
+      const inStr = el("checkin").value;
+      const outStr = el("checkout").value;
+
+      if (!inStr || !outStr) {
+        setStatus("Elegí check-in y check-out.");
         return;
       }
+
+      // Convertimos de d/m/Y a YYYY-MM-DD para backend
+      const [di, mi, yi] = inStr.split("/");
+      const [do_, mo, yo] = outStr.split("/");
+      const checkinISO = `${yi}-${mi}-${di}`;
+      const checkoutISO = `${yo}-${mo}-${do_}`;
+
       setStatus("Bloqueando...");
-      const out = await apiFetch("/.netlify/functions/owner-blocks", { body: payload });
-      setStatus(`✅ Bloqueado (${out.id})`);
+      const out = await apiFetch("/.netlify/functions/owner-blocks", {
+        body: {
+          house_code: el("house").value,
+          checkin: checkinISO,
+          checkout: checkoutISO,
+          note: el("note").value || "",
+        }
+      });
+
+      setStatus(`✅ Bloqueado (${out.id || "OK"})`);
+      // refrescar rangos deshabilitados
+      await loadAvailabilityAndUpdatePickers();
     } catch (e) {
       setStatus(`❌ ${e.message}`);
     }
   };
 
   // TRANSFERENCIAS
-  async function loadPending() {
-    const out = await apiFetch("/.netlify/functions/list-pending", { method: "GET" });
+  function renderPending(items) {
     const box = el("pendingList");
     box.innerHTML = "";
 
-    if (!out.items || !out.items.length) {
-      box.innerHTML = `<div class="p-4 bg-gray-50 rounded">No hay pendientes.</div>`;
+    if (!items.length) {
+      box.innerHTML = `<div class="p-4 bg-gray-50 rounded-lg">No hay pendientes.</div>`;
       return;
     }
 
-    out.items.forEach(r => {
+    items.forEach(r => {
       const div = document.createElement("div");
-      div.className = "p-4 border rounded-xl bg-white";
+      div.className = "p-4 border rounded-lg bg-white";
       div.innerHTML = `
         <div class="font-semibold">${r.id} — ${r.house_code}</div>
         <div>${r.check_in} → ${r.check_out}</div>
         <div>${r.guest_name || "-"} — ${r.phone || "-"}</div>
+        <div class="text-xs text-gray-500">Vence: ${r.expires_at || "-"}</div>
         <div class="mt-3 flex gap-2">
-          <button class="confirm px-3 py-2 bg-green-600 text-white rounded-lg font-semibold" data-id="${r.id}">Confirmar</button>
-          <button class="cancel px-3 py-2 bg-gray-100 rounded-lg font-semibold" data-id="${r.id}">Cancelar</button>
+          <button class="confirm px-3 py-2 bg-green-600 text-white rounded-lg font-semibold" data-id="${r.id}">
+            Confirmar
+          </button>
+          <button class="cancel px-3 py-2 bg-gray-200 rounded-lg font-semibold" data-id="${r.id}">
+            Cancelar
+          </button>
         </div>
       `;
       box.appendChild(div);
     });
 
-    box.querySelectorAll(".confirm").forEach(b => b.onclick = async () => {
-      try {
-        setStatus("Confirmando...");
-        await apiFetch("/.netlify/functions/confirm-transfer", { body: { id: b.dataset.id } });
-        setStatus(`✅ Confirmada: ${b.dataset.id}`);
-        loadPending();
-      } catch (e) { setStatus(`❌ ${e.message}`); }
+    box.querySelectorAll(".confirm").forEach(btn => {
+      btn.onclick = async () => {
+        try {
+          setStatus("Confirmando...");
+          await apiFetch("/.netlify/functions/confirm-transfer", { body: { id: btn.dataset.id } });
+          setStatus(`✅ Confirmada: ${btn.dataset.id}`);
+          await loadPending();
+        } catch (e) {
+          setStatus(`❌ ${e.message}`);
+        }
+      };
     });
 
-    box.querySelectorAll(".cancel").forEach(b => b.onclick = async () => {
-      try {
-        setStatus("Cancelando...");
-        await apiFetch("/.netlify/functions/cancel-reservation", { body: { id: b.dataset.id } });
-        setStatus(`✅ Cancelada: ${b.dataset.id}`);
-        loadPending();
-      } catch (e) { setStatus(`❌ ${e.message}`); }
+    box.querySelectorAll(".cancel").forEach(btn => {
+      btn.onclick = async () => {
+        try {
+          setStatus("Cancelando...");
+          await apiFetch("/.netlify/functions/cancel-reservation", { body: { id: btn.dataset.id } });
+          setStatus(`✅ Cancelada: ${btn.dataset.id}`);
+          await loadPending();
+        } catch (e) {
+          setStatus(`❌ ${e.message}`);
+        }
+      };
     });
   }
 
+  async function loadPending() {
+    const out = await apiFetch("/.netlify/functions/list-pending", { method: "GET" });
+
+    // tu workflow devuelve { ok, count, holds } según el JSON
+    // así que normalizamos a items
+    const items = out.items || out.holds || [];
+    renderPending(items);
+  }
+
   el("btnRefresh").onclick = async () => {
-    try { setStatus("Cargando..."); await loadPending(); setStatus("Lista actualizada"); }
-    catch (e) { setStatus(`❌ ${e.message}`); }
+    try {
+      setStatus("Cargando...");
+      await loadPending();
+      setStatus("✅ Lista actualizada.");
+    } catch (e) {
+      setStatus(`❌ ${e.message}`);
+    }
   };
 
-  // BOOT
-  (async function boot() {
-    // IMPORTANTE: si antes guardaste basura, limpiá y validamos bien
-    if (getSecret()) {
-      const ok = await validateSession();
-      if (ok) {
-        showApp();
-        setStatus("✅ Panel habilitado.");
-        return;
-      }
-    }
-    showLogin();
-  })();
-</script>
+  // LOGIN FLOW: validamos en backend con /admin-login
+  async function tryLogin(user, pass) {
+    const basic = btoa(`${user}:${pass}`);
 
+    const res = await fetch("/.netlify/functions/admin-login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Basic ${basic}`,
+      },
+      body: JSON.stringify({ ping: true }),
+    });
+
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.message || "Usuario/contraseña inválidos");
+
+    // ok
+    localStorage.setItem(AUTH_KEY, basic);
+  }
+
+  function refreshUI() {
+    const auth = getAuth();
+    if (auth) {
+      btnAuth.textContent = "Cerrar sesión";
+      app.classList.remove("hidden");
+      setStatus("Panel habilitado ✅");
+      // inicializo calendarios
+      loadAvailabilityAndUpdatePickers();
+    } else {
+      btnAuth.textContent = "Iniciar sesión";
+      app.classList.add("hidden");
+      setStatus("Iniciá sesión para continuar.");
+    }
+  }
+
+  btnAuth.onclick = () => {
+    if (getAuth()) {
+      clearAuth();
+      refreshUI();
+    } else {
+      openModal();
+    }
+  };
+
+  btnCloseModal.onclick = closeModal;
+  loginModal.addEventListener("click", (e) => {
+    if (e.target === loginModal) closeModal();
+  });
+
+  btnDoLogin.onclick = async () => {
+    try {
+      clearLoginError();
+      const u = (loginUser.value || "").trim();
+      const p = (loginPass.value || "").trim();
+      if (!u || !p) return showLoginError("Completá usuario y contraseña.");
+
+      await tryLogin(u, p);
+      closeModal();
+      refreshUI();
+    } catch (e) {
+      showLoginError(e.message);
+    }
+  };
+
+  // init
+  refreshUI();
+</script>
 </body>
 </html>

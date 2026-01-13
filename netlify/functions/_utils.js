@@ -65,4 +65,40 @@ const callN8n = async (path, { method = "POST", body = null, baseUrl, secret }) 
   return data;
 };
 
-module.exports = { assertAuth, json, callN8n };
+function parseBasicAuth(header) {
+  if (!header) return null;
+  const [type, value] = header.split(" ");
+  if (type !== "Basic" || !value) return null;
+  try {
+    const decoded = Buffer.from(value, "base64").toString("utf8");
+    const idx = decoded.indexOf(":");
+    if (idx < 0) return null;
+    return { user: decoded.slice(0, idx), pass: decoded.slice(idx + 1) };
+  } catch {
+    return null;
+  }
+}
+
+const assertAdmin = (event) => {
+  // 1) Basic auth (admin.html)
+  const creds = parseBasicAuth(event.headers.authorization || event.headers.Authorization);
+  if (creds) {
+    const u = process.env.ADMIN_USER;
+    const p = process.env.ADMIN_PASS;
+    if (u && p && creds.user === u && creds.pass === p) return true;
+  }
+
+  // 2) fallback: x-lc-secret (por si lo usás con curl)
+  const incoming =
+    event.headers["x-lc-secret"] ||
+    event.headers["X-Lc-Secret"] ||
+    event.headers["X-LC-SECRET"] ||
+    "";
+
+  const expected = process.env.LC_OWNER_SECRET;
+  if (expected && incoming === expected) return true;
+
+  return false;
+};
+
+module.exports = { assertAuth, assertAdmin, json, callN8n };
