@@ -9,133 +9,169 @@
 
 <body class="bg-gray-50 text-gray-900">
 
-<header class="bg-white shadow">
-  <div class="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
-    <a href="index.html" class="font-bold text-xl">← Las Cañas</a>
-    <button id="btnAuth"
-      class="px-4 py-2 rounded-lg bg-blue-600 text-white font-semibold">
-      Iniciar sesión
-    </button>
-  </div>
-</header>
+  <!-- Header -->
+  <header class="bg-white shadow">
+    <div class="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
+      <a href="index.html" class="font-bold text-xl">← Las Cañas</a>
 
-<main class="max-w-3xl mx-auto px-4 py-8">
-  <h1 class="text-2xl font-bold mb-2">Panel de Dueños</h1>
-  <p class="text-gray-600 mb-6">Confirmar transferencias y bloquear fechas.</p>
+      <div class="flex items-center gap-3">
+        <span id="authPill" class="hidden text-xs px-3 py-1 rounded-full bg-gray-100 border"></span>
+        <button id="btnAuth" class="px-4 py-2 rounded-lg bg-blue-600 text-white font-semibold">
+          Iniciar sesión
+        </button>
+      </div>
+    </div>
+  </header>
 
-  <div id="status"
-    class="mb-6 p-4 rounded-lg bg-gray-100 text-sm text-gray-700">
-    Iniciá sesión para continuar.
-  </div>
+  <!-- Main -->
+  <main class="max-w-4xl mx-auto px-4 py-8">
+    <h1 class="text-2xl font-bold mb-2">Panel de Dueños</h1>
+    <p class="text-gray-600 mb-6">Confirmar transferencias y bloquear fechas.</p>
 
-  <section id="app" class="hidden">
-
-    <!-- Tabs -->
-    <div class="flex gap-2 mb-6">
-      <button id="tabBlock"
-        class="px-4 py-2 rounded-lg bg-gray-100 border font-semibold">
-        Bloquear fechas
-      </button>
-      <button id="tabTransfers"
-        class="px-4 py-2 rounded-lg bg-white border font-semibold">
-        Transferencias
-      </button>
+    <div id="status" class="mb-6 p-4 rounded-lg bg-gray-100 text-sm text-gray-700">
+      Iniciá sesión para continuar.
     </div>
 
-    <!-- BLOQUEAR FECHAS -->
-    <div id="viewBlock" class="bg-white rounded-xl shadow p-6">
-      <h2 class="text-xl font-semibold mb-4">Bloqueo manual</h2>
-
-      <div class="grid sm:grid-cols-2 gap-4">
-        <div>
-          <label class="block text-sm font-medium mb-1">Casa</label>
-          <select id="house" class="w-full border rounded-lg p-3">
-            <option value="LC1">Las Cañas 1</option>
-            <option value="LC2">Las Cañas 2</option>
-            <option value="LC3">Las Cañas 3</option>
-            <option value="LC4">Las Cañas 4</option>
-            <option value="LC5">Las Cañas 5</option>
-          </select>
-        </div>
-
-        <div>
-          <label class="block text-sm font-medium mb-1">Motivo</label>
-          <input id="note"
-            class="w-full border rounded-lg p-3"
-            placeholder="Ej: mantenimiento" />
-        </div>
-
-        <div>
-          <label class="block text-sm font-medium mb-1">Check-in</label>
-          <input id="checkin" type="date"
-            class="w-full border rounded-lg p-3" />
-        </div>
-
-        <div>
-          <label class="block text-sm font-medium mb-1">Check-out</label>
-          <input id="checkout" type="date"
-            class="w-full border rounded-lg p-3" />
-        </div>
+    <section id="app" class="hidden">
+      <!-- Tabs -->
+      <div class="flex gap-2 mb-6">
+        <button id="tabBlock" class="px-4 py-2 rounded-lg bg-gray-100 border font-semibold">Bloquear fechas</button>
+        <button id="tabTransfers" class="px-4 py-2 rounded-lg bg-white border font-semibold">Transferencias</button>
       </div>
 
-      <button id="btnBlock"
-        class="mt-5 w-full py-3 rounded-lg bg-red-600 text-white font-semibold hover:bg-red-700">
-        Bloquear fechas
-      </button>
+      <!-- BLOQUEAR FECHAS -->
+      <div id="viewBlock" class="bg-white rounded-xl shadow p-6">
+        <h2 class="text-xl font-semibold mb-4">Bloqueo manual</h2>
+
+        <div class="grid sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium mb-1">Casa</label>
+            <select id="house" class="w-full border rounded-lg p-3">
+              <option value="LC1">Las Cañas 1</option>
+              <option value="LC2">Las Cañas 2</option>
+              <option value="LC3">Las Cañas 3</option>
+              <option value="LC4">Las Cañas 4</option>
+              <option value="LC5">Las Cañas 5</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium mb-1">Motivo</label>
+            <input id="note" class="w-full border rounded-lg p-3" placeholder="Ej: mantenimiento" />
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium mb-1">Check-in</label>
+            <input id="checkin" type="date" class="w-full border rounded-lg p-3" />
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium mb-1">Check-out</label>
+            <input id="checkout" type="date" class="w-full border rounded-lg p-3" />
+          </div>
+        </div>
+
+        <button id="btnBlock"
+          class="mt-5 w-full py-3 rounded-lg bg-red-600 text-white font-semibold hover:bg-red-700">
+          Bloquear fechas
+        </button>
+
+        <p class="mt-3 text-xs text-gray-500">
+          Esto crea un bloqueo manual (no es una reserva de huésped).
+        </p>
+      </div>
+
+      <!-- TRANSFERENCIAS -->
+      <div id="viewTransfers" class="bg-white rounded-xl shadow p-6 hidden">
+        <div class="flex items-center justify-between gap-3 mb-4">
+          <h2 class="text-xl font-semibold">Transferencias pendientes</h2>
+          <button id="btnRefresh" class="px-4 py-2 rounded-lg bg-blue-600 text-white font-semibold">
+            Actualizar lista
+          </button>
+        </div>
+
+        <div id="pendingList" class="space-y-3 text-sm"></div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Modal Login -->
+  <div id="loginModal" class="hidden fixed inset-0 bg-black/40 z-50">
+    <div class="min-h-full flex items-center justify-center p-4">
+      <div class="w-full max-w-md bg-white rounded-2xl shadow-xl border p-6">
+        <div class="flex items-start justify-between gap-4">
+          <div>
+            <h3 class="text-lg font-bold">Acceso Dueños</h3>
+            <p class="text-sm text-gray-600 mt-1">Ingresá la clave para habilitar el panel.</p>
+          </div>
+          <button id="btnCloseModal" class="text-gray-500 hover:text-gray-800">✕</button>
+        </div>
+
+        <div class="mt-4">
+          <label class="block text-sm font-medium mb-1">Clave</label>
+          <input id="secretInput" type="password" class="w-full border rounded-lg p-3" placeholder="Ej: Disney2026" />
+          <p id="loginErr" class="hidden mt-2 text-sm text-red-600"></p>
+        </div>
+
+        <div class="mt-5 flex gap-2 justify-end">
+          <button id="btnCancelLogin" class="px-4 py-2 rounded-lg bg-gray-100 font-semibold">Cancelar</button>
+          <button id="btnDoLogin" class="px-4 py-2 rounded-lg bg-blue-600 text-white font-semibold">Entrar</button>
+        </div>
+      </div>
     </div>
-
-    <!-- TRANSFERENCIAS -->
-    <div id="viewTransfers"
-      class="bg-white rounded-xl shadow p-6 hidden">
-      <h2 class="text-xl font-semibold mb-4">Transferencias pendientes</h2>
-
-      <button id="btnRefresh"
-        class="mb-4 px-4 py-2 rounded-lg bg-blue-600 text-white font-semibold">
-        Actualizar lista
-      </button>
-
-      <div id="pendingList" class="space-y-3 text-sm"></div>
-    </div>
-
-  </section>
-</main>
+  </div>
 
 <script>
 /* =====================
-   AUTH SIMPLE (PASSWORD)
+   AUTH (CLAVE MANUAL + VALIDACIÓN REAL)
 ===================== */
 const OWNER_KEY = "lc_owner_secret";
 
 function getSecret() {
   return localStorage.getItem(OWNER_KEY);
 }
-
-function login() {
-  const secret = prompt("Clave de acceso para dueños:");
-  if (!secret) return;
-  localStorage.setItem(OWNER_KEY, secret);
-  location.reload();
+function setSecret(s) {
+  localStorage.setItem(OWNER_KEY, s);
 }
-
-function logout() {
+function clearSecret() {
   localStorage.removeItem(OWNER_KEY);
-  location.reload();
 }
 
 /* =====================
-   HELPERS
+   HELPERS UI
 ===================== */
 const el = (id) => document.getElementById(id);
 const statusBox = el("status");
 const app = el("app");
 const btnAuth = el("btnAuth");
+const authPill = el("authPill");
 
-function setStatus(msg) {
-  statusBox.textContent = msg;
+const loginModal = el("loginModal");
+const secretInput = el("secretInput");
+const loginErr = el("loginErr");
+
+function setStatus(msg) { statusBox.textContent = msg; }
+function showErr(msg) {
+  loginErr.textContent = msg;
+  loginErr.classList.remove("hidden");
+}
+function clearErr() {
+  loginErr.textContent = "";
+  loginErr.classList.add("hidden");
+}
+
+function openLoginModal() {
+  clearErr();
+  secretInput.value = "";
+  loginModal.classList.remove("hidden");
+  setTimeout(() => secretInput.focus(), 50);
+}
+function closeLoginModal() {
+  loginModal.classList.add("hidden");
 }
 
 /* =====================
-   API FETCH
+   API FETCH (usa x-lc-secret)
 ===================== */
 async function apiFetch(url, { method = "POST", body = null } = {}) {
   const secret = getSecret();
@@ -151,25 +187,108 @@ async function apiFetch(url, { method = "POST", body = null } = {}) {
   });
 
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.message || "Error");
+  if (!res.ok) throw new Error(data.message || `Error (${res.status})`);
   return data;
+}
+
+/* =====================
+   VALIDAR CLAVE (lo que faltaba)
+   - probamos contra un endpoint protegido
+===================== */
+async function validateSecret(candidate) {
+  const res = await fetch("/.netlify/functions/list-pending", {
+    method: "GET",
+    headers: {
+      "x-lc-secret": candidate,
+    },
+  });
+
+  // 401/403 => clave inválida
+  if (!res.ok) return false;
+  return true;
 }
 
 /* =====================
    INIT AUTH UI
 ===================== */
-if (getSecret()) {
+async function refreshAuthUI() {
+  const secret = getSecret();
+
+  if (!secret) {
+    btnAuth.textContent = "Iniciar sesión";
+    authPill.classList.add("hidden");
+    app.classList.add("hidden");
+    setStatus("Iniciá sesión para continuar.");
+    return;
+  }
+
+  // Si hay clave guardada, la validamos (por si cambió en Netlify)
+  setStatus("Validando acceso...");
+  const ok = await validateSecret(secret);
+
+  if (!ok) {
+    clearSecret();
+    btnAuth.textContent = "Iniciar sesión";
+    authPill.classList.add("hidden");
+    app.classList.add("hidden");
+    setStatus("Clave inválida o expirada. Volvé a iniciar sesión.");
+    return;
+  }
+
   btnAuth.textContent = "Cerrar sesión";
+  authPill.textContent = "Autenticado";
+  authPill.classList.remove("hidden");
+
   app.classList.remove("hidden");
   setStatus("Panel habilitado");
-} else {
-  btnAuth.textContent = "Iniciar sesión";
-  app.classList.add("hidden");
-  setStatus("Iniciá sesión para continuar.");
 }
 
-btnAuth.addEventListener("click", () => {
-  getSecret() ? logout() : login();
+/* =====================
+   BTN AUTH
+===================== */
+btnAuth.addEventListener("click", async () => {
+  if (getSecret()) {
+    clearSecret();
+    await refreshAuthUI();
+    return;
+  }
+  openLoginModal();
+});
+
+el("btnCloseModal").onclick = closeLoginModal;
+el("btnCancelLogin").onclick = closeLoginModal;
+loginModal.addEventListener("click", (e) => {
+  if (e.target === loginModal) closeLoginModal();
+});
+
+el("btnDoLogin").onclick = async () => {
+  try {
+    clearErr();
+    const candidate = (secretInput.value || "").trim();
+    if (!candidate) {
+      showErr("Ingresá una clave.");
+      return;
+    }
+
+    setStatus("Validando clave...");
+    const ok = await validateSecret(candidate);
+
+    if (!ok) {
+      showErr("Clave incorrecta.");
+      setStatus("Iniciá sesión para continuar.");
+      return;
+    }
+
+    setSecret(candidate);
+    closeLoginModal();
+    await refreshAuthUI();
+  } catch (e) {
+    showErr(e.message || "Error");
+  }
+};
+
+secretInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") el("btnDoLogin").click();
 });
 
 /* =====================
@@ -210,9 +329,7 @@ el("btnBlock").onclick = async () => {
     }
 
     setStatus("Bloqueando...");
-    const out = await apiFetch("/.netlify/functions/owner-blocks", {
-      body: payload
-    });
+    const out = await apiFetch("/.netlify/functions/owner-blocks", { body: payload });
     setStatus(`✅ Bloqueado (${out.id})`);
   } catch (e) {
     setStatus(`❌ ${e.message}`);
@@ -223,9 +340,7 @@ el("btnBlock").onclick = async () => {
    TRANSFERENCIAS
 ===================== */
 async function loadPending() {
-  const out = await apiFetch("/.netlify/functions/list-pending", {
-    method: "GET"
-  });
+  const out = await apiFetch("/.netlify/functions/list-pending", { method: "GET" });
 
   const box = el("pendingList");
   box.innerHTML = "";
@@ -237,16 +352,16 @@ async function loadPending() {
 
   out.items.forEach(r => {
     const div = document.createElement("div");
-    div.className = "p-4 border rounded bg-white";
+    div.className = "p-4 border rounded-xl bg-white";
     div.innerHTML = `
       <div class="font-semibold">${r.id} — ${r.house_code}</div>
       <div>${r.check_in} → ${r.check_out}</div>
-      <div>${r.guest_name} — ${r.phone}</div>
-      <div class="text-xs text-gray-500">Vence: ${r.expires_at || "-"}</div>
+      <div>${r.guest_name || "-"} — ${r.phone || "-"}</div>
+      <div class="text-xs text-gray-500">Vence: ${r.expires_at || r.hold_expires_at || "-"}</div>
       <div class="mt-3 flex gap-2">
-        <button class="confirm px-3 py-2 bg-green-600 text-white rounded"
+        <button class="confirm px-3 py-2 bg-green-600 text-white rounded-lg font-semibold"
           data-id="${r.id}">Confirmar</button>
-        <button class="cancel px-3 py-2 bg-gray-200 rounded"
+        <button class="cancel px-3 py-2 bg-gray-100 rounded-lg font-semibold"
           data-id="${r.id}">Cancelar</button>
       </div>
     `;
@@ -255,19 +370,27 @@ async function loadPending() {
 
   box.querySelectorAll(".confirm").forEach(b =>
     b.onclick = async () => {
-      await apiFetch("/.netlify/functions/confirm-transfer", {
-        body: { id: b.dataset.id }
-      });
-      loadPending();
+      try {
+        setStatus("Confirmando...");
+        await apiFetch("/.netlify/functions/confirm-transfer", { body: { id: b.dataset.id } });
+        setStatus(`✅ Confirmada: ${b.dataset.id}`);
+        loadPending();
+      } catch (e) {
+        setStatus(`❌ ${e.message}`);
+      }
     }
   );
 
   box.querySelectorAll(".cancel").forEach(b =>
     b.onclick = async () => {
-      await apiFetch("/.netlify/functions/cancel-reservation", {
-        body: { id: b.dataset.id }
-      });
-      loadPending();
+      try {
+        setStatus("Cancelando...");
+        await apiFetch("/.netlify/functions/cancel-reservation", { body: { id: b.dataset.id } });
+        setStatus(`✅ Cancelada: ${b.dataset.id}`);
+        loadPending();
+      } catch (e) {
+        setStatus(`❌ ${e.message}`);
+      }
     }
   );
 }
@@ -281,6 +404,11 @@ el("btnRefresh").onclick = async () => {
     setStatus(`❌ ${e.message}`);
   }
 };
+
+/* =====================
+   BOOT
+===================== */
+refreshAuthUI();
 </script>
 
 </body>
