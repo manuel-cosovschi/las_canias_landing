@@ -179,6 +179,11 @@
     localStorage.removeItem(AUTH_KEY);
   }
 
+  // ✅ Base64 UTF-8 (soporta ñ, tildes, etc.). Evita el bug de btoa() con caracteres no ASCII.
+  function b64utf8(str) {
+    return btoa(String.fromCharCode(...new TextEncoder().encode(str)));
+  }
+
   async function apiFetch(url, { method="POST", body=null } = {}) {
     const auth = getAuth();
     if (!auth) throw new Error("No autorizado. Iniciá sesión.");
@@ -413,7 +418,7 @@
 
   // LOGIN FLOW: validamos con /.netlify/functions/admin-login (Basic Auth)
   async function tryLogin(user, pass) {
-    const basic = btoa(`${user}:${pass}`);
+    const basic = b64utf8(`${user}:${pass}`);
 
     const res = await fetch("/.netlify/functions/admin-login", {
       method: "POST",
