@@ -1,3 +1,4 @@
+// /netlify/functions/owner-blocks.js
 const { assertAuth, json, callN8n } = require("./_utils");
 
 exports.handler = async (event) => {
@@ -11,10 +12,14 @@ exports.handler = async (event) => {
 
   try {
     const baseUrl = process.env.N8N_BASE_URL;
-    const secret = process.env.N8N_SECRET;
+    const ownerSecret = process.env.N8N_OWNER_SECRET;
+    const path = process.env.N8N_OWNER_BLOCK_PATH;
 
-    if (!baseUrl || !secret) {
-      return json(500, { message: "Faltan env vars en Netlify" });
+    if (!baseUrl || !ownerSecret || !path) {
+      return json(500, {
+        message:
+          "Faltan env vars: N8N_BASE_URL / N8N_OWNER_SECRET / N8N_OWNER_BLOCK_PATH",
+      });
     }
 
     const body = JSON.parse(event.body || "{}");
@@ -27,16 +32,14 @@ exports.handler = async (event) => {
     };
 
     if (!payload.house_code || !payload.checkin || !payload.checkout) {
-      return json(400, {
-        message: "house_code, checkin y checkout son obligatorios",
-      });
+      return json(400, { message: "house_code, checkin y checkout son obligatorios" });
     }
 
-    const out = await callN8n("/webhook/owner-block", {
+    const out = await callN8n(path, {
       method: "POST",
       body: payload,
       baseUrl,
-      secret,
+      secret: ownerSecret,
     });
 
     return json(200, out);
