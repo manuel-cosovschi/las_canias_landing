@@ -126,6 +126,10 @@
         </button>
 
         <div id="loginErr" class="hidden text-sm text-red-600"></div>
+
+        <p class="text-xs text-gray-500 pt-2">
+          Tip: si cambiás credenciales en Netlify, cerrá sesión y volvé a entrar.
+        </p>
       </div>
     </div>
   </div>
@@ -172,15 +176,10 @@
     loginModal.classList.remove("flex");
   }
 
-  function getAuth() {
-    return localStorage.getItem(AUTH_KEY);
-  }
-  function clearAuth() {
-    localStorage.removeItem(AUTH_KEY);
-  }
+  function getAuth() { return localStorage.getItem(AUTH_KEY); }
+  function clearAuth() { localStorage.removeItem(AUTH_KEY); }
 
-  // ✅ Base64 UTF-8 REAL (soporta ñ, tildes, etc.)
-  // Evita el bug típico del navegador con btoa() + caracteres no ASCII.
+  // Base64 UTF-8 real (soporta ñ)
   function b64utf8(str) {
     const bytes = new TextEncoder().encode(str);
     let bin = "";
@@ -188,8 +187,7 @@
     return btoa(bin);
   }
 
-  // ✅ Si quedó guardado un Basic viejo (hecho con btoa roto), lo limpiamos.
-  // Heurística: si el decode no contiene ":" o da error → lo borramos.
+  // Limpia auth viejo corrupto
   (function purgeBadAuth() {
     const stored = getAuth();
     if (!stored) return;
@@ -205,9 +203,8 @@
     const auth = getAuth();
     if (!auth) throw new Error("No autorizado. Iniciá sesión.");
 
-    const headers = {};
+    const headers = { "Authorization": `Basic ${auth}` };
     if (body !== null) headers["Content-Type"] = "application/json";
-    headers["Authorization"] = `Basic ${auth}`;
 
     const res = await fetch(url, {
       method,
@@ -216,6 +213,14 @@
     });
 
     const data = await res.json().catch(() => ({}));
+
+    // Si expiró / es inválido, limpiamos y forzamos login
+    if (res.status === 401) {
+      clearAuth();
+      refreshUI();
+      throw new Error(data.message || "Sesión expirada. Volvé a iniciar sesión.");
+    }
+
     if (!res.ok) throw new Error(data.message || "Error");
     return data;
   }
@@ -232,21 +237,24 @@
     tabBlock.classList.toggle("bg-white", !isBlock);
     tabTransfers.classList.toggle("bg-white", isBlock);
   }
+
   tabBlock.onclick = () => showTab("block");
+
   tabTransfers.onclick = async () => {
     showTab("transfers");
     try {
-        setStatus("Cargando...");
-        await loadPending();
-        setStatus("✅ Lista actualizada.");
+      setStatus("Cargando pendientes...");
+      await loadPending();
+      setStatus("✅ Lista actualizada.");
     } catch (e) {
-        setStatus(`❌ ${e.message}`);
+      setStatus(`❌ ${e.message}`);
     }
-};
+  };
+
   showTab("block");
 
   /* =====================
-     FLATPICKR (RANGO + NO PASADO + LOCALE ES)
+     FLATPICKR + AVAILABILITY
   ===================== */
   let fpIn = null;
   let fpOut = null;
@@ -266,13 +274,29 @@
     return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
   }
 
+  // Para flatpickr: si reservas son [check_in, check_out), deshabilitamos hasta el día anterior al check_out
+  function toMinusOneDayISO(iso) {
+    const ms = Date.parse(iso);
+    if (!Number.isFinite(ms)) return iso;
+    const d = new Date(ms);
+    d.setDate(d.getDate() - 1);
+    return toISO(d);
+  }
+
+  function normalizeDisableRanges(ranges) {
+    return (ranges || [])
+      .map(r => {
+        const from = r.from || r.start || r.check_in || r.begin;
+        const toRaw = r.to || r.end || r.check_out || r.finish;
+        if (!from || !toRaw) return null;
+        const to = toMinusOneDayISO(toRaw);
+        return { from, to };
+      })
+      .filter(Boolean);
+  }
+
   function initPickers(disabledRanges = []) {
-    const disable = (disabledRanges || [])
-      .map(r => ({
-        from: r.from || r.start || r.check_in || r.begin,
-        to: r.to || r.end || r.check_out || r.finish
-      }))
-      .filter(r => r.from && r.to);
+    const disable = normalizeDisableRanges(disabledRanges);
 
     if (fpIn) fpIn.destroy();
     if (fpOut) fpOut.destroy();
@@ -305,21 +329,18 @@
     });
   }
 
-  // Si tenés endpoint availability, lo usa. Si no existe, no rompe.
   async function loadAvailabilityAndUpdatePickers() {
     try {
       const house = el("house").value;
       const res = await fetch(`/.netlify/functions/availability?house_code=${encodeURIComponent(house)}`, { method: "GET" });
       const data = await res.json().catch(() => ({}));
 
+      // Soporta:
+      // data.blocked: [{start,end}] o [{from,to}]
+      // data.ranges:  [{from,to}]
       const ranges = []
         .concat(data.blocked || [])
-        .concat(data.ranges || [])
-        .map(r => ({
-          from: r.from || r.start || r.check_in || r.begin,
-          to: r.to || r.end || r.check_out || r.finish
-        }))
-        .filter(r => r.from && r.to);
+        .concat(data.ranges || []);
 
       initPickers(ranges);
     } catch {
@@ -335,14 +356,8 @@
       const inD = parseDMY(el("checkin").value);
       const outD = parseDMY(el("checkout").value);
 
-      if (!inD || !outD) {
-        setStatus("Elegí check-in y check-out.");
-        return;
-      }
-      if (outD <= inD) {
-        setStatus("Check-out debe ser posterior al check-in.");
-        return;
-      }
+      if (!inD || !outD) return setStatus("Elegí check-in y check-out.");
+      if (outD <= inD) return setStatus("Check-out debe ser posterior al check-in.");
 
       setStatus("Bloqueando...");
       const out = await apiFetch("/.netlify/functions/owner-blocks", {
@@ -398,13 +413,18 @@
     box.querySelectorAll(".confirm").forEach(btn => {
       btn.onclick = async () => {
         try {
+          const id = btn.dataset.id;
+          const ref = prompt("Referencia de pago (payment_ref):", "Confirmado por dueño");
+          if (ref === null) return;
+
           setStatus("Confirmando...");
           await apiFetch("/.netlify/functions/confirm-transfer", {
             method: "POST",
-            body: { id: btn.dataset.id, payment_ref: "Confirmado por dueño" }
+            body: { id, payment_ref: ref }
           });
-          setStatus(`✅ Confirmada: ${btn.dataset.id}`);
+          setStatus(`✅ Confirmada: ${id}`);
           await loadPending();
+          await loadAvailabilityAndUpdatePickers();
         } catch (e) {
           setStatus(`❌ ${e.message}`);
         }
@@ -414,13 +434,18 @@
     box.querySelectorAll(".cancel").forEach(btn => {
       btn.onclick = async () => {
         try {
+          const id = btn.dataset.id;
+          const reason = prompt("Motivo de cancelación (reason):", "Cancelado por dueño");
+          if (reason === null) return;
+
           setStatus("Cancelando...");
           await apiFetch("/.netlify/functions/cancel-reservation", {
             method: "POST",
-            body: { id: btn.dataset.id, reason: "Cancelado por dueño" }
+            body: { id, reason }
           });
-          setStatus(`✅ Cancelada: ${btn.dataset.id}`);
+          setStatus(`✅ Cancelada: ${id}`);
           await loadPending();
+          await loadAvailabilityAndUpdatePickers();
         } catch (e) {
           setStatus(`❌ ${e.message}`);
         }
@@ -429,16 +454,19 @@
   }
 
   async function loadPending() {
+    // GET sin body
     const out = await apiFetch("/.netlify/functions/list-pending", { method: "GET", body: null });
     const items = out.items || out.holds || [];
+    const count = out.count ?? items.length;
     renderPending(items);
+    return count;
   }
 
   el("btnRefresh").onclick = async () => {
     try {
-      setStatus("Cargando...");
-      await loadPending();
-      setStatus("✅ Lista actualizada.");
+      setStatus("Cargando pendientes...");
+      const c = await loadPending();
+      setStatus(`✅ Lista actualizada. Pendientes: ${c}`);
     } catch (e) {
       setStatus(`❌ ${e.message}`);
     }
@@ -458,12 +486,7 @@
     });
 
     const data = await res.json().catch(() => ({}));
-
-    // Debug útil (no rompe nada)
-    if (!res.ok) {
-      console.warn("admin-login failed", { status: res.status, data });
-      throw new Error(data.message || "Usuario/contraseña inválidos");
-    }
+    if (!res.ok) throw new Error(data.message || "Usuario/contraseña inválidos");
 
     localStorage.setItem(AUTH_KEY, basic);
   }
@@ -475,7 +498,7 @@
       app.classList.remove("hidden");
       setStatus("Panel habilitado ✅");
       loadAvailabilityAndUpdatePickers();
-      loadPending().catch(() => {});
+      // no forzamos el tab transfers, pero si estabas ahí, podés apretar actualizar
     } else {
       btnAuth.textContent = "Iniciar sesión";
       app.classList.add("hidden");
@@ -514,6 +537,12 @@
 
   // init
   refreshUI();
+
+  // FUTURO (si querés después):
+  // - filtro por casa en transferencias
+  // - mostrar “tiempo restante” del expires_at
+  // - botón “Copiar datos del huésped”
+  // - log de acciones (auditoría) en sheet
 </script>
 </body>
 </html>
