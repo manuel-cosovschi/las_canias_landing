@@ -4,15 +4,15 @@ exports.handler = async (event) => {
   if (!assertAuth(event)) return json(401, { message: "No autorizado" });
   if (event.httpMethod !== "POST") return json(405, { message: "Method not allowed" });
 
+  const baseUrl = process.env.N8N_BASE_URL;
+  const secret = process.env.LC_OWNER_SECRET;
+  const path = process.env.N8N_OWNER_APPROVE_PATH;
+
+  if (!baseUrl || !secret || !path) {
+    return json(500, { message: "Faltan env vars: N8N_BASE_URL / LC_OWNER_SECRET / N8N_OWNER_APPROVE_PATH" });
+  }
+
   try {
-    const baseUrl = process.env.N8N_BASE_URL;
-    const n8nSecret = process.env.N8N_SECRET;
-    const path = process.env.N8N_OWNER_APPROVE_PATH;
-
-    if (!baseUrl || !n8nSecret || !path) {
-      return json(500, { message: "Faltan env vars: N8N_BASE_URL / N8N_SECRET / N8N_OWNER_APPROVE_PATH" });
-    }
-
     const body = JSON.parse(event.body || "{}");
     if (!body.id) return json(400, { message: "Falta id" });
 
@@ -20,7 +20,7 @@ exports.handler = async (event) => {
       method: "POST",
       body: { id: body.id, payment_ref: body.payment_ref || "" },
       baseUrl,
-      secret: n8nSecret,
+      secret,
     });
 
     return json(200, out);
