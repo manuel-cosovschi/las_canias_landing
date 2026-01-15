@@ -153,7 +153,8 @@
   const loginPass = el("loginPass");
   const loginErr = el("loginErr");
 
-  const AUTH_KEY = "lc_admin_basic";
+  const AUTH_KEY = "lc_admin_basic";       // Basic (admin user:pass) en base64
+  const OWNER_KEY = "lc_owner_secret";     // x-lc-secret (opcional, fallback)
 
   function setStatus(msg) { statusBox.textContent = msg; }
   function showLoginError(msg) {
@@ -179,6 +180,10 @@
   function getAuth() { return localStorage.getItem(AUTH_KEY); }
   function clearAuth() { localStorage.removeItem(AUTH_KEY); }
 
+  function getOwnerSecret() { return localStorage.getItem(OWNER_KEY); }
+  function setOwnerSecret(v) { localStorage.setItem(OWNER_KEY, v); }
+  function clearOwnerSecret() { localStorage.removeItem(OWNER_KEY); }
+
   // Base64 UTF-8 real (soporta ñ)
   function b64utf8(str) {
     const bytes = new TextEncoder().encode(str);
@@ -199,29 +204,72 @@
     }
   })();
 
+  // Helper: arma headers para endpoints privados.
+  function buildHeaders({ withJson=true } = {}) {
+    const headers = {};
+    const auth = getAuth();
+    if (auth) headers["Authorization"] = `Basic ${auth}`;
+    const owner = getOwnerSecret();
+    if (owner) headers["x-lc-secret"] = owner;
+    if (withJson) headers["Content-Type"] = "application/json";
+    return headers;
+  }
+
+  // Si el backend está configurado SOLO con x-lc-secret, pedimos y guardamos una vez.
+  async function ensureOwnerSecretIfNeeded(errText) {
+    const msg = String(errText || "").toLowerCase();
+    const needsOwner =
+      msg.includes("x-lc-secret") ||
+      msg.includes("lc-secret") ||
+      msg.includes("owner secret") ||
+      msg.includes("forbidden") ||
+      msg.includes("no autorizado") ||
+      msg.includes("unauthorized");
+
+    if (!needsOwner) return false;
+    if (getOwnerSecret()) return false; // ya hay
+
+    const val = prompt("Falta Owner Secret (x-lc-secret). Pegalo acá (ej: Disney2026):", "");
+    if (!val) return false;
+    setOwnerSecret(val.trim());
+    return true;
+  }
+
   async function apiFetch(url, { method="POST", body=null } = {}) {
     const auth = getAuth();
     if (!auth) throw new Error("No autorizado. Iniciá sesión.");
 
-    const headers = { "Authorization": `Basic ${auth}` };
-    if (body !== null) headers["Content-Type"] = "application/json";
-
     const res = await fetch(url, {
       method,
-      headers,
+      headers: buildHeaders({ withJson: body !== null }),
       body: body !== null ? JSON.stringify(body) : null,
     });
 
     const data = await res.json().catch(() => ({}));
 
-    // Si expiró / es inválido, limpiamos y forzamos login
+    // Si el Basic expiró / es inválido
     if (res.status === 401) {
       clearAuth();
-      refreshUI();
       throw new Error(data.message || "Sesión expirada. Volvé a iniciar sesión.");
     }
 
-    if (!res.ok) throw new Error(data.message || "Error");
+    // Si falla por secret faltante: lo pedimos y reintentamos una vez
+    if (!res.ok) {
+      const didSet = await ensureOwnerSecretIfNeeded(data.message || "");
+      if (didSet) {
+        const res2 = await fetch(url, {
+          method,
+          headers: buildHeaders({ withJson: body !== null }),
+          body: body !== null ? JSON.stringify(body) : null,
+        });
+        const data2 = await res2.json().catch(() => ({}));
+        if (!res2.ok) throw new Error(data2.message || "Error");
+        return data2;
+      }
+
+      throw new Error(data.message || "Error");
+    }
+
     return data;
   }
 
@@ -244,8 +292,8 @@
     showTab("transfers");
     try {
       setStatus("Cargando pendientes...");
-      await loadPending();
-      setStatus("✅ Lista actualizada.");
+      const c = await loadPending();
+      setStatus(`✅ Lista actualizada. Pendientes: ${c}`);
     } catch (e) {
       setStatus(`❌ ${e.message}`);
     }
@@ -274,7 +322,7 @@
     return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
   }
 
-  // Para flatpickr: si reservas son [check_in, check_out), deshabilitamos hasta el día anterior al check_out
+  // Para flatpickr: reservas son [check_in, check_out) -> deshabilitar hasta el día anterior al checkout
   function toMinusOneDayISO(iso) {
     const ms = Date.parse(iso);
     if (!Number.isFinite(ms)) return iso;
@@ -335,9 +383,6 @@
       const res = await fetch(`/.netlify/functions/availability?house_code=${encodeURIComponent(house)}`, { method: "GET" });
       const data = await res.json().catch(() => ({}));
 
-      // Soporta:
-      // data.blocked: [{start,end}] o [{from,to}]
-      // data.ranges:  [{from,to}]
       const ranges = []
         .concat(data.blocked || [])
         .concat(data.ranges || []);
@@ -348,7 +393,9 @@
     }
   }
 
-  el("house").addEventListener("change", loadAvailabilityAndUpdatePickers);
+  el("house").addEventListener("change", async () => {
+    await loadAvailabilityAndUpdatePickers();
+  });
 
   // BLOQUEAR
   el("btnBlock").onclick = async () => {
@@ -422,6 +469,7 @@
             method: "POST",
             body: { id, payment_ref: ref }
           });
+
           setStatus(`✅ Confirmada: ${id}`);
           await loadPending();
           await loadAvailabilityAndUpdatePickers();
@@ -443,6 +491,7 @@
             method: "POST",
             body: { id, reason }
           });
+
           setStatus(`✅ Cancelada: ${id}`);
           await loadPending();
           await loadAvailabilityAndUpdatePickers();
@@ -454,7 +503,6 @@
   }
 
   async function loadPending() {
-    // GET sin body
     const out = await apiFetch("/.netlify/functions/list-pending", { method: "GET", body: null });
     const items = out.items || out.holds || [];
     const count = out.count ?? items.length;
@@ -472,7 +520,7 @@
     }
   };
 
-  // LOGIN FLOW: validamos con /.netlify/functions/admin-login (Basic Auth)
+  // LOGIN FLOW
   async function tryLogin(user, pass) {
     const basic = b64utf8(`${user}:${pass}`);
 
@@ -498,7 +546,6 @@
       app.classList.remove("hidden");
       setStatus("Panel habilitado ✅");
       loadAvailabilityAndUpdatePickers();
-      // no forzamos el tab transfers, pero si estabas ahí, podés apretar actualizar
     } else {
       btnAuth.textContent = "Iniciar sesión";
       app.classList.add("hidden");
@@ -509,6 +556,7 @@
   btnAuth.onclick = () => {
     if (getAuth()) {
       clearAuth();
+      // el secret puede quedarse guardado (no molesta)
       refreshUI();
     } else {
       openModal();
@@ -543,6 +591,7 @@
   // - mostrar “tiempo restante” del expires_at
   // - botón “Copiar datos del huésped”
   // - log de acciones (auditoría) en sheet
+  // - botón “Limpiar Owner Secret”
 </script>
 </body>
 </html>
