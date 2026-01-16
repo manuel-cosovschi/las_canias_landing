@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Las Cañas | Mar de Cobo</title>
+    <meta
+      name="description"
+      content="Alquiler de casas frente al mar en Mar de Cobo. Complejo Las Cañas: parque, parrilla, tranquilidad y confort."
+    />
+
+    <!-- favicon -->
+    <link rel="icon" href="/logo.PNG" type="image/png" />
+    <link rel="apple-touch-icon" href="/logo.PNG" />
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Tailwind CDN (rápido y seguro para terminar) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              brand: {
+                beige: "#DED2B9",
+                cream: "#F5F1E9",
+                brown: "#4A3728",
+                accent: "#8C7662",
+              },
+            },
+          },
+        },
+      };
+    </script>
+
+    <style>
+      html { scroll-behavior: smooth; scroll-padding-top: 5rem; }
+      body { font-family: "Inter", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background: #F5F1E9; }
+      h1,h2,h3,.serif { font-family: "Playfair Display", serif; }
+      .logo-shadow { filter: drop-shadow(2px 4px 6px rgba(74,55,40,.20)); }
+    </style>
+  </head>
+  <body class="text-brand-brown overflow-x-hidden">
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
