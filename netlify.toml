@@ -1,6 +1,9 @@
 [build]
-  publish = "."
-  functions = "netlify/functions"
+  command = "cd las-canas-react && npm ci && npm run build"
+  publish = "las-canas-react/dist"
+
+[functions]
+  directory = "netlify/functions"
 
 [[headers]]
   for = "/*"
