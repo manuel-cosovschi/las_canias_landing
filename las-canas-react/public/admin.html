@@ -100,7 +100,7 @@
   </main>
 
   <!-- LOGIN MODAL -->
-  <div id="loginModal" class="fixed inset-0 hidden items-center justify-center bg-black/50 p-4">
+  <div id="loginModal" class="fixed inset-0 hidden items-center justify-center bg-black/50 p-4 z-[1000]">
     <div class="w-full max-w-md rounded-2xl bg-white shadow-xl p-6">
       <div class="flex items-center justify-between mb-3">
         <h3 class="text-lg font-bold">Ingresar</h3>
@@ -114,7 +114,7 @@
       <div class="space-y-3">
         <div>
           <label class="block text-sm font-medium mb-1">Usuario</label>
-          <input id="loginUser" class="w-full border rounded-lg p-3" placeholder="admin_cañas" autocomplete="username" />
+          <input id="loginUser" class="w-full border rounded-lg p-3" placeholder="Usuario" autocomplete="username" />
         </div>
         <div>
           <label class="block text-sm font-medium mb-1">Contraseña</label>
@@ -129,6 +129,42 @@
 
         <p class="text-xs text-gray-500 pt-2">
           Tip: si cambiás credenciales en Netlify, cerrá sesión y volvé a entrar.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- OWNER SECRET MODAL (NO hardcode, evita error de secrets scanning) -->
+  <div id="secretModal" class="fixed inset-0 hidden items-center justify-center bg-black/50 p-4 z-[1100]">
+    <div class="w-full max-w-md rounded-2xl bg-white shadow-xl p-6">
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="text-lg font-bold">Clave de propietarios</h3>
+        <button id="btnCloseSecretModal" class="text-gray-500 hover:text-gray-800">✕</button>
+      </div>
+
+      <p class="text-sm text-gray-600 mb-4">
+        Ingresá la clave para autorizar acciones (header <span class="font-mono">x-lc-secret</span>).
+      </p>
+
+      <div class="space-y-3">
+        <div>
+          <label class="block text-sm font-medium mb-1">Owner Secret</label>
+          <input id="ownerSecretInput" type="password" class="w-full border rounded-lg p-3" placeholder="Clave" autocomplete="off" />
+        </div>
+
+        <div class="flex gap-2">
+          <button id="btnSaveSecret" class="flex-1 py-3 rounded-lg bg-slate-900 text-white font-semibold">
+            Guardar
+          </button>
+          <button id="btnClearSecret" class="py-3 px-4 rounded-lg bg-gray-200 font-semibold">
+            Limpiar
+          </button>
+        </div>
+
+        <div id="secretErr" class="hidden text-sm text-red-600"></div>
+
+        <p class="text-xs text-gray-500 pt-2">
+          Se guarda en este navegador (localStorage).
         </p>
       </div>
     </div>
@@ -153,8 +189,15 @@
   const loginPass = el("loginPass");
   const loginErr = el("loginErr");
 
+  const secretModal = el("secretModal");
+  const btnCloseSecretModal = el("btnCloseSecretModal");
+  const btnSaveSecret = el("btnSaveSecret");
+  const btnClearSecret = el("btnClearSecret");
+  const ownerSecretInput = el("ownerSecretInput");
+  const secretErr = el("secretErr");
+
   const AUTH_KEY = "lc_admin_basic";       // Basic (admin user:pass) en base64
-  const OWNER_KEY = "lc_owner_secret";     // x-lc-secret (opcional, fallback)
+  const OWNER_KEY = "lc_owner_secret";     // x-lc-secret (guardado local, NO en código)
 
   function setStatus(msg) { statusBox.textContent = msg; }
   function showLoginError(msg) {
@@ -166,6 +209,15 @@
     loginErr.classList.add("hidden");
   }
 
+  function showSecretError(msg) {
+    secretErr.textContent = msg;
+    secretErr.classList.remove("hidden");
+  }
+  function clearSecretError() {
+    secretErr.textContent = "";
+    secretErr.classList.add("hidden");
+  }
+
   function openModal() {
     clearLoginError();
     loginModal.classList.remove("hidden");
@@ -175,6 +227,17 @@
   function closeModal() {
     loginModal.classList.add("hidden");
     loginModal.classList.remove("flex");
+  }
+
+  function openSecretModal() {
+    clearSecretError();
+    secretModal.classList.remove("hidden");
+    secretModal.classList.add("flex");
+    setTimeout(() => ownerSecretInput.focus(), 50);
+  }
+  function closeSecretModal() {
+    secretModal.classList.add("hidden");
+    secretModal.classList.remove("flex");
   }
 
   function getAuth() { return localStorage.getItem(AUTH_KEY); }
@@ -215,26 +278,6 @@
     return headers;
   }
 
-  // Si el backend está configurado SOLO con x-lc-secret, pedimos y guardamos una vez.
-  async function ensureOwnerSecretIfNeeded(errText) {
-    const msg = String(errText || "").toLowerCase();
-    const needsOwner =
-      msg.includes("x-lc-secret") ||
-      msg.includes("lc-secret") ||
-      msg.includes("owner secret") ||
-      msg.includes("forbidden") ||
-      msg.includes("no autorizado") ||
-      msg.includes("unauthorized");
-
-    if (!needsOwner) return false;
-    if (getOwnerSecret()) return false; // ya hay
-
-    const val = prompt("Falta Owner Secret (x-lc-secret). Pegalo acá (ej: Disney2026):", "");
-    if (!val) return false;
-    setOwnerSecret(val.trim());
-    return true;
-  }
-
   async function apiFetch(url, { method="POST", body=null } = {}) {
     const auth = getAuth();
     if (!auth) throw new Error("No autorizado. Iniciá sesión.");
@@ -247,24 +290,25 @@
 
     const data = await res.json().catch(() => ({}));
 
-    // Si el Basic expiró / es inválido
     if (res.status === 401) {
       clearAuth();
       throw new Error(data.message || "Sesión expirada. Volvé a iniciar sesión.");
     }
 
-    // Si falla por secret faltante: lo pedimos y reintentamos una vez
     if (!res.ok) {
-      const didSet = await ensureOwnerSecretIfNeeded(data.message || "");
-      if (didSet) {
-        const res2 = await fetch(url, {
-          method,
-          headers: buildHeaders({ withJson: body !== null }),
-          body: body !== null ? JSON.stringify(body) : null,
-        });
-        const data2 = await res2.json().catch(() => ({}));
-        if (!res2.ok) throw new Error(data2.message || "Error");
-        return data2;
+      // Si falta x-lc-secret, pedimos por modal (NO prompt con ejemplo)
+      const msg = String(data.message || "").toLowerCase();
+      const needsOwner =
+        msg.includes("x-lc-secret") ||
+        msg.includes("lc-secret") ||
+        msg.includes("owner secret") ||
+        msg.includes("forbidden") ||
+        msg.includes("no autorizado") ||
+        msg.includes("unauthorized");
+
+      if (needsOwner && !getOwnerSecret()) {
+        openSecretModal();
+        throw new Error("Falta Owner Secret. Ingresalo para continuar.");
       }
 
       throw new Error(data.message || "Error");
@@ -322,7 +366,7 @@
     return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
   }
 
-  // Para flatpickr: reservas son [check_in, check_out) -> deshabilitar hasta el día anterior al checkout
+  // reservas son [check_in, check_out) -> deshabilitar hasta el día anterior al checkout
   function toMinusOneDayISO(iso) {
     const ms = Date.parse(iso);
     if (!Number.isFinite(ms)) return iso;
@@ -546,6 +590,9 @@
       app.classList.remove("hidden");
       setStatus("Panel habilitado ✅");
       loadAvailabilityAndUpdatePickers();
+
+      // Si falta owner secret, lo pedimos por modal (sin hardcode)
+      if (!getOwnerSecret()) openSecretModal();
     } else {
       btnAuth.textContent = "Iniciar sesión";
       app.classList.add("hidden");
@@ -556,7 +603,6 @@
   btnAuth.onclick = () => {
     if (getAuth()) {
       clearAuth();
-      // el secret puede quedarse guardado (no molesta)
       refreshUI();
     } else {
       openModal();
@@ -583,15 +629,46 @@
     }
   };
 
+  // Secret modal handlers
+  btnCloseSecretModal.onclick = closeSecretModal;
+  secretModal.addEventListener("click", (e) => {
+    if (e.target === secretModal) closeSecretModal();
+  });
+
+  btnClearSecret.onclick = () => {
+    clearOwnerSecret();
+    ownerSecretInput.value = "";
+    clearSecretError();
+    setStatus("Owner Secret limpiado.");
+  };
+
+  btnSaveSecret.onclick = async () => {
+    try {
+      clearSecretError();
+      const val = (ownerSecretInput.value || "").trim();
+      if (!val) return showSecretError("Ingresá una clave.");
+
+      // Validación simple: probamos list-pending con el secret
+      const res = await fetch("/.netlify/functions/list-pending", {
+        method: "GET",
+        headers: {
+          "Authorization": `Basic ${getAuth()}`,
+          "x-lc-secret": val,
+        }
+      });
+
+      if (!res.ok) return showSecretError("Clave inválida o no autorizada.");
+
+      setOwnerSecret(val);
+      closeSecretModal();
+      setStatus("✅ Owner Secret guardado.");
+    } catch (e) {
+      showSecretError(e.message || "Error guardando clave.");
+    }
+  };
+
   // init
   refreshUI();
-
-  // FUTURO (si querés después):
-  // - filtro por casa en transferencias
-  // - mostrar “tiempo restante” del expires_at
-  // - botón “Copiar datos del huésped”
-  // - log de acciones (auditoría) en sheet
-  // - botón “Limpiar Owner Secret”
 </script>
 </body>
 </html>
