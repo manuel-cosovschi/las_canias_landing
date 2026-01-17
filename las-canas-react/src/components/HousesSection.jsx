@@ -46,7 +46,7 @@ const houses = [
     people: "Hasta 4",
     description:
       "Ideal para 3 adultos o 2 adultos y 2 niños. A 1 cuadra de la playa. WiFi, Smart TV, parrilla y parque. No se aceptan mascotas.",
-    images: [], // cuando tengas fotos, ponelas acá
+    images: [],
     comingSoon: true,
   },
   {
@@ -55,7 +55,7 @@ const houses = [
     people: "Hasta 3",
     description:
       "Ideal para 2 adultos y 1 niño. A 1 cuadra de la playa. WiFi, Smart TV, parrilla y parque. No se aceptan mascotas.",
-    images: [], // cuando tengas fotos, ponelas acá
+    images: [],
     comingSoon: true,
   },
 ];
@@ -90,11 +90,12 @@ export default function HousesSection() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+        {/* ✅ grid con items-stretch para que todas las cards estiren igual */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 items-stretch">
           {houses.map((h) => (
             <div
               key={h.id}
-              className="group bg-white rounded-[2.5rem] overflow-hidden shadow-2xl hover:shadow-brand-brown/10 transition-all duration-500 border border-transparent hover:border-brand-beige"
+              className="group bg-white rounded-[2.5rem] overflow-hidden shadow-2xl hover:shadow-brand-brown/10 transition-all duration-500 border border-transparent hover:border-brand-beige h-full flex flex-col"
             >
               <div className="relative aspect-[4/5] overflow-hidden bg-brand-beige/20">
                 {h.images?.length ? (
@@ -120,39 +121,56 @@ export default function HousesSection() {
                 )}
               </div>
 
-              <div className="p-10">
-                <h3 className="text-3xl font-bold mb-4 serif italic text-brand-brown">{h.title}</h3>
-                <p className="text-brand-brown/60 mb-8 text-sm leading-relaxed font-light">
+              {/* ✅ cuerpo en flex-col para empujar botones abajo */}
+              <div className="p-10 flex flex-col flex-1">
+                <h3 className="text-3xl font-bold mb-4 serif italic text-brand-brown">
+                  {h.title}
+                </h3>
+
+                {/* ✅ descripción con “altura visual” consistente */}
+                <p
+                  className="text-brand-brown/60 mb-8 text-sm leading-relaxed font-light"
+                  style={{
+                    display: "-webkit-box",
+                    WebkitLineClamp: 4,     // <- ajustá 3/4/5 si querés
+                    WebkitBoxOrient: "vertical",
+                    overflow: "hidden",
+                  }}
+                >
                   {h.description}
                 </p>
 
-                <div className="flex gap-3">
-                  <a
-                    href="/reservar.html"
-                    className="flex-1 text-center py-5 bg-brand-cream hover:bg-brand-brown text-brand-brown hover:text-white rounded-2xl font-black text-[11px] uppercase tracking-widest transition-all border border-brand-beige"
-                  >
-                    Reservar
-                  </a>
-                  <a
-                    href="#gallery"
-                    className="px-6 py-5 bg-white hover:bg-brand-cream text-brand-brown rounded-2xl font-black text-[11px] uppercase tracking-widest transition-all border border-brand-beige"
-                  >
-                    Ver fotos
-                  </a>
-                </div>
-
-                {h.images?.length > 1 && (
-                  <div className="mt-8 grid grid-cols-4 gap-3">
-                    {h.images.slice(1, 5).map((src, i) => (
-                      <img
-                        key={i}
-                        src={src}
-                        alt={`${h.title} ${i + 2}`}
-                        className="rounded-xl aspect-square object-cover border border-brand-beige/60 hover:scale-[1.03] transition-transform"
-                      />
-                    ))}
+                {/* ✅ botones siempre abajo */}
+                <div className="mt-auto">
+                  <div className="flex gap-3">
+                    <a
+                      href="/reservar.html"
+                      className="flex-1 text-center py-5 bg-brand-cream hover:bg-brand-brown text-brand-brown hover:text-white rounded-2xl font-black text-[11px] uppercase tracking-widest transition-all border border-brand-beige"
+                    >
+                      Reservar
+                    </a>
+                    <a
+                      href="#gallery"
+                      className="w-[140px] text-center px-6 py-5 bg-white hover:bg-brand-cream text-brand-brown rounded-2xl font-black text-[11px] uppercase tracking-widest transition-all border border-brand-beige"
+                    >
+                      Ver fotos
+                    </a>
                   </div>
-                )}
+
+                  {/* ✅ mini galería también queda alineada entre cards */}
+                  {h.images?.length > 1 && (
+                    <div className="mt-8 grid grid-cols-4 gap-3">
+                      {h.images.slice(1, 5).map((src, i) => (
+                        <img
+                          key={i}
+                          src={src}
+                          alt={`${h.title} ${i + 2}`}
+                          className="rounded-xl aspect-square object-cover border border-brand-beige/60 hover:scale-[1.03] transition-transform"
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           ))}
