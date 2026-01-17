@@ -1,17 +1,13 @@
 export default function Location() {
-  // 📍 Ubicación exacta – Las Cañas, Mar de Cobo
-  const googleMapsLink =
-    "https://maps.app.goo.gl/p9P4HvCc21jQYQm16";
+  // 📍 Link externo (lo que te abre perfecto en Google Maps)
+  const googleMapsLink = "https://maps.app.goo.gl/Y4pXNaTYMhq2seEV9?g_st=ic";
 
-  // Embed basado en esa ubicación (centrado en el punto real)
+  // ✅ Embed por coordenadas exactas (pin correcto)
   const mapEmbed =
-    "https://www.google.com/maps?q=-37.7576,-57.4567&hl=es&z=16&output=embed";
+    "https://www.google.com/maps?q=-37.7705815,-57.4464581&z=17&output=embed";
 
   return (
-    <section
-      id="location"
-      className="py-28 bg-brand-cream relative overflow-hidden"
-    >
+    <section id="location" className="py-28 bg-brand-cream relative overflow-hidden">
       {/* decoración suave */}
       <div className="absolute top-0 right-0 w-96 h-96 bg-brand-beige/20 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl" />
 
@@ -33,12 +29,10 @@ export default function Location() {
                   📍
                 </div>
                 <div>
-                  <h4 className="font-bold text-brand-brown text-lg">
-                    Mar de Cobo
-                  </h4>
+                  <h4 className="font-bold text-brand-brown text-lg">Mar de Cobo</h4>
                   <p className="text-brand-brown/60 text-sm leading-relaxed italic">
-                    Partido de Mar Chiquita, Provincia de Buenos Aires.  
-                    Un entorno natural, tranquilo y rodeado de bosque.
+                    Partido de Mar Chiquita, Provincia de Buenos Aires. Un entorno natural,
+                    tranquilo y rodeado de bosque.
                   </p>
                 </div>
               </div>
@@ -48,12 +42,10 @@ export default function Location() {
                   🌊
                 </div>
                 <div>
-                  <h4 className="font-bold text-brand-brown text-lg">
-                    A metros del mar
-                  </h4>
+                  <h4 className="font-bold text-brand-brown text-lg">A metros del mar</h4>
                   <p className="text-brand-brown/60 text-sm leading-relaxed italic">
-                    Las casas se encuentran a solo una cuadra de la playa,
-                    ideales para disfrutar del sonido del mar y la calma del lugar.
+                    Las casas se encuentran a solo una cuadra de la playa, ideales para disfrutar
+                    del sonido del mar y la calma del lugar.
                   </p>
                 </div>
               </div>
@@ -66,9 +58,7 @@ export default function Location() {
               className="inline-flex items-center gap-4 px-10 py-5 bg-brand-brown text-brand-cream rounded-full font-black text-xs uppercase tracking-widest shadow-2xl transition-all hover:bg-black hover:-translate-y-1 group"
             >
               Abrir en Google Maps
-              <span className="text-lg group-hover:translate-x-1 transition-transform">
-                ↗
-              </span>
+              <span className="text-lg group-hover:translate-x-1 transition-transform">↗</span>
             </a>
           </div>
 
