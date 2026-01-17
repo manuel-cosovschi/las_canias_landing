@@ -9,9 +9,9 @@
       content="Alquiler de casas frente al mar en Mar de Cobo. Complejo Las Cañas: parque, parrilla, tranquilidad y confort."
     />
 
-    <!-- favicon -->
-    <link rel="icon" href="/las-canas-react/public/logo.PNG" type="image/png" />
-    <link rel="apple-touch-icon" href="/las-canas-react/public/logo.PNG" />
+    <!-- favicon (en Vite: todo lo de /public se sirve desde "/") -->
+    <link rel="icon" href="/logo.PNG" type="image/png" />
+    <link rel="apple-touch-icon" href="/logo.PNG" />
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -47,7 +47,15 @@
       .logo-shadow { filter: drop-shadow(2px 4px 6px rgba(74,55,40,.20)); }
     </style>
   </head>
+
   <body class="text-brand-brown overflow-x-hidden">
+    <!-- ✅ Netlify Forms: form oculto para que Netlify lo detecte en build -->
+    <form name="contacto" data-netlify="true" data-netlify-honeypot="bot-field" hidden>
+      <input type="text" name="name" />
+      <input type="email" name="email" />
+      <textarea name="message"></textarea>
+    </form>
+
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>

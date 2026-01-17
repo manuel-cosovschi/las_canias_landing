@@ -1,17 +1,34 @@
+import { useEffect, useMemo, useState } from "react";
+
 export default function Contact() {
+  const [sent, setSent] = useState(false);
+
+  // Si vuelve con ?contact=success (acción del form), mostramos mensajito
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("contact") === "success") setSent(true);
+  }, []);
+
+  // acción para volver a la misma página y mostrar success
+  const formAction = useMemo(() => "/?contact=success#contact", []);
+
   return (
     <section id="contact" className="py-24 bg-white overflow-hidden">
       <div className="container mx-auto px-6">
         <div className="max-w-6xl mx-auto bg-stone-50 rounded-[3rem] p-8 md:p-16 shadow-inner flex flex-col lg:flex-row gap-16">
           <div className="w-full lg:w-1/3">
-            <h2 className="text-4xl font-bold mb-6 italic serif text-brand-brown">¿Te gustaría visitarnos?</h2>
+            <h2 className="text-4xl font-bold mb-6 italic serif text-brand-brown">
+              ¿Te gustaría visitarnos?
+            </h2>
             <p className="text-brand-brown/60 mb-10 font-light">
               Escribinos tu consulta y te respondemos a la brevedad.
             </p>
 
             <div className="space-y-8">
               <div className="flex items-start gap-4">
-                <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm">📞</div>
+                <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm">
+                  📞
+                </div>
                 <div>
                   <h4 className="font-bold text-brand-brown">Teléfono</h4>
                   <p className="text-brand-brown/60">+54 223 6882986</p>
@@ -19,10 +36,14 @@ export default function Contact() {
               </div>
 
               <div className="flex items-start gap-4">
-                <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm">📍</div>
+                <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm">
+                  📍
+                </div>
                 <div>
                   <h4 className="font-bold text-brand-brown">Ubicación</h4>
-                  <p className="text-brand-brown/60">Mar de Cobo, Buenos Aires, Argentina</p>
+                  <p className="text-brand-brown/60">
+                    Mar de Cobo, Buenos Aires, Argentina
+                  </p>
                 </div>
               </div>
 
@@ -38,15 +59,26 @@ export default function Contact() {
           </div>
 
           <div className="w-full lg:w-2/3">
-            {/* Netlify form (sin backend) */}
+            {/* ✅ Success banner */}
+            {sent && (
+              <div className="mb-6 rounded-2xl border border-green-200 bg-green-50 px-6 py-4 text-sm text-green-800">
+                ✅ Mensaje enviado. Te respondemos a la brevedad.
+              </div>
+            )}
+
+            {/* ✅ Netlify form */}
             <form
               name="contacto"
               method="POST"
+              action={formAction}
               data-netlify="true"
-              netlify-honeypot="bot-field"
+              data-netlify-honeypot="bot-field"
+              encType="application/x-www-form-urlencoded"
               className="grid grid-cols-1 md:grid-cols-2 gap-6"
             >
               <input type="hidden" name="form-name" value="contacto" />
+
+              {/* honeypot */}
               <p className="hidden">
                 <label>
                   Si sos humano, dejá esto vacío: <input name="bot-field" />
@@ -54,7 +86,9 @@ export default function Contact() {
               </p>
 
               <div className="space-y-2">
-                <label className="text-sm font-bold text-brand-brown ml-1">Nombre</label>
+                <label className="text-sm font-bold text-brand-brown ml-1">
+                  Nombre
+                </label>
                 <input
                   type="text"
                   name="name"
@@ -65,7 +99,9 @@ export default function Contact() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-bold text-brand-brown ml-1">Email</label>
+                <label className="text-sm font-bold text-brand-brown ml-1">
+                  Email
+                </label>
                 <input
                   type="email"
                   name="email"
@@ -76,7 +112,9 @@ export default function Contact() {
               </div>
 
               <div className="space-y-2 md:col-span-2">
-                <label className="text-sm font-bold text-brand-brown ml-1">Mensaje</label>
+                <label className="text-sm font-bold text-brand-brown ml-1">
+                  Mensaje
+                </label>
                 <textarea
                   name="message"
                   placeholder="Contanos fechas tentativas, cantidad de personas y dudas..."
