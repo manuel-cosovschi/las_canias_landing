@@ -4,6 +4,7 @@ export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [dropOpen, setDropOpen] = useState(false);
+  const [logoOk, setLogoOk] = useState(true);
   const dropRef = useRef(null);
 
   useEffect(() => {
@@ -27,15 +28,11 @@ export default function Navbar() {
     { name: "Nuestras Casas", href: "#casas" },
   ];
 
+  // ✅ SIN Instagram acá (porque va solo en el Footer)
   const extra = [
     { name: "Galería", href: "#gallery" },
     { name: "Ubicación", href: "#location" },
     { name: "Contacto", href: "#contact" },
-    {
-      name: "Instagram",
-      href: "https://www.instagram.com/lascaniasmardecobo?igsh=a2htcW8zdmp1aGY5",
-      external: true,
-    },
     { name: "Términos", href: "#terms" },
   ];
 
@@ -57,22 +54,22 @@ export default function Navbar() {
           className="flex items-center gap-4 group"
           onClick={() => setMobileOpen(false)}
         >
-          <div className="w-12 h-12 md:w-14 md:h-14 flex items-center justify-center rounded-full overflow-hidden bg-brand-beige/40 border border-white/30 shadow-sm">
-            <img
-              src="/logo.PNG"
-              alt=""
-              aria-hidden="true"
-              className="w-full h-full object-contain logo-shadow block select-none"
-              draggable="false"
-              loading="eager"
-              onError={(e) => {
-                e.currentTarget.style.display = "none";
-              }}
-            />
-            {/* fallback visual sin texto */}
-            <div className="w-full h-full hidden items-center justify-center bg-brand-beige/60">
-              <span className="serif font-bold text-brand-brown">LC</span>
-            </div>
+          <div className="w-12 h-12 md:w-14 md:h-14 rounded-full overflow-hidden bg-brand-beige/40 border border-white/30 shadow-sm flex items-center justify-center">
+            {logoOk ? (
+              <img
+                src="/logo.PNG"
+                alt=""
+                aria-hidden="true"
+                className="w-full h-full object-contain logo-shadow block select-none"
+                draggable="false"
+                loading="eager"
+                onError={() => setLogoOk(false)}
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center bg-brand-beige/60">
+                <span className="serif font-bold text-brand-brown">LC</span>
+              </div>
+            )}
           </div>
 
           <div className="flex flex-col">
@@ -124,8 +121,6 @@ export default function Navbar() {
                 <a
                   key={it.name}
                   href={it.href}
-                  target={it.external ? "_blank" : undefined}
-                  rel={it.external ? "noopener noreferrer" : undefined}
                   className="block px-6 py-4 text-[11px] font-black tracking-[0.22em] uppercase text-brand-brown hover:bg-brand-cream hover:text-brand-accent transition-colors border-b border-gray-50 last:border-0"
                   onClick={() => setDropOpen(false)}
                 >
@@ -160,9 +155,17 @@ export default function Navbar() {
           aria-label="Abrir menú"
           type="button"
         >
-          <div className={`w-6 h-0.5 bg-current mb-1.5 transition-all ${mobileOpen ? "rotate-45 translate-y-2" : ""}`} />
+          <div
+            className={`w-6 h-0.5 bg-current mb-1.5 transition-all ${
+              mobileOpen ? "rotate-45 translate-y-2" : ""
+            }`}
+          />
           <div className={`w-6 h-0.5 bg-current mb-1.5 transition-all ${mobileOpen ? "opacity-0" : ""}`} />
-          <div className={`w-6 h-0.5 bg-current transition-all ${mobileOpen ? "-rotate-45 -translate-y-2" : ""}`} />
+          <div
+            className={`w-6 h-0.5 bg-current transition-all ${
+              mobileOpen ? "-rotate-45 -translate-y-2" : ""
+            }`}
+          />
         </button>
       </div>
 
@@ -181,17 +184,24 @@ export default function Navbar() {
         </button>
 
         <div className="w-24 h-24 mb-2 rounded-full overflow-hidden bg-brand-beige/40 border border-white/30 shadow-sm flex items-center justify-center">
-          <img
-            src="/logo.PNG"
-            alt=""
-            aria-hidden="true"
-            className="w-full h-full object-contain block select-none"
-            draggable="false"
-            onError={(e) => (e.currentTarget.style.display = "none")}
-          />
+          {logoOk ? (
+            <img
+              src="/logo.PNG"
+              alt=""
+              aria-hidden="true"
+              className="w-full h-full object-contain block select-none"
+              draggable="false"
+              onError={() => setLogoOk(false)}
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-brand-beige/60">
+              <span className="serif font-bold text-brand-brown text-2xl">LC</span>
+            </div>
+          )}
         </div>
 
-        {[...links, ...extra.filter((x) => !x.external)].map((l) => (
+        {/* ✅ Mobile: links + extra (sin Instagram) */}
+        {[...links, ...extra].map((l) => (
           <a
             key={l.name}
             href={l.href}
@@ -201,16 +211,6 @@ export default function Navbar() {
             {l.name}
           </a>
         ))}
-
-        <a
-          href="https://www.instagram.com/lascaniasmardecobo?igsh=a2htcW8zdmp1aGY5"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-sm font-black uppercase tracking-[0.22em] text-brand-brown/70 hover:text-brand-accent"
-          onClick={() => setMobileOpen(false)}
-        >
-          Instagram
-        </a>
 
         <a
           href="/reservar.html"
