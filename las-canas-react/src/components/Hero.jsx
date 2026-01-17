@@ -2,13 +2,18 @@ export default function Hero() {
   return (
     <section
       id="home"
-      className="relative min-h-screen flex items-center justify-center overflow-hidden pt-28 md:pt-32 pb-20"
+      className="relative min-h-screen flex items-center justify-center overflow-hidden pt-28 md:pt-36 pb-32"
     >
       <div className="absolute inset-0 z-0">
         <img
           src="/entradaVista1.jpg"
-          alt="Las Cañas"
+          alt="" // decorativo
+          aria-hidden="true"
           className="w-full h-full object-cover grayscale-[0.15] sepia-[0.08]"
+          onError={(e) => {
+            // si falla la imagen del fondo, no queremos textos raros
+            e.currentTarget.style.display = "none";
+          }}
         />
         <div className="absolute inset-0 bg-brand-beige/30 backdrop-blur-[2px]" />
         <div className="absolute inset-0 bg-gradient-to-t from-brand-cream via-transparent to-black/25" />
@@ -18,7 +23,18 @@ export default function Hero() {
         <div className="mb-10 flex justify-center">
           <div className="bg-brand-beige p-2 rounded-[3.5rem] shadow-2xl border border-white/30 max-w-md w-full overflow-hidden">
             <div className="bg-brand-beige border-4 border-white/40 rounded-[3rem] p-10 md:p-12 flex flex-col items-center">
-              <img src="/logo.PNG" alt="Las Cañas" className="w-full max-w-[320px] h-auto mb-6 logo-shadow" />
+              <img
+                src="/logo.PNG"
+                alt=""               // ✅ clave: evita el “Las Cañas” fantasma
+                aria-hidden="true"
+                className="w-full max-w-[320px] h-auto mb-6 logo-shadow block select-none"
+                draggable="false"
+                loading="eager"
+                onError={(e) => {
+                  // ✅ si falla el logo, lo ocultamos y listo (nada de alt flotando)
+                  e.currentTarget.style.display = "none";
+                }}
+              />
               <div className="w-32 h-[1px] bg-brand-brown/30 mb-4" />
               <p className="text-brand-brown font-black tracking-[0.35em] uppercase text-[9px] md:text-[10px] opacity-80">
                 Refugio de Mar · Estancia Única
@@ -48,9 +64,11 @@ export default function Hero() {
         </div>
       </div>
 
-      {/* ✅ más abajo + por encima + sin interferir */}
-      <div className="absolute bottom-6 md:bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-3 z-20 pointer-events-none">
-        <span className="text-[10px] font-black uppercase tracking-[0.3em] text-brand-brown/40">Descubrir</span>
+      {/* ✅ Descubrir siempre visible, no se pisa */}
+      <div className="absolute bottom-8 md:bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-3 z-30 pointer-events-none">
+        <span className="text-[10px] font-black uppercase tracking-[0.3em] text-brand-brown/40">
+          Descubrir
+        </span>
         <div className="w-[1px] h-12 bg-gradient-to-b from-brand-brown/40 to-transparent" />
       </div>
     </section>

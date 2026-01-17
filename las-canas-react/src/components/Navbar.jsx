@@ -29,13 +29,17 @@ export default function Navbar() {
 
   const extra = [
     { name: "Galería", href: "#gallery" },
-    { name: "Ubicación", href: "#location" }, // si ya la agregaste
+    { name: "Ubicación", href: "#location" },
     { name: "Contacto", href: "#contact" },
-    { name: "Instagram", href: "https://www.instagram.com/lascaniasmardecobo?igsh=a2htcW8zdmp1aGY5", external: true },
-    { name: "Términos", href: "#terms" }, // si ya la agregaste
+    {
+      name: "Instagram",
+      href: "https://www.instagram.com/lascaniasmardecobo?igsh=a2htcW8zdmp1aGY5",
+      external: true,
+    },
+    { name: "Términos", href: "#terms" },
   ];
 
-  const linkClass = `text-[11px] font-black tracking-[0.22em] uppercase hover:text-brand-accent transition-colors ${
+  const linkClass = `flex items-center leading-none text-[11px] font-black tracking-[0.22em] uppercase hover:text-brand-accent transition-colors ${
     isScrolled ? "text-brand-brown" : "text-brand-brown md:text-white lg:text-brand-brown"
   }`;
 
@@ -56,17 +60,19 @@ export default function Navbar() {
           <div className="w-12 h-12 md:w-14 md:h-14 flex items-center justify-center rounded-full overflow-hidden bg-brand-beige/40 border border-white/30 shadow-sm">
             <img
               src="/logo.PNG"
-              alt=""               // ✅ evita que aparezca “Las Cañas” fantasma si el img falla
-              aria-hidden="true"   // ✅ accesibilidad: el link ya tiene aria-label
-              className="w-full h-full object-contain logo-shadow block"
+              alt=""
+              aria-hidden="true"
+              className="w-full h-full object-contain logo-shadow block select-none"
+              draggable="false"
               loading="eager"
               onError={(e) => {
-                // fallback: un círculo con LC (sin texto suelto por la pantalla)
                 e.currentTarget.style.display = "none";
-                e.currentTarget.parentElement.innerHTML =
-                  '<div class="w-full h-full flex items-center justify-center bg-brand-beige/60"><span class="serif font-bold text-brand-brown">LC</span></div>';
               }}
             />
+            {/* fallback visual sin texto */}
+            <div className="w-full h-full hidden items-center justify-center bg-brand-beige/60">
+              <span className="serif font-bold text-brand-brown">LC</span>
+            </div>
           </div>
 
           <div className="flex flex-col">
@@ -90,20 +96,23 @@ export default function Navbar() {
         {/* Desktop */}
         <ul className="hidden lg:flex items-center space-x-10">
           {links.map((l) => (
-            <li key={l.name}>
+            <li key={l.name} className="flex items-center">
               <a href={l.href} className={linkClass}>
                 {l.name}
               </a>
             </li>
           ))}
 
-          <li className="relative" ref={dropRef}>
+          <li className="relative flex items-center" ref={dropRef}>
             <button
               onClick={() => setDropOpen((v) => !v)}
-              className={`${linkClass} flex items-center gap-2`}
+              className={`${linkClass} gap-2`}
               type="button"
             >
-              Explorar <span className={`transition-transform duration-300 ${dropOpen ? "rotate-180" : ""}`}>▾</span>
+              Explorar{" "}
+              <span className={`transition-transform duration-300 ${dropOpen ? "rotate-180" : ""}`}>
+                ▾
+              </span>
             </button>
 
             <div
@@ -134,7 +143,7 @@ export default function Navbar() {
             </div>
           </li>
 
-          <li>
+          <li className="flex items-center">
             <a
               href="/reservar.html"
               className="bg-brand-brown hover:bg-black text-brand-cream px-10 py-4 rounded-full text-[10px] font-black uppercase tracking-[0.24em] transition-all shadow-xl hover:shadow-brand-brown/30"
@@ -171,8 +180,15 @@ export default function Navbar() {
           &times;
         </button>
 
-        <div className="w-24 h-24 mb-2 rounded-full overflow-hidden bg-brand-beige/40 border border-white/30 shadow-sm">
-          <img src="/logo.PNG" alt="" aria-hidden="true" className="w-full h-full object-contain block" />
+        <div className="w-24 h-24 mb-2 rounded-full overflow-hidden bg-brand-beige/40 border border-white/30 shadow-sm flex items-center justify-center">
+          <img
+            src="/logo.PNG"
+            alt=""
+            aria-hidden="true"
+            className="w-full h-full object-contain block select-none"
+            draggable="false"
+            onError={(e) => (e.currentTarget.style.display = "none")}
+          />
         </div>
 
         {[...links, ...extra.filter((x) => !x.external)].map((l) => (
