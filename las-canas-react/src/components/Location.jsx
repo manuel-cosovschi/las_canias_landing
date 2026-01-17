@@ -1,7 +1,7 @@
 export default function Location() {
   // 📍 Ubicación exacta – Las Cañas, Mar de Cobo
   const googleMapsLink =
-    "https://maps.app.goo.gl/Y4pXNaTYMhq2seEV9?g_st=ic";
+    "https://maps.app.goo.gl/p9P4HvCc21jQYQm16";
 
   // Embed basado en esa ubicación (centrado en el punto real)
   const mapEmbed =
