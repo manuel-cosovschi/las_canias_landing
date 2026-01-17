@@ -1,4 +1,3 @@
-// src/components/Hero.jsx
 export default function Hero() {
   return (
     <section id="home" className="relative h-screen flex items-center justify-center overflow-hidden">
@@ -12,7 +11,8 @@ export default function Hero() {
         <div className="absolute inset-0 bg-gradient-to-t from-brand-cream via-transparent to-black/25" />
       </div>
 
-      <div className="container mx-auto px-6 relative z-10 text-center">
+      {/* CLAVE: le damos padding abajo para que “Descubrir” nunca quede pegado */}
+      <div className="container mx-auto px-6 relative z-10 text-center pb-28 md:pb-24">
         <div className="mb-10 flex justify-center">
           <div className="bg-brand-beige p-2 rounded-[3.5rem] shadow-2xl border border-white/30 max-w-md w-full overflow-hidden">
             <div className="bg-brand-beige border-4 border-white/40 rounded-[3rem] p-10 md:p-12 flex flex-col items-center">
@@ -46,11 +46,9 @@ export default function Hero() {
         </div>
       </div>
 
-      {/* MÁS AIRE: separo “Descubrir” de los botones */}
-      <div className="absolute bottom-4 sm:bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-5">
-        <span className="text-[10px] font-black uppercase tracking-[0.3em] text-brand-brown/40">
-          Descubrir
-        </span>
+      {/* Vuelve a una altura segura (y con gap real) */}
+      <div className="absolute bottom-10 md:bottom-12 left-1/2 -translate-x-1/2 flex flex-col items-center gap-5">
+        <span className="text-[10px] font-black uppercase tracking-[0.3em] text-brand-brown/40">Descubrir</span>
         <div className="w-[1px] h-12 bg-gradient-to-b from-brand-brown/40 to-transparent" />
       </div>
     </section>

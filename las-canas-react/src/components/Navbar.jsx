@@ -1,4 +1,3 @@
-// src/components/Navbar.jsx
 import { useEffect, useRef, useState } from "react";
 
 export default function Navbar() {
@@ -33,7 +32,6 @@ export default function Navbar() {
 
   const extra = [
     { name: "Galería", href: "#gallery" },
-    // Ubicación y Términos vienen en el Paso 3/5
     { name: "Contacto", href: "#contact" },
   ];
 
@@ -50,13 +48,16 @@ export default function Navbar() {
       <div className="container mx-auto px-6 flex justify-between items-center">
         <a href="#home" className="flex items-center gap-4 group" onClick={() => setMobileOpen(false)}>
           <div className="w-12 h-12 md:w-14 md:h-14 flex items-center justify-center transition-transform duration-500 group-hover:scale-110">
-            {/* IMPORTANTE: sin logo-shadow acá para evitar “mancha/borroso” */}
+            {/* SIN sombras ni filtros: elimina el “parche borroso” */}
             <img
               src="/logo.PNG"
               alt="Las Cañas"
-              className="w-full h-full object-contain drop-shadow-[0_10px_22px_rgba(0,0,0,0.10)]"
+              className="w-full h-full object-contain filter-none"
+              style={{ filter: "none" }}
+              draggable="false"
             />
           </div>
+
           <div className="flex flex-col">
             <span
               className={`text-xl font-bold tracking-tight leading-none serif ${
@@ -92,9 +93,7 @@ export default function Navbar() {
               type="button"
             >
               Explorar{" "}
-              <span className={`transition-transform duration-300 ${dropOpen ? "rotate-180" : ""}`}>
-                ▾
-              </span>
+              <span className={`transition-transform duration-300 ${dropOpen ? "rotate-180" : ""}`}>▾</span>
             </button>
 
             <div
@@ -162,16 +161,12 @@ export default function Navbar() {
           mobileOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >
-        <button
-          className="absolute top-6 right-6 p-4 text-4xl text-brand-brown"
-          onClick={() => setMobileOpen(false)}
-          type="button"
-        >
+        <button className="absolute top-6 right-6 p-4 text-4xl text-brand-brown" onClick={() => setMobileOpen(false)} type="button">
           &times;
         </button>
 
         <div className="w-24 h-24 mb-2">
-          <img src="/logo.PNG" alt="Logo" className="w-full h-full object-contain drop-shadow-[0_14px_28px_rgba(0,0,0,0.12)]" />
+          <img src="/logo.PNG" alt="Logo" className="w-full h-full object-contain filter-none" style={{ filter: "none" }} />
         </div>
 
         {[...links, ...extra].map((l) => (
