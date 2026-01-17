@@ -4,7 +4,6 @@ export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [dropOpen, setDropOpen] = useState(false);
-  const [logoOk, setLogoOk] = useState(true);
   const dropRef = useRef(null);
 
   useEffect(() => {
@@ -28,12 +27,13 @@ export default function Navbar() {
     { name: "Nuestras Casas", href: "#casas" },
   ];
 
-  // ✅ SIN Instagram acá (porque va solo en el Footer)
+  // ✅ NO instagram acá
+  // ✅ Términos va al HTML aparte
   const extra = [
     { name: "Galería", href: "#gallery" },
     { name: "Ubicación", href: "#location" },
     { name: "Contacto", href: "#contact" },
-    { name: "Términos", href: "#terms" },
+    { name: "Términos", href: "/terminos.html" },
   ];
 
   const linkClass = `flex items-center leading-none text-[11px] font-black tracking-[0.22em] uppercase hover:text-brand-accent transition-colors ${
@@ -54,22 +54,26 @@ export default function Navbar() {
           className="flex items-center gap-4 group"
           onClick={() => setMobileOpen(false)}
         >
-          <div className="w-12 h-12 md:w-14 md:h-14 rounded-full overflow-hidden bg-brand-beige/40 border border-white/30 shadow-sm flex items-center justify-center">
-            {logoOk ? (
-              <img
-                src="/logo.PNG"
-                alt=""
-                aria-hidden="true"
-                className="w-full h-full object-contain logo-shadow block select-none"
-                draggable="false"
-                loading="eager"
-                onError={() => setLogoOk(false)}
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center bg-brand-beige/60">
-                <span className="serif font-bold text-brand-brown">LC</span>
-              </div>
-            )}
+          <div className="w-12 h-12 md:w-14 md:h-14 flex items-center justify-center rounded-full overflow-hidden bg-brand-beige/40 border border-white/30 shadow-sm">
+            <img
+              src="/logo.PNG" // ✅ así se accede en Vite (sale de /public)
+              alt=""
+              aria-hidden="true"
+              className="w-full h-full object-contain logo-shadow block select-none"
+              draggable="false"
+              loading="eager"
+              onError={(e) => {
+                e.currentTarget.style.display = "none";
+                const parent = e.currentTarget.parentElement;
+                if (parent) {
+                  parent.classList.add("flex");
+                  parent.classList.add("items-center");
+                  parent.classList.add("justify-center");
+                  parent.innerHTML =
+                    '<span class="serif font-bold text-brand-brown select-none">LC</span>';
+                }
+              }}
+            />
           </div>
 
           <div className="flex flex-col">
@@ -114,7 +118,9 @@ export default function Navbar() {
 
             <div
               className={`absolute top-full right-0 mt-4 w-56 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden transition-all duration-300 origin-top ${
-                dropOpen ? "scale-100 opacity-100 translate-y-0" : "scale-95 opacity-0 -translate-y-2 pointer-events-none"
+                dropOpen
+                  ? "scale-100 opacity-100 translate-y-0"
+                  : "scale-95 opacity-0 -translate-y-2 pointer-events-none"
               }`}
             >
               {extra.map((it) => (
@@ -160,7 +166,11 @@ export default function Navbar() {
               mobileOpen ? "rotate-45 translate-y-2" : ""
             }`}
           />
-          <div className={`w-6 h-0.5 bg-current mb-1.5 transition-all ${mobileOpen ? "opacity-0" : ""}`} />
+          <div
+            className={`w-6 h-0.5 bg-current mb-1.5 transition-all ${
+              mobileOpen ? "opacity-0" : ""
+            }`}
+          />
           <div
             className={`w-6 h-0.5 bg-current transition-all ${
               mobileOpen ? "-rotate-45 -translate-y-2" : ""
@@ -184,28 +194,33 @@ export default function Navbar() {
         </button>
 
         <div className="w-24 h-24 mb-2 rounded-full overflow-hidden bg-brand-beige/40 border border-white/30 shadow-sm flex items-center justify-center">
-          {logoOk ? (
-            <img
-              src="/logo.PNG"
-              alt=""
-              aria-hidden="true"
-              className="w-full h-full object-contain block select-none"
-              draggable="false"
-              onError={() => setLogoOk(false)}
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center bg-brand-beige/60">
-              <span className="serif font-bold text-brand-brown text-2xl">LC</span>
-            </div>
-          )}
+          <img
+            src="/logo.PNG"
+            alt=""
+            aria-hidden="true"
+            className="w-full h-full object-contain block select-none"
+            draggable="false"
+            onError={(e) => (e.currentTarget.style.display = "none")}
+          />
         </div>
 
-        {/* ✅ Mobile: links + extra (sin Instagram) */}
-        {[...links, ...extra].map((l) => (
+        {[...links].map((l) => (
           <a
             key={l.name}
             href={l.href}
             className="text-2xl font-bold text-brand-brown serif tracking-wider hover:text-brand-accent transition-colors"
+            onClick={() => setMobileOpen(false)}
+          >
+            {l.name}
+          </a>
+        ))}
+
+        {/* Explorar items también en mobile */}
+        {extra.map((l) => (
+          <a
+            key={l.name}
+            href={l.href}
+            className="text-lg font-bold text-brand-brown serif tracking-wider hover:text-brand-accent transition-colors"
             onClick={() => setMobileOpen(false)}
           >
             {l.name}
