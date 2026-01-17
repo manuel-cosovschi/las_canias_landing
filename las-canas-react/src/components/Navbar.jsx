@@ -6,9 +6,6 @@ export default function Navbar() {
   const [dropOpen, setDropOpen] = useState(false);
   const dropRef = useRef(null);
 
-  const IG_URL =
-    "https://www.instagram.com/lascaniasmardecobo?igsh=a2htcW8zdmp1aGY5";
-
   useEffect(() => {
     const onScroll = () => setIsScrolled(window.scrollY > 20);
     window.addEventListener("scroll", onScroll);
@@ -32,10 +29,13 @@ export default function Navbar() {
 
   const extra = [
     { name: "Galería", href: "#gallery" },
+    { name: "Ubicación", href: "#location" },
     { name: "Contacto", href: "#contact" },
+    { name: "Términos", href: "#terms" },
+    { name: "Instagram", href: "https://www.instagram.com/lascaniasmardecobo?igsh=a2htcW8zdmp1aGY5", external: true },
   ];
 
-  const linkClass = `text-[11px] font-black tracking-[0.22em] uppercase hover:text-brand-accent transition-colors leading-none ${
+  const linkClass = `text-[11px] font-black tracking-[0.22em] uppercase hover:text-brand-accent transition-colors ${
     isScrolled ? "text-brand-brown" : "text-brand-brown md:text-white lg:text-brand-brown"
   }`;
 
@@ -46,19 +46,20 @@ export default function Navbar() {
       }`}
     >
       <div className="container mx-auto px-6 flex justify-between items-center">
-        <a href="#home" className="flex items-center gap-4 group" onClick={() => setMobileOpen(false)}>
+        {/* Brand (con fondo para tapar el hero detrás) */}
+        <a
+          href="#home"
+          className={`flex items-center gap-4 group rounded-full px-3 py-2 transition-all ${
+            isScrolled
+              ? "bg-white/80"
+              : "bg-brand-cream/70 backdrop-blur-md shadow-sm border border-white/40"
+          }`}
+          onClick={() => setMobileOpen(false)}
+        >
           <div className="w-12 h-12 md:w-14 md:h-14 flex items-center justify-center transition-transform duration-500 group-hover:scale-110">
-            {/* SIN sombras ni filtros: elimina el “parche borroso” */}
-            <img
-              src="/logo.PNG"
-              alt="Las Cañas"
-              className="w-full h-full object-contain filter-none"
-              style={{ filter: "none" }}
-              draggable="false"
-            />
+            <img src="/logo.PNG" alt="Las Cañas" className="w-full h-full object-contain logo-shadow" />
           </div>
-
-          <div className="flex flex-col">
+          <div className="flex flex-col pr-2">
             <span
               className={`text-xl font-bold tracking-tight leading-none serif ${
                 isScrolled ? "text-brand-brown" : "text-brand-brown md:text-white lg:text-brand-brown"
@@ -79,21 +80,20 @@ export default function Navbar() {
         {/* Desktop */}
         <ul className="hidden lg:flex items-center space-x-10">
           {links.map((l) => (
-            <li key={l.name} className="flex items-center">
+            <li key={l.name}>
               <a href={l.href} className={linkClass}>
                 {l.name}
               </a>
             </li>
           ))}
 
-          <li className="relative flex items-center" ref={dropRef}>
+          <li className="relative" ref={dropRef}>
             <button
               onClick={() => setDropOpen((v) => !v)}
-              className={`${linkClass} inline-flex items-center gap-2`}
+              className={`${linkClass} flex items-center gap-2`}
               type="button"
             >
-              Explorar{" "}
-              <span className={`transition-transform duration-300 ${dropOpen ? "rotate-180" : ""}`}>▾</span>
+              Explorar <span className={`transition-transform duration-300 ${dropOpen ? "rotate-180" : ""}`}>▾</span>
             </button>
 
             <div
@@ -101,26 +101,29 @@ export default function Navbar() {
                 dropOpen ? "scale-100 opacity-100 translate-y-0" : "scale-95 opacity-0 -translate-y-2 pointer-events-none"
               }`}
             >
-              {extra.map((it) => (
-                <a
-                  key={it.name}
-                  href={it.href}
-                  className="block px-6 py-4 text-[11px] font-black tracking-[0.22em] uppercase text-brand-brown hover:bg-brand-cream hover:text-brand-accent transition-colors border-b border-gray-50 last:border-0"
-                  onClick={() => setDropOpen(false)}
-                >
-                  {it.name}
-                </a>
-              ))}
-
-              <a
-                href={IG_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block px-6 py-4 text-[11px] font-black tracking-[0.22em] uppercase text-brand-brown hover:bg-brand-cream hover:text-brand-accent transition-colors border-b border-gray-50"
-                onClick={() => setDropOpen(false)}
-              >
-                Instagram ↗
-              </a>
+              {extra.map((it) =>
+                it.external ? (
+                  <a
+                    key={it.name}
+                    href={it.href}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="block px-6 py-4 text-[11px] font-black tracking-[0.22em] uppercase text-brand-brown hover:bg-brand-cream hover:text-brand-accent transition-colors border-b border-gray-50 last:border-0"
+                    onClick={() => setDropOpen(false)}
+                  >
+                    {it.name}
+                  </a>
+                ) : (
+                  <a
+                    key={it.name}
+                    href={it.href}
+                    className="block px-6 py-4 text-[11px] font-black tracking-[0.22em] uppercase text-brand-brown hover:bg-brand-cream hover:text-brand-accent transition-colors border-b border-gray-50 last:border-0"
+                    onClick={() => setDropOpen(false)}
+                  >
+                    {it.name}
+                  </a>
+                )
+              )}
 
               <a
                 href="/admin.html"
@@ -132,7 +135,7 @@ export default function Navbar() {
             </div>
           </li>
 
-          <li className="flex items-center">
+          <li>
             <a
               href="/reservar.html"
               className="bg-brand-brown hover:bg-black text-brand-cream px-10 py-4 rounded-full text-[10px] font-black uppercase tracking-[0.24em] transition-all shadow-xl hover:shadow-brand-brown/30"
@@ -166,10 +169,10 @@ export default function Navbar() {
         </button>
 
         <div className="w-24 h-24 mb-2">
-          <img src="/logo.PNG" alt="Logo" className="w-full h-full object-contain filter-none" style={{ filter: "none" }} />
+          <img src="/logo.PNG" alt="Logo" className="w-full h-full object-contain" />
         </div>
 
-        {[...links, ...extra].map((l) => (
+        {[...links, ...extra.filter((e) => !e.external)].map((l) => (
           <a
             key={l.name}
             href={l.href}
@@ -181,13 +184,13 @@ export default function Navbar() {
         ))}
 
         <a
-          href={IG_URL}
+          href="https://www.instagram.com/lascaniasmardecobo?igsh=a2htcW8zdmp1aGY5"
           target="_blank"
-          rel="noopener noreferrer"
-          className="text-sm font-black uppercase tracking-[0.22em] text-brand-brown/70 hover:text-brand-accent"
+          rel="noreferrer"
+          className="text-lg font-bold text-brand-brown serif tracking-wider hover:text-brand-accent transition-colors"
           onClick={() => setMobileOpen(false)}
         >
-          Instagram ↗
+          Instagram
         </a>
 
         <a
