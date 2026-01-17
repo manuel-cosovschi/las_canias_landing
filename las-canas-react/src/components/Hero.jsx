@@ -1,3 +1,4 @@
+// src/components/Hero.jsx
 export default function Hero() {
   return (
     <section id="home" className="relative h-screen flex items-center justify-center overflow-hidden">
@@ -45,8 +46,11 @@ export default function Hero() {
         </div>
       </div>
 
-      <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-3">
-        <span className="text-[10px] font-black uppercase tracking-[0.3em] text-brand-brown/40">Descubrir</span>
+      {/* MÁS AIRE: separo “Descubrir” de los botones */}
+      <div className="absolute bottom-4 sm:bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-5">
+        <span className="text-[10px] font-black uppercase tracking-[0.3em] text-brand-brown/40">
+          Descubrir
+        </span>
         <div className="w-[1px] h-12 bg-gradient-to-b from-brand-brown/40 to-transparent" />
       </div>
     </section>

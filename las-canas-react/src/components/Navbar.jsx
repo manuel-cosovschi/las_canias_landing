@@ -1,3 +1,4 @@
+// src/components/Navbar.jsx
 import { useEffect, useRef, useState } from "react";
 
 export default function Navbar() {
@@ -5,6 +6,9 @@ export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [dropOpen, setDropOpen] = useState(false);
   const dropRef = useRef(null);
+
+  const IG_URL =
+    "https://www.instagram.com/lascaniasmardecobo?igsh=a2htcW8zdmp1aGY5";
 
   useEffect(() => {
     const onScroll = () => setIsScrolled(window.scrollY > 20);
@@ -29,10 +33,11 @@ export default function Navbar() {
 
   const extra = [
     { name: "Galería", href: "#gallery" },
+    // Ubicación y Términos vienen en el Paso 3/5
     { name: "Contacto", href: "#contact" },
   ];
 
-  const linkClass = `text-[11px] font-black tracking-[0.22em] uppercase hover:text-brand-accent transition-colors ${
+  const linkClass = `text-[11px] font-black tracking-[0.22em] uppercase hover:text-brand-accent transition-colors leading-none ${
     isScrolled ? "text-brand-brown" : "text-brand-brown md:text-white lg:text-brand-brown"
   }`;
 
@@ -45,15 +50,26 @@ export default function Navbar() {
       <div className="container mx-auto px-6 flex justify-between items-center">
         <a href="#home" className="flex items-center gap-4 group" onClick={() => setMobileOpen(false)}>
           <div className="w-12 h-12 md:w-14 md:h-14 flex items-center justify-center transition-transform duration-500 group-hover:scale-110">
-            <img src="/logo.PNG" alt="Las Cañas" className="w-full h-full object-contain logo-shadow" />
+            {/* IMPORTANTE: sin logo-shadow acá para evitar “mancha/borroso” */}
+            <img
+              src="/logo.PNG"
+              alt="Las Cañas"
+              className="w-full h-full object-contain drop-shadow-[0_10px_22px_rgba(0,0,0,0.10)]"
+            />
           </div>
           <div className="flex flex-col">
-            <span className={`text-xl font-bold tracking-tight leading-none serif ${isScrolled ? "text-brand-brown" : "text-brand-brown md:text-white lg:text-brand-brown"}`}>
+            <span
+              className={`text-xl font-bold tracking-tight leading-none serif ${
+                isScrolled ? "text-brand-brown" : "text-brand-brown md:text-white lg:text-brand-brown"
+              }`}
+            >
               Las Cañas
             </span>
-            <span className={`text-[9px] uppercase tracking-[0.3em] font-semibold mt-1 ${
-              isScrolled ? "text-brand-accent" : "text-brand-accent md:text-brand-beige lg:text-brand-accent"
-            }`}>
+            <span
+              className={`text-[9px] uppercase tracking-[0.3em] font-semibold mt-1 ${
+                isScrolled ? "text-brand-accent" : "text-brand-accent md:text-brand-beige lg:text-brand-accent"
+              }`}
+            >
               Mar de Cobo
             </span>
           </div>
@@ -62,24 +78,27 @@ export default function Navbar() {
         {/* Desktop */}
         <ul className="hidden lg:flex items-center space-x-10">
           {links.map((l) => (
-            <li key={l.name}>
+            <li key={l.name} className="flex items-center">
               <a href={l.href} className={linkClass}>
                 {l.name}
               </a>
             </li>
           ))}
 
-          <li className="relative" ref={dropRef}>
+          <li className="relative flex items-center" ref={dropRef}>
             <button
               onClick={() => setDropOpen((v) => !v)}
-              className={`${linkClass} flex items-center gap-2`}
+              className={`${linkClass} inline-flex items-center gap-2`}
               type="button"
             >
-              Explorar <span className={`transition-transform duration-300 ${dropOpen ? "rotate-180" : ""}`}>▾</span>
+              Explorar{" "}
+              <span className={`transition-transform duration-300 ${dropOpen ? "rotate-180" : ""}`}>
+                ▾
+              </span>
             </button>
 
             <div
-              className={`absolute top-full right-0 mt-4 w-52 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden transition-all duration-300 origin-top ${
+              className={`absolute top-full right-0 mt-4 w-56 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden transition-all duration-300 origin-top ${
                 dropOpen ? "scale-100 opacity-100 translate-y-0" : "scale-95 opacity-0 -translate-y-2 pointer-events-none"
               }`}
             >
@@ -93,6 +112,17 @@ export default function Navbar() {
                   {it.name}
                 </a>
               ))}
+
+              <a
+                href={IG_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block px-6 py-4 text-[11px] font-black tracking-[0.22em] uppercase text-brand-brown hover:bg-brand-cream hover:text-brand-accent transition-colors border-b border-gray-50"
+                onClick={() => setDropOpen(false)}
+              >
+                Instagram ↗
+              </a>
+
               <a
                 href="/admin.html"
                 className="block px-6 py-4 text-[11px] font-black tracking-[0.22em] uppercase text-brand-brown/60 hover:bg-brand-cream hover:text-brand-accent transition-colors"
@@ -103,7 +133,7 @@ export default function Navbar() {
             </div>
           </li>
 
-          <li>
+          <li className="flex items-center">
             <a
               href="/reservar.html"
               className="bg-brand-brown hover:bg-black text-brand-cream px-10 py-4 rounded-full text-[10px] font-black uppercase tracking-[0.24em] transition-all shadow-xl hover:shadow-brand-brown/30"
@@ -132,12 +162,16 @@ export default function Navbar() {
           mobileOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >
-        <button className="absolute top-6 right-6 p-4 text-4xl text-brand-brown" onClick={() => setMobileOpen(false)} type="button">
+        <button
+          className="absolute top-6 right-6 p-4 text-4xl text-brand-brown"
+          onClick={() => setMobileOpen(false)}
+          type="button"
+        >
           &times;
         </button>
 
         <div className="w-24 h-24 mb-2">
-          <img src="/logo.PNG" alt="Logo" className="w-full h-full object-contain" />
+          <img src="/logo.PNG" alt="Logo" className="w-full h-full object-contain drop-shadow-[0_14px_28px_rgba(0,0,0,0.12)]" />
         </div>
 
         {[...links, ...extra].map((l) => (
@@ -150,6 +184,16 @@ export default function Navbar() {
             {l.name}
           </a>
         ))}
+
+        <a
+          href={IG_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-sm font-black uppercase tracking-[0.22em] text-brand-brown/70 hover:text-brand-accent"
+          onClick={() => setMobileOpen(false)}
+        >
+          Instagram ↗
+        </a>
 
         <a
           href="/reservar.html"
