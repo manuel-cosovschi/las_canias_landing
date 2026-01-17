@@ -2,7 +2,7 @@ export default function Hero() {
   return (
     <section
       id="home"
-      className="relative h-screen flex items-center justify-center overflow-hidden pt-24 md:pt-28"
+      className="relative min-h-screen flex items-center justify-center overflow-hidden pt-28 md:pt-32 pb-20"
     >
       <div className="absolute inset-0 z-0">
         <img
@@ -48,7 +48,8 @@ export default function Hero() {
         </div>
       </div>
 
-      <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-3">
+      {/* ✅ más abajo + por encima + sin interferir */}
+      <div className="absolute bottom-6 md:bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-3 z-20 pointer-events-none">
         <span className="text-[10px] font-black uppercase tracking-[0.3em] text-brand-brown/40">Descubrir</span>
         <div className="w-[1px] h-12 bg-gradient-to-b from-brand-brown/40 to-transparent" />
       </div>

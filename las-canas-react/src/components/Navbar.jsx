@@ -29,10 +29,10 @@ export default function Navbar() {
 
   const extra = [
     { name: "Galería", href: "#gallery" },
-    { name: "Ubicación", href: "#location" },
+    { name: "Ubicación", href: "#location" }, // si ya la agregaste
     { name: "Contacto", href: "#contact" },
-    { name: "Términos", href: "#terms" },
     { name: "Instagram", href: "https://www.instagram.com/lascaniasmardecobo?igsh=a2htcW8zdmp1aGY5", external: true },
+    { name: "Términos", href: "#terms" }, // si ya la agregaste
   ];
 
   const linkClass = `text-[11px] font-black tracking-[0.22em] uppercase hover:text-brand-accent transition-colors ${
@@ -46,20 +46,30 @@ export default function Navbar() {
       }`}
     >
       <div className="container mx-auto px-6 flex justify-between items-center">
-        {/* Brand (con fondo para tapar el hero detrás) */}
+        {/* Brand */}
         <a
           href="#home"
-          className={`flex items-center gap-4 group rounded-full px-3 py-2 transition-all ${
-            isScrolled
-              ? "bg-white/80"
-              : "bg-brand-cream/70 backdrop-blur-md shadow-sm border border-white/40"
-          }`}
+          aria-label="Ir al inicio - Las Cañas"
+          className="flex items-center gap-4 group"
           onClick={() => setMobileOpen(false)}
         >
-          <div className="w-12 h-12 md:w-14 md:h-14 flex items-center justify-center transition-transform duration-500 group-hover:scale-110">
-            <img src="/logo.PNG" alt="Las Cañas" className="w-full h-full object-contain logo-shadow" />
+          <div className="w-12 h-12 md:w-14 md:h-14 flex items-center justify-center rounded-full overflow-hidden bg-brand-beige/40 border border-white/30 shadow-sm">
+            <img
+              src="/logo.PNG"
+              alt=""               // ✅ evita que aparezca “Las Cañas” fantasma si el img falla
+              aria-hidden="true"   // ✅ accesibilidad: el link ya tiene aria-label
+              className="w-full h-full object-contain logo-shadow block"
+              loading="eager"
+              onError={(e) => {
+                // fallback: un círculo con LC (sin texto suelto por la pantalla)
+                e.currentTarget.style.display = "none";
+                e.currentTarget.parentElement.innerHTML =
+                  '<div class="w-full h-full flex items-center justify-center bg-brand-beige/60"><span class="serif font-bold text-brand-brown">LC</span></div>';
+              }}
+            />
           </div>
-          <div className="flex flex-col pr-2">
+
+          <div className="flex flex-col">
             <span
               className={`text-xl font-bold tracking-tight leading-none serif ${
                 isScrolled ? "text-brand-brown" : "text-brand-brown md:text-white lg:text-brand-brown"
@@ -101,29 +111,18 @@ export default function Navbar() {
                 dropOpen ? "scale-100 opacity-100 translate-y-0" : "scale-95 opacity-0 -translate-y-2 pointer-events-none"
               }`}
             >
-              {extra.map((it) =>
-                it.external ? (
-                  <a
-                    key={it.name}
-                    href={it.href}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="block px-6 py-4 text-[11px] font-black tracking-[0.22em] uppercase text-brand-brown hover:bg-brand-cream hover:text-brand-accent transition-colors border-b border-gray-50 last:border-0"
-                    onClick={() => setDropOpen(false)}
-                  >
-                    {it.name}
-                  </a>
-                ) : (
-                  <a
-                    key={it.name}
-                    href={it.href}
-                    className="block px-6 py-4 text-[11px] font-black tracking-[0.22em] uppercase text-brand-brown hover:bg-brand-cream hover:text-brand-accent transition-colors border-b border-gray-50 last:border-0"
-                    onClick={() => setDropOpen(false)}
-                  >
-                    {it.name}
-                  </a>
-                )
-              )}
+              {extra.map((it) => (
+                <a
+                  key={it.name}
+                  href={it.href}
+                  target={it.external ? "_blank" : undefined}
+                  rel={it.external ? "noopener noreferrer" : undefined}
+                  className="block px-6 py-4 text-[11px] font-black tracking-[0.22em] uppercase text-brand-brown hover:bg-brand-cream hover:text-brand-accent transition-colors border-b border-gray-50 last:border-0"
+                  onClick={() => setDropOpen(false)}
+                >
+                  {it.name}
+                </a>
+              ))}
 
               <a
                 href="/admin.html"
@@ -164,15 +163,19 @@ export default function Navbar() {
           mobileOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >
-        <button className="absolute top-6 right-6 p-4 text-4xl text-brand-brown" onClick={() => setMobileOpen(false)} type="button">
+        <button
+          className="absolute top-6 right-6 p-4 text-4xl text-brand-brown"
+          onClick={() => setMobileOpen(false)}
+          type="button"
+        >
           &times;
         </button>
 
-        <div className="w-24 h-24 mb-2">
-          <img src="/logo.PNG" alt="Logo" className="w-full h-full object-contain" />
+        <div className="w-24 h-24 mb-2 rounded-full overflow-hidden bg-brand-beige/40 border border-white/30 shadow-sm">
+          <img src="/logo.PNG" alt="" aria-hidden="true" className="w-full h-full object-contain block" />
         </div>
 
-        {[...links, ...extra.filter((e) => !e.external)].map((l) => (
+        {[...links, ...extra.filter((x) => !x.external)].map((l) => (
           <a
             key={l.name}
             href={l.href}
@@ -186,8 +189,8 @@ export default function Navbar() {
         <a
           href="https://www.instagram.com/lascaniasmardecobo?igsh=a2htcW8zdmp1aGY5"
           target="_blank"
-          rel="noreferrer"
-          className="text-lg font-bold text-brand-brown serif tracking-wider hover:text-brand-accent transition-colors"
+          rel="noopener noreferrer"
+          className="text-sm font-black uppercase tracking-[0.22em] text-brand-brown/70 hover:text-brand-accent"
           onClick={() => setMobileOpen(false)}
         >
           Instagram
