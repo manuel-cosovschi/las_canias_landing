@@ -269,7 +269,63 @@
         <div><strong>Fechas:</strong> <span id="resDates">-</span></div>
         <div><strong>Personas:</strong> <span id="resGuests">-</span></div>
       </div>
+      <!-- UX: Qué sigue ahora (checklist + HOLD) -->
+      <div class="mt-4 p-5 rounded-2xl bg-white/70 border border-brand-beige">
+        <div class="flex items-center justify-between gap-3">
+          <div class="font-semibold">Qué sigue ahora</div>
+          <div id="resStatusBadge" class="text-xs font-semibold px-3 py-1 rounded-full bg-yellow-100 text-yellow-900 border border-yellow-200">
+            Estado: HOLD (pendiente)
+          </div>
+        </div>
 
+        <p class="mt-2 text-sm text-brand-brown/90">
+          Tu solicitud quedó en <strong>HOLD</strong>: la casa se guarda para vos por <strong>6 horas</strong>.
+          Durante ese tiempo necesitás <strong>enviar el comprobante</strong> para que los dueños puedan confirmarla.
+        </p>
+
+        <div class="mt-3 text-sm">
+          <div class="flex items-center justify-between gap-3">
+            <div class="text-brand-accent">Tiempo restante del HOLD</div>
+            <div id="holdCountdown" class="font-semibold">-</div>
+          </div>
+          <div class="mt-2 h-2 w-full rounded-full bg-brand-beige/40 overflow-hidden">
+            <div id="holdBar" class="h-full w-0 bg-brand-brown"></div>
+          </div>
+        </div>
+
+        <div class="mt-4 grid sm:grid-cols-3 gap-3 text-sm">
+          <div id="step1" class="p-3 rounded-xl border border-brand-beige bg-white/60">
+            <div class="font-semibold">1) Transferí la seña</div>
+            <div class="text-brand-accent text-xs mt-1">
+              Monto: <span id="uxDepositAmount">-</span>
+            </div>
+          </div>
+
+          <div id="step2" class="p-3 rounded-xl border border-brand-beige bg-white/60">
+            <div class="font-semibold">2) Subí el comprobante</div>
+            <div class="text-brand-accent text-xs mt-1">
+              Abajo tenés el botón para enviarlo.
+            </div>
+          </div>
+
+          <div id="step3" class="p-3 rounded-xl border border-brand-beige bg-white/60">
+            <div class="font-semibold">3) Confirmación final</div>
+            <div class="text-brand-accent text-xs mt-1">
+              Los dueños revisan el pago y confirman la reserva.
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-4 p-3 rounded-xl bg-brand-cream border border-brand-beige text-sm">
+          <div class="font-semibold mb-1">Seña y saldo</div>
+          <div>
+            <strong>Seña (50%):</strong> <span id="uxDepositAmount2">-</span>
+          </div>
+          <div class="mt-1 text-brand-accent text-xs">
+            El <strong>saldo restante</strong> se coordina con los dueños cerca de la fecha de tu estadía.
+          </div>
+        </div>
+      </div>
       <div class="mt-4 p-4 rounded-2xl bg-brand-cream border border-brand-beige text-sm">
         <div class="font-semibold mb-2">Transferencia bancaria (seña 50%)</div>
 
@@ -292,7 +348,7 @@
         <div>Alias: <strong>Anacarla74</strong></div>
 
         <div class="mt-3">
-          <strong>Referencia / concepto:</strong> <span id="resRef">-</span>
+           <span id="resRef">-</span>
         </div>
       </div>
 
