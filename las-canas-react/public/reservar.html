@@ -1,12 +1,42 @@
-<!-- reservar.html (FINAL) — copiar y pegar entero -->
+<!-- reservar.html (FINAL con estética Las Cañas) — copiar y pegar entero -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Reservar - Las Cañas</title>
+  <meta name="description" content="Reserva tu estadía en Las Cañas, Mar de Cobo. Elegí casa, personas y fechas, completá tus datos y solicitá la reserva por transferencia." />
 
+  <!-- favicon -->
+  <link rel="icon" href="/las-canas-react/public/logo.PNG" type="image/png" />
+  <link rel="apple-touch-icon" href="/las-canas-react/public/logo.PNG" />
+
+  <!-- Fonts (misma estética que index/terminos) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet"
+  />
+
+  <!-- Tailwind CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              beige: "#DED2B9",
+              cream: "#F5F1E9",
+              brown: "#4A3728",
+              accent: "#8C7662",
+            },
+          },
+        },
+      },
+    };
+  </script>
 
   <!-- Flatpickr -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
@@ -14,260 +44,297 @@
   <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
 
   <style>
-    .flatpickr-calendar { font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; }
+    html { scroll-behavior: smooth; scroll-padding-top: 5rem; }
+    body { font-family: "Inter", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background: #F5F1E9; }
+    h1,h2,h3,.serif { font-family: "Playfair Display", serif; }
+    .logo-shadow { filter: drop-shadow(2px 4px 6px rgba(74,55,40,.20)); }
+    .flatpickr-calendar { font-family: "Inter", ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; }
   </style>
 </head>
-<body class="bg-gray-50 text-gray-900">
 
-<header class="bg-white shadow">
-  <div class="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
-    <a href="index.html" class="font-bold text-xl">← Las Cañas</a>
-    <a href="index.html#contact" class="text-blue-600 font-semibold">Contacto</a>
-  </div>
-</header>
+<body class="text-brand-brown overflow-x-hidden">
 
-<main class="max-w-3xl mx-auto px-4 py-10">
-  <h1 class="text-3xl font-bold mb-2">Reservar</h1>
-  <p class="text-gray-600 mb-8">
-    Elegí la casa, personas y fechas. Luego completás tus datos y solicitás la reserva por transferencia.
-  </p>
+  <!-- Header (estética Las Cañas) -->
+  <header class="sticky top-0 z-40 border-b border-brand-beige/60 bg-brand-cream/90 backdrop-blur">
+    <div class="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
+      <a href="index.html" class="flex items-center gap-3 group">
+        <img src="/las-canas-react/public/logo.PNG" alt="Las Cañas" class="w-9 h-9 rounded-xl bg-white/70 p-1 logo-shadow" />
+        <div class="leading-tight">
+          <div class="serif text-lg font-bold tracking-tight">Las Cañas</div>
+          <div class="text-xs text-brand-accent">Mar de Cobo</div>
+        </div>
+      </a>
 
-  <!-- NOTA GRANDE (excepciones) -->
-  <div class="mb-6 p-4 rounded-xl bg-yellow-50 text-sm text-gray-800 border border-yellow-200">
-    <div class="font-semibold mb-1">📌 Importante</div>
-    <div>
-      Si necesitás una excepción (menos días o ajustar un día más/menos), consultanos por <strong>WhatsApp</strong>.
-      <div class="mt-2 font-semibold">👉 PARA EXCEPCIONES DE ESTADÍAS MENORES CONSULTAR POR WHATSAPP.</div>
+      <nav class="flex items-center gap-2">
+        <a href="index.html" class="px-3 py-2 rounded-xl text-sm font-semibold hover:bg-brand-beige/40 transition">
+          ← Volver
+        </a>
+        <a href="index.html#contact" class="px-3 py-2 rounded-xl text-sm font-semibold bg-brand-brown text-brand-cream hover:opacity-90 transition">
+          Contacto
+        </a>
+      </nav>
     </div>
-  </div>
+  </header>
 
-  <div id="statusBox" class="mb-6 p-4 rounded-lg bg-gray-100 text-sm text-gray-700">
-    1) Elegí una casa para empezar.
-  </div>
-
-  <!-- PASO 1 -->
-  <section id="staySection" class="bg-white rounded-xl shadow p-6 mb-6">
-    <h2 class="text-xl font-semibold mb-4">1) Estadía</h2>
-
-    <div id="capacityBanner" class="hidden mb-4 p-3 rounded-lg bg-blue-50 text-sm text-blue-900">
-      <strong>Capacidad:</strong> <span id="capacityText"></span>
-    </div>
-
-    <div class="grid sm:grid-cols-2 gap-4">
-      <div>
-        <label class="block text-sm font-medium mb-1">Casa</label>
-        <select id="house" class="w-full border rounded-lg p-3">
-          <option value="">Seleccionar...</option>
-          <option value="LC1">Las Cañas 1</option>
-          <option value="LC2">Las Cañas 2</option>
-          <option value="LC3">Las Cañas 3</option>
-          <option value="LC4">Las Cañas 4</option>
-          <option value="LC5">Las Cañas 5</option>
-        </select>
-        <p id="houseHint" class="text-xs text-gray-500 mt-1 hidden"></p>
-      </div>
-
-      <div>
-        <label class="block text-sm font-medium mb-1">Personas</label>
-        <input id="guests" type="number" disabled
-          class="w-full border rounded-lg p-3 bg-gray-100"
-          placeholder="Elegí casa primero" min="1">
-      </div>
-
-      <div>
-        <label class="block text-sm font-medium mb-1">Check-in</label>
-        <input id="checkin" type="text" disabled
-          class="w-full border rounded-lg p-3 bg-gray-100"
-          placeholder="Elegí una fecha">
-      </div>
-
-      <div>
-        <label class="block text-sm font-medium mb-1">Check-out</label>
-        <input id="checkout" type="text" disabled
-          class="w-full border rounded-lg p-3 bg-gray-100"
-          placeholder="Elegí una fecha">
-      </div>
-    </div>
-
-    <div id="minNightsBanner" class="mt-4 p-4 rounded-lg bg-yellow-50 text-sm text-gray-800">
-      <div><strong>Mínimo:</strong> <span id="minNightsText">-</span>.</div>
-      <div class="mt-1 text-xs text-gray-600">
-        Si el sistema no habilita tu caso, consultá por WhatsApp (excepciones).
-      </div>
-    </div>
-
-    <!-- PRECIOS (dinámico) -->
-    <div id="priceBanner" class="mt-4 p-4 rounded-lg bg-emerald-50 text-sm text-emerald-900 border border-emerald-200 hidden">
-      <div class="font-semibold mb-1">💰 Precio estimado</div>
-      <div class="grid sm:grid-cols-3 gap-2">
-        <div><strong>Por noche:</strong> <span id="nightPriceText">-</span></div>
-        <div><strong>Noches:</strong> <span id="nightsCountText">-</span></div>
-        <div><strong>Total:</strong> <span id="totalPriceText">-</span></div>
-      </div>
-      <div class="mt-2 text-xs text-emerald-800/80">
-        * Total estimado según tarifas de <strong>Marzo / Abril / Mayo</strong>. Seña: <strong>50%</strong>.
-      </div>
-    </div>
-
-    <!-- AVISO (bloqueo junio+) -->
-    <div id="bookingWindowBanner" class="mt-4 p-4 rounded-lg bg-blue-50 text-sm text-blue-900 border border-blue-200">
-      <div class="font-semibold mb-1">📅 Reservas habilitadas hasta mayo (inclusive)</div>
-      <div>
-        Por el momento el calendario está habilitado hasta el <strong>31/05/2026</strong>.
-        Junio en adelante se habilita más adelante.
-      </div>
-    </div>
-
-    <button id="continue" disabled
-      class="mt-5 w-full py-3 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 transition disabled:opacity-40 disabled:cursor-not-allowed">
-      Continuar
-    </button>
-  </section>
-
-  <!-- PASO 2 -->
-  <section id="guestSection" class="bg-white rounded-xl shadow p-6 mb-6 hidden">
-    <h2 class="text-xl font-semibold mb-4">2) Datos del huésped</h2>
-
-    <div class="grid sm:grid-cols-2 gap-4">
-      <input id="name" class="border rounded-lg p-3" placeholder="Nombre y apellido">
-      <input id="dni" class="border rounded-lg p-3" placeholder="DNI">
-      <input id="email" type="email" class="border rounded-lg p-3" placeholder="Email">
-      <input id="phone" class="border rounded-lg p-3" placeholder="WhatsApp">
-    </div>
-
-    <button id="guestContinue" disabled
-      class="mt-5 w-full py-3 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 transition disabled:opacity-40 disabled:cursor-not-allowed">
-      Continuar
-    </button>
-  </section>
-
-  <!-- PASO 3 -->
-  <section id="paySection" class="bg-white rounded-xl shadow p-6 hidden">
-    <h2 class="text-xl font-semibold mb-4">3) Pago</h2>
-
-    <div class="bg-gray-50 p-4 rounded-lg text-sm text-gray-700">
-      <div><strong>Casa:</strong> <span id="sumHouse">-</span></div>
-      <div><strong>Personas:</strong> <span id="sumGuests">-</span></div>
-      <div><strong>Check-in:</strong> <span id="sumCheckin">-</span> (14:00)</div>
-      <div><strong>Check-out:</strong> <span id="sumCheckout">-</span> (10:00)</div>
-      <div><strong>Precio estimado:</strong> <span id="sumTotalPrice">-</span></div>
-      <div><strong>Seña (50%):</strong> <span id="sumDeposit">-</span></div>
-      <div class="mt-2"><strong>Importante:</strong> Por el momento aceptamos <strong>solo transferencia bancaria</strong>.</div>
-    </div>
-
-    <!-- INFO DE PAGO (VISIBLE ACÁ) -->
-    <div class="mt-4 p-4 rounded-lg bg-yellow-50 text-sm text-gray-800 border border-yellow-200">
-      <div class="font-semibold mb-2">Transferencia bancaria (seña 50%)</div>
-
-      <div class="mb-3">
-        <div class="font-semibold">Banco Macro SA</div>
-        <div>Titular: Ana Carla Fernandez</div>
-        <div>CUIT/CUIL: 27238877593</div>
-        <div>CBU: <strong>2850684140095901049508</strong></div>
-        <div>Alias: <strong>Anacobo8</strong></div>
-        <div>CTA: CA ARS 468409590104950</div>
-        <div>Entidad: Banco Macro SA</div>
-      </div>
-
-      <hr class="my-3">
-
-      <div class="mb-1 font-semibold">Titular de cuenta Lemon</div>
-      <div>Ana Carla Fernandez</div>
-      <div>DNI: 23887759</div>
-      <div>CUIL: 27238877593</div>
-      <div>Alias: <strong>Anacarla74</strong></div>
-
-      <div class="mt-3 text-xs text-gray-600">
-        En el concepto poné el <strong>ID de reserva</strong> que te aparece al enviar la solicitud.
-      </div>
-    </div>
-
-    <div class="mt-6">
-      <button id="payTransfer" class="w-full py-3 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700">
-        Solicitar reserva por transferencia
-      </button>
-    </div>
-
-    <p class="mt-3 text-xs text-gray-500">
-      La solicitud queda en “HOLD” por 6 horas y luego expira automáticamente si no se confirma.
-    </p>
-
-    <!-- ✅ Debug / errores del paso pago -->
-    <div id="payMsg" class="hidden mt-4 p-3 rounded-lg text-sm"></div>
-
-  </section>
-
-  <!-- CONFIRMACIÓN -->
-  <section id="transferSection" class="bg-white rounded-xl shadow p-6 hidden">
-    <h2 class="text-xl font-semibold mb-2">✅ Solicitud de reserva recibida</h2>
-    <p class="text-gray-700 text-sm mb-4">
-      Te reservamos el lugar <strong>por 6 horas</strong> (pendiente de transferencia).
-    </p>
-
-    <div class="bg-gray-50 p-4 rounded-lg text-sm text-gray-700">
-      <div><strong>ID de reserva:</strong> <span id="resId">-</span></div>
-      <div><strong>Vence:</strong> <span id="resExpires">-</span></div>
-      <div class="mt-2"><strong>Casa:</strong> <span id="resHouse">-</span></div>
-      <div><strong>Fechas:</strong> <span id="resDates">-</span></div>
-      <div><strong>Personas:</strong> <span id="resGuests">-</span></div>
-    </div>
-
-    <!-- INFO DE PAGO TAMBIÉN ACÁ -->
-    <div class="mt-4 p-4 rounded-lg bg-yellow-50 text-sm text-gray-800 border border-yellow-200">
-      <div class="font-semibold mb-2">Transferencia bancaria (seña 50%)</div>
-
-      <div class="mb-3">
-        <div class="font-semibold">Banco Macro SA</div>
-        <div>Titular: Ana Carla Fernandez</div>
-        <div>CUIT/CUIL: 27238877593</div>
-        <div>CBU: <strong>2850684140095901049508</strong></div>
-        <div>Alias: <strong>Anacobo8</strong></div>
-        <div>CTA: CA ARS 468409590104950</div>
-        <div>Entidad: Banco Macro SA</div>
-      </div>
-
-      <hr class="my-3">
-
-      <div class="mb-1 font-semibold">Titular de cuenta Lemon</div>
-      <div>Ana Carla Fernandez</div>
-      <div>DNI: 23887759</div>
-      <div>CUIL: 27238877593</div>
-      <div>Alias: <strong>Anacarla74</strong></div>
-
-      <div class="mt-3">
-        <strong>Referencia / concepto:</strong> <span id="resRef">-</span>
-      </div>
-    </div>
-
-    <!-- SUBIR COMPROBANTE -->
-    <div class="mt-4 p-4 rounded-lg bg-white border">
-      <div class="font-semibold mb-2">📎 Subir comprobante de transferencia</div>
-      <p class="text-sm text-gray-600 mb-3">
-        Subí el comprobante para que le llegue a los dueños junto con la información de tu reserva.
-      </p>
-
-      <input id="proofFile" type="file" accept="image/*,application/pdf"
-             class="block w-full text-sm text-gray-700 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-gray-100 file:text-gray-800 hover:file:bg-gray-200">
-
-      <button id="sendProofBtn"
-        class="mt-3 w-full py-3 rounded-lg bg-green-600 text-white font-semibold hover:bg-green-700 disabled:opacity-40 disabled:cursor-not-allowed">
-        Enviar comprobante
-      </button>
-
-      <div id="proofMsg" class="hidden mt-3 p-3 rounded-lg text-sm"></div>
-
-      <p class="mt-3 text-xs text-gray-500">
-        Si tenés problemas para subirlo, envialo por WhatsApp indicando el ID de reserva.
+  <main class="max-w-5xl mx-auto px-4 py-10">
+    <!-- Encabezado -->
+    <div class="mb-8">
+      <h1 class="serif text-3xl sm:text-4xl font-bold tracking-tight">Reservar</h1>
+      <p class="text-brand-accent mt-2 max-w-2xl">
+        Elegí la casa, personas y fechas. Luego completás tus datos y solicitás la reserva por transferencia.
       </p>
     </div>
 
-    <button id="transferDone" class="mt-5 w-full py-3 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 transition">
-      Volver al inicio
-    </button>
-  </section>
-</main>
+    <!-- Nota Importante -->
+    <div class="mb-6 p-5 rounded-2xl bg-white/70 border border-brand-beige shadow-sm">
+      <div class="font-semibold mb-1">📌 Importante</div>
+      <div class="text-sm text-brand-brown/90">
+        Si necesitás una excepción (menos días o ajustar un día más/menos), consultanos por <strong>WhatsApp</strong>.
+        <div class="mt-2 font-semibold">👉 PARA EXCEPCIONES DE ESTADÍAS MENORES CONSULTAR POR WHATSAPP.</div>
+      </div>
+    </div>
+
+    <!-- Status -->
+    <div id="statusBox" class="mb-6 p-4 rounded-2xl bg-brand-beige/35 text-sm border border-brand-beige/70">
+      1) Elegí una casa para empezar.
+    </div>
+
+    <!-- PASO 1 -->
+    <section id="staySection" class="bg-white/75 rounded-2xl shadow-sm border border-brand-beige p-6 mb-6">
+      <div class="flex items-start justify-between gap-4 mb-4">
+        <h2 class="serif text-xl sm:text-2xl font-bold">1) Estadía</h2>
+        <span class="text-xs font-semibold px-3 py-1 rounded-full bg-brand-beige/50 border border-brand-beige/80">
+          Reserva guiada
+        </span>
+      </div>
+
+      <div id="capacityBanner" class="hidden mb-4 p-4 rounded-2xl bg-brand-cream border border-brand-beige">
+        <div class="text-sm">
+          <strong>Capacidad:</strong> <span id="capacityText"></span>
+        </div>
+      </div>
+
+      <div class="grid sm:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-semibold mb-1">Casa</label>
+          <select id="house" class="w-full border border-brand-beige rounded-2xl p-3 bg-white/80 focus:outline-none focus:ring-2 focus:ring-brand-accent/40">
+            <option value="">Seleccionar...</option>
+            <option value="LC1">Las Cañas 1</option>
+            <option value="LC2">Las Cañas 2</option>
+            <option value="LC3">Las Cañas 3</option>
+            <option value="LC4">Las Cañas 4</option>
+            <option value="LC5">Las Cañas 5</option>
+          </select>
+          <p id="houseHint" class="text-xs text-brand-accent mt-2 hidden"></p>
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold mb-1">Personas</label>
+          <input id="guests" type="number" disabled
+            class="w-full border border-brand-beige rounded-2xl p-3 bg-brand-beige/25 focus:outline-none focus:ring-2 focus:ring-brand-accent/40"
+            placeholder="Elegí casa primero" min="1">
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold mb-1">Check-in</label>
+          <input id="checkin" type="text" disabled
+            class="w-full border border-brand-beige rounded-2xl p-3 bg-brand-beige/25 focus:outline-none focus:ring-2 focus:ring-brand-accent/40"
+            placeholder="Elegí una fecha">
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold mb-1">Check-out</label>
+          <input id="checkout" type="text" disabled
+            class="w-full border border-brand-beige rounded-2xl p-3 bg-brand-beige/25 focus:outline-none focus:ring-2 focus:ring-brand-accent/40"
+            placeholder="Elegí una fecha">
+        </div>
+      </div>
+
+      <div id="minNightsBanner" class="mt-4 p-4 rounded-2xl bg-white/70 border border-brand-beige">
+        <div class="text-sm"><strong>Mínimo:</strong> <span id="minNightsText">-</span>.</div>
+        <div class="mt-1 text-xs text-brand-accent">
+          Si el sistema no habilita tu caso, consultá por WhatsApp (excepciones).
+        </div>
+      </div>
+
+      <!-- PRECIOS -->
+      <div id="priceBanner" class="mt-4 p-4 rounded-2xl bg-brand-cream border border-brand-beige hidden">
+        <div class="font-semibold mb-2">💰 Precio estimado</div>
+        <div class="grid sm:grid-cols-3 gap-2 text-sm">
+          <div><strong>Por noche:</strong> <span id="nightPriceText">-</span></div>
+          <div><strong>Noches:</strong> <span id="nightsCountText">-</span></div>
+          <div><strong>Total:</strong> <span id="totalPriceText">-</span></div>
+        </div>
+        <div class="mt-2 text-xs text-brand-accent">
+          * Total estimado según tarifas de <strong>Marzo / Abril / Mayo</strong>. Seña: <strong>50%</strong>.
+        </div>
+      </div>
+
+      <!-- AVISO (mantenemos) -->
+      <div id="bookingWindowBanner" class="mt-4 p-4 rounded-2xl bg-white/70 border border-brand-beige">
+        <div class="font-semibold mb-1">📅 Reservas habilitadas hasta mayo (inclusive)</div>
+        <div class="text-sm text-brand-brown/90">
+          Por el momento el calendario está habilitado hasta el <strong>31/05/2026</strong>.
+          Junio en adelante se habilita más adelante.
+        </div>
+      </div>
+
+      <button id="continue" disabled
+        class="mt-5 w-full py-3 rounded-2xl bg-brand-brown text-brand-cream font-semibold hover:opacity-90 transition disabled:opacity-40 disabled:cursor-not-allowed">
+        Continuar
+      </button>
+    </section>
+
+    <!-- PASO 2 -->
+    <section id="guestSection" class="bg-white/75 rounded-2xl shadow-sm border border-brand-beige p-6 mb-6 hidden">
+      <h2 class="serif text-xl sm:text-2xl font-bold mb-4">2) Datos del huésped</h2>
+
+      <div class="grid sm:grid-cols-2 gap-4">
+        <input id="name" class="border border-brand-beige rounded-2xl p-3 bg-white/80 focus:outline-none focus:ring-2 focus:ring-brand-accent/40" placeholder="Nombre y apellido">
+        <input id="dni" class="border border-brand-beige rounded-2xl p-3 bg-white/80 focus:outline-none focus:ring-2 focus:ring-brand-accent/40" placeholder="DNI">
+        <input id="email" type="email" class="border border-brand-beige rounded-2xl p-3 bg-white/80 focus:outline-none focus:ring-2 focus:ring-brand-accent/40" placeholder="Email">
+        <input id="phone" class="border border-brand-beige rounded-2xl p-3 bg-white/80 focus:outline-none focus:ring-2 focus:ring-brand-accent/40" placeholder="WhatsApp">
+      </div>
+
+      <button id="guestContinue" disabled
+        class="mt-5 w-full py-3 rounded-2xl bg-brand-brown text-brand-cream font-semibold hover:opacity-90 transition disabled:opacity-40 disabled:cursor-not-allowed">
+        Continuar
+      </button>
+    </section>
+
+    <!-- PASO 3 -->
+    <section id="paySection" class="bg-white/75 rounded-2xl shadow-sm border border-brand-beige p-6 hidden">
+      <h2 class="serif text-xl sm:text-2xl font-bold mb-4">3) Pago</h2>
+
+      <div class="bg-white/70 p-4 rounded-2xl border border-brand-beige text-sm">
+        <div><strong>Casa:</strong> <span id="sumHouse">-</span></div>
+        <div><strong>Personas:</strong> <span id="sumGuests">-</span></div>
+        <div><strong>Check-in:</strong> <span id="sumCheckin">-</span> (14:00)</div>
+        <div><strong>Check-out:</strong> <span id="sumCheckout">-</span> (10:00)</div>
+        <div><strong>Precio estimado:</strong> <span id="sumTotalPrice">-</span></div>
+        <div><strong>Seña (50%):</strong> <span id="sumDeposit">-</span></div>
+        <div class="mt-2"><strong>Importante:</strong> Por el momento aceptamos <strong>solo transferencia bancaria</strong>.</div>
+      </div>
+
+      <div class="mt-4 p-4 rounded-2xl bg-brand-cream border border-brand-beige text-sm">
+        <div class="font-semibold mb-2">Transferencia bancaria (seña 50%)</div>
+
+        <div class="mb-3">
+          <div class="font-semibold">Banco Macro SA</div>
+          <div>Titular: Ana Carla Fernandez</div>
+          <div>CUIT/CUIL: 27238877593</div>
+          <div>CBU: <strong>2850684140095901049508</strong></div>
+          <div>Alias: <strong>Anacobo8</strong></div>
+          <div>CTA: CA ARS 468409590104950</div>
+          <div>Entidad: Banco Macro SA</div>
+        </div>
+
+        <hr class="my-3 border-brand-beige">
+
+        <div class="mb-1 font-semibold">Titular de cuenta Lemon</div>
+        <div>Ana Carla Fernandez</div>
+        <div>DNI: 23887759</div>
+        <div>CUIL: 27238877593</div>
+        <div>Alias: <strong>Anacarla74</strong></div>
+
+        <div class="mt-3 text-xs text-brand-accent">
+          En el concepto poné el <strong>ID de reserva</strong> que te aparece al enviar la solicitud.
+        </div>
+      </div>
+
+      <div class="mt-6">
+        <button id="payTransfer" class="w-full py-3 rounded-2xl bg-brand-brown text-brand-cream font-semibold hover:opacity-90 transition">
+          Solicitar reserva por transferencia
+        </button>
+      </div>
+
+      <p class="mt-3 text-xs text-brand-accent">
+        La solicitud queda en “HOLD” por 6 horas y luego expira automáticamente si no se confirma.
+      </p>
+
+      <div id="payMsg" class="hidden mt-4 p-3 rounded-2xl text-sm border border-brand-beige bg-white/70"></div>
+    </section>
+
+    <!-- CONFIRMACIÓN -->
+    <section id="transferSection" class="bg-white/75 rounded-2xl shadow-sm border border-brand-beige p-6 hidden">
+      <h2 class="serif text-xl sm:text-2xl font-bold mb-2">✅ Solicitud de reserva recibida</h2>
+      <p class="text-sm text-brand-brown/90 mb-4">
+        Te reservamos el lugar <strong>por 6 horas</strong> (pendiente de transferencia).
+      </p>
+
+      <div class="bg-white/70 p-4 rounded-2xl border border-brand-beige text-sm">
+        <div><strong>ID de reserva:</strong> <span id="resId">-</span></div>
+        <div><strong>Vence:</strong> <span id="resExpires">-</span></div>
+        <div class="mt-2"><strong>Casa:</strong> <span id="resHouse">-</span></div>
+        <div><strong>Fechas:</strong> <span id="resDates">-</span></div>
+        <div><strong>Personas:</strong> <span id="resGuests">-</span></div>
+      </div>
+
+      <div class="mt-4 p-4 rounded-2xl bg-brand-cream border border-brand-beige text-sm">
+        <div class="font-semibold mb-2">Transferencia bancaria (seña 50%)</div>
+
+        <div class="mb-3">
+          <div class="font-semibold">Banco Macro SA</div>
+          <div>Titular: Ana Carla Fernandez</div>
+          <div>CUIT/CUIL: 27238877593</div>
+          <div>CBU: <strong>2850684140095901049508</strong></div>
+          <div>Alias: <strong>Anacobo8</strong></div>
+          <div>CTA: CA ARS 468409590104950</div>
+          <div>Entidad: Banco Macro SA</div>
+        </div>
+
+        <hr class="my-3 border-brand-beige">
+
+        <div class="mb-1 font-semibold">Titular de cuenta Lemon</div>
+        <div>Ana Carla Fernandez</div>
+        <div>DNI: 23887759</div>
+        <div>CUIL: 27238877593</div>
+        <div>Alias: <strong>Anacarla74</strong></div>
+
+        <div class="mt-3">
+          <strong>Referencia / concepto:</strong> <span id="resRef">-</span>
+        </div>
+      </div>
+
+      <!-- SUBIR COMPROBANTE -->
+      <div class="mt-4 p-4 rounded-2xl bg-white/70 border border-brand-beige">
+        <div class="font-semibold mb-2">📎 Subir comprobante de transferencia</div>
+        <p class="text-sm text-brand-accent mb-3">
+          Subí el comprobante para que le llegue a los dueños junto con la información de tu reserva.
+        </p>
+
+        <input id="proofFile" type="file" accept="image/*,application/pdf"
+               class="block w-full text-sm text-brand-brown
+                      file:mr-4 file:py-2 file:px-4 file:rounded-2xl file:border-0
+                      file:text-sm file:font-semibold file:bg-brand-beige/60 file:text-brand-brown
+                      hover:file:bg-brand-beige/80">
+
+        <button id="sendProofBtn"
+          class="mt-3 w-full py-3 rounded-2xl bg-emerald-700 text-white font-semibold hover:opacity-90 transition disabled:opacity-40 disabled:cursor-not-allowed">
+          Enviar comprobante
+        </button>
+
+        <div id="proofMsg" class="hidden mt-3 p-3 rounded-2xl text-sm border border-brand-beige bg-white/70"></div>
+
+        <p class="mt-3 text-xs text-brand-accent">
+          Si tenés problemas para subirlo, envialo por WhatsApp indicando el ID de reserva.
+        </p>
+      </div>
+
+      <button id="transferDone" class="mt-5 w-full py-3 rounded-2xl bg-brand-brown text-brand-cream font-semibold hover:opacity-90 transition">
+        Volver al inicio
+      </button>
+    </section>
+
+    <footer class="mt-10 pb-6 text-center text-xs text-brand-accent">
+      © <span id="year"></span> Las Cañas · Mar de Cobo
+    </footer>
+  </main>
 
 <script>
+  // Año footer
+  document.getElementById("year").textContent = new Date().getFullYear();
+
   const AVAILABILITY_API = "/api/availability";
   const CREATE_RESERVATION_API = "/api/create-reservation";
   const SUBMIT_PROOF_API = "/api/submit-proof";
@@ -355,10 +422,10 @@
   function showPayMsg(msg, kind="info"){
     payMsg.classList.remove("hidden");
     payMsg.textContent = msg;
-    payMsg.classList.remove("bg-red-50","text-red-800","bg-green-50","text-green-800","bg-gray-50","text-gray-800");
-    if (kind === "err") payMsg.classList.add("bg-red-50","text-red-800");
-    else if (kind === "ok") payMsg.classList.add("bg-green-50","text-green-800");
-    else payMsg.classList.add("bg-gray-50","text-gray-800");
+    payMsg.classList.remove("bg-red-50","text-red-800","bg-green-50","text-green-800","bg-white/70","text-brand-brown");
+    payMsg.classList.add("bg-white/70","text-brand-brown","border","border-brand-beige");
+    if (kind === "err") { payMsg.classList.add("bg-red-50","text-red-800"); payMsg.classList.remove("bg-white/70","text-brand-brown"); }
+    if (kind === "ok")  { payMsg.classList.add("bg-green-50","text-green-800"); payMsg.classList.remove("bg-white/70","text-brand-brown"); }
   }
   function clearPayMsg(){
     payMsg.classList.add("hidden");
@@ -368,10 +435,10 @@
   function showProofMsg(msg, kind="info"){
     proofMsg.classList.remove("hidden");
     proofMsg.textContent = msg;
-    proofMsg.classList.remove("bg-red-50","text-red-800","bg-green-50","text-green-800","bg-gray-50","text-gray-800");
-    if (kind === "err") proofMsg.classList.add("bg-red-50","text-red-800");
-    else if (kind === "ok") proofMsg.classList.add("bg-green-50","text-green-800");
-    else proofMsg.classList.add("bg-gray-50","text-gray-800");
+    proofMsg.classList.remove("bg-red-50","text-red-800","bg-green-50","text-green-800","bg-white/70","text-brand-brown");
+    proofMsg.classList.add("bg-white/70","text-brand-brown","border","border-brand-beige");
+    if (kind === "err") { proofMsg.classList.add("bg-red-50","text-red-800"); proofMsg.classList.remove("bg-white/70","text-brand-brown"); }
+    if (kind === "ok")  { proofMsg.classList.add("bg-green-50","text-green-800"); proofMsg.classList.remove("bg-white/70","text-brand-brown"); }
   }
   function clearProofMsg(){
     proofMsg.classList.add("hidden");
@@ -404,12 +471,12 @@
   // =========================================================
   // BLOQUEO: reservas SOLO hasta MAYO inclusive
   // =========================================================
-  const BOOKING_LAST_DATE = "2026-05-31"; // NO se puede elegir nada después de esta fecha
-  const BOOKING_CUTOFF = parseYMD(BOOKING_LAST_DATE); // 2026-05-31 00:00
+  const BOOKING_LAST_DATE = "2026-05-31";
+  const BOOKING_CUTOFF = parseYMD(BOOKING_LAST_DATE);
 
   function isAfterBookingWindow(date){
     const d0 = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-    return d0 > BOOKING_CUTOFF; // bloquea desde 01/06 en adelante
+    return d0 > BOOKING_CUTOFF;
   }
 
   // =========================================================
@@ -471,7 +538,6 @@
 
     const ci = parseYMD(checkin.value);
 
-    // Si por alguna razón cae fuera de ventana habilitada
     if (isAfterBookingWindow(ci) || isAfterBookingWindow(parseYMD(checkout.value))){
       banner.classList.add("hidden");
       if (sumTotalPrice) sumTotalPrice.textContent = "-";
@@ -512,7 +578,7 @@
     const co = parseYMD(coYmd);
     return FIXED_WINDOWS.find(w => {
       const wStart = parseYMD(w.checkin);
-      const wEnd = parseYMD(w.checkout); // checkout EXCLUSIVO
+      const wEnd = parseYMD(w.checkout);
       return overlapsStay(ci, co, wStart, wEnd);
     }) || null;
   }
@@ -520,20 +586,15 @@
   function isDateInsideAnyFixedWindow(date){
     for (const w of FIXED_WINDOWS){
       const s = parseYMD(w.checkin);
-      const e = parseYMD(w.checkout); // exclusivo
+      const e = parseYMD(w.checkout);
       if (date >= s && date < e) return w;
     }
     return null;
   }
 
-  // Min nights:
-  // - Si checkin <= 04/04 => 7 noches
-  // - Si toca ventana fija => SOLO exacta (sino fixed_block)
-  // - Sino => mínimo 2
   function getMinRule(ciYmd, coYmd){
     if (!ciYmd) return { type:"none", min: null, label:"-" };
 
-    // Si hay rango y toca una ventana fija pero no es EXACTA => bloquear
     if (coYmd){
       const overlap = getFixedWindowOverlapping(ciYmd, coYmd);
       if (overlap){
@@ -551,7 +612,6 @@
       }
     }
 
-    // Check-in exacto de una ventana fija => forzar checkout exacto
     const fixed = getFixedWindowForCheckin(ciYmd);
     if (fixed){
       const nights = Math.round((parseYMD(fixed.checkout) - parseYMD(fixed.checkin)) / 86400000);
@@ -591,9 +651,6 @@
 
       const data = await res.json().catch(()=> ({}));
 
-      // El API devuelve rangos:
-      //   start = check_in (inclusive)
-      //   end   = check_out (EXCLUSIVO)
       blockedRanges = (data.blocked || []).map(r => {
         const start = parseYMD(r.start);
 
@@ -629,8 +686,6 @@
 
   function isDateBlockedForCheckin(date){
     if (isPast(date)) return true;
-
-    // ✅ Bloqueo Junio+ (reservas solo hasta 31/05/2026)
     if (isAfterBookingWindow(date)) return true;
 
     const d0 = new Date(date.getFullYear(), date.getMonth(), date.getDate());
@@ -638,7 +693,6 @@
     const minAllowed = parseYMD(getFirstAllowedCheckin());
     if (d0 < minAllowed) return true;
 
-    // Si está dentro de una ventana fija, solo permitimos el día exacto de check-in de esa ventana
     const fixed = isDateInsideAnyFixedWindow(d0);
     if (fixed){
       const ymd = fmtYMD(d0);
@@ -652,7 +706,6 @@
   }
 
   function isCheckoutDisabled(date){
-    // ✅ Bloqueo Junio+ también para checkout
     if (isAfterBookingWindow(date)) return true;
 
     const ciDate = fpCheckin?.selectedDates?.[0];
@@ -684,8 +737,8 @@
     checkin.disabled = !canUseDates;
     checkout.disabled = !canUseDates;
 
-    checkin.classList.toggle("bg-gray-100", !canUseDates);
-    checkout.classList.toggle("bg-gray-100", !canUseDates);
+    checkin.classList.toggle("bg-brand-beige/25", !canUseDates);
+    checkout.classList.toggle("bg-brand-beige/25", !canUseDates);
 
     if (fpCheckin) fpCheckin.destroy();
     if (fpCheckout) fpCheckout.destroy();
@@ -715,12 +768,10 @@
         const ci0 = new Date(ci.getFullYear(), ci.getMonth(), ci.getDate());
         const ciYmd = fmtYMD(ci0);
 
-        // Acá todavía no hay checkout, pasamos solo ci
         const rule = getMinRule(ciYmd, "");
 
         if (fpCheckout) fpCheckout.destroy();
 
-        // si es fijo => minDate y maxDate iguales al checkout fijo
         if (rule.type === "fixed"){
           fpCheckout = flatpickr(checkout, {
             locale: "es",
@@ -784,7 +835,7 @@
   function resetAfterHouseChange(){
     guests.value = "";
     guests.disabled = true;
-    guests.classList.add("bg-gray-100");
+    guests.classList.add("bg-brand-beige/25");
     guests.placeholder = "Elegí casa primero";
     guests.removeAttribute("max");
 
@@ -792,8 +843,8 @@
     checkout.value = "";
     checkin.disabled = true;
     checkout.disabled = true;
-    checkin.classList.add("bg-gray-100");
-    checkout.classList.add("bg-gray-100");
+    checkin.classList.add("bg-brand-beige/25");
+    checkout.classList.add("bg-brand-beige/25");
 
     availabilityLoaded = false;
     blockedRanges = [];
@@ -821,7 +872,6 @@
     updateMinBanner();
     refreshPickers();
 
-    // reset proof UI
     if (proofFile) proofFile.value = "";
     if (sendProofBtn) sendProofBtn.disabled = true;
 
@@ -832,7 +882,7 @@
     const rule = HOUSE_RULES[h];
 
     guests.disabled = false;
-    guests.classList.remove("bg-gray-100");
+    guests.classList.remove("bg-brand-beige/25");
     guests.placeholder = `1 a ${rule.max}`;
     guests.max = rule.max;
 
@@ -860,7 +910,6 @@
     const ci = parseYMD(checkin.value);
     const co = parseYMD(checkout.value);
 
-    // ✅ Bloqueo Junio+ (por si alguien logra setear el input)
     if (isAfterBookingWindow(ci) || isAfterBookingWindow(co)){
       continueBtn.disabled = true;
       setStatus("Por el momento solo se puede reservar hasta el 31/05/2026.");
@@ -898,16 +947,16 @@
 
     continueBtn.disabled = false;
     setStatus("4) Perfecto. Continuá para ingresar los datos del huésped.");
-  }
+    }
 
-  function validateGuestData(){
+    function validateGuestData(){
     const ok = name.value.trim() && dni.value.trim() && email.value.trim() && phone.value.trim();
     guestContinue.disabled = !ok;
     return ok;
-  }
+    }
 
-  // Extrae row/id de cualquier formato
-  function extractReservation(data){
+    // Extrae row/id de cualquier formato
+    function extractReservation(data){
     const candidates = [
       data?.row,
       data,
@@ -923,10 +972,10 @@
       if (c?.row?.id) return c.row;
     }
     return null;
-  }
+    }
 
-  // ---- Events ----
-  house.addEventListener("change", async ()=>{
+    // ---- Events ----
+    house.addEventListener("change", async ()=>{
     resetAfterHouseChange();
 
     const h = house.value;
@@ -940,9 +989,9 @@
     updateMinBanner();
     updateContinueState();
     updatePriceUI();
-  });
+    });
 
-  guests.addEventListener("input", ()=>{
+    guests.addEventListener("input", ()=>{
     const h = house.value;
     if (!h) return;
 
@@ -956,9 +1005,9 @@
     updateMinBanner();
     updateContinueState();
     updatePriceUI();
-  });
+    });
 
-  continueBtn.addEventListener("click", ()=>{
+    continueBtn.addEventListener("click", ()=>{
     continueBtn.classList.add("hidden");
 
     house.disabled = true;
@@ -969,15 +1018,15 @@
     guestSection.classList.remove("hidden");
     guestSection.scrollIntoView({behavior:"smooth"});
     setStatus("5) Completá los datos del huésped para continuar.");
-  });
+    });
 
-  [name, dni, email, phone].forEach(inp=>{
+    [name, dni, email, phone].forEach(inp=>{
     inp.addEventListener("input", ()=>{
       if (validateGuestData()) setStatus("6) Listo. Ya podés continuar.");
     });
-  });
+    });
 
-  guestContinue.addEventListener("click", ()=>{
+    guestContinue.addEventListener("click", ()=>{
     guestContinue.classList.add("hidden");
 
     sumHouse.textContent = house.value;
@@ -991,15 +1040,15 @@
     paySection.classList.remove("hidden");
     paySection.scrollIntoView({behavior:"smooth"});
     setStatus("7) Solicitá la reserva por transferencia.");
-  });
+    });
 
-  function setPayBusy(busy){
+    function setPayBusy(busy){
     payTransferBtn.disabled = busy;
     payTransferBtn.classList.toggle("opacity-60", busy);
     payTransferBtn.classList.toggle("cursor-not-allowed", busy);
-  }
+    }
 
-  payTransferBtn.addEventListener("click", async ()=>{
+    payTransferBtn.addEventListener("click", async ()=>{
     clearPayMsg();
     setPayBusy(true);
     setStatus("Enviando solicitud de reserva...");
@@ -1051,7 +1100,7 @@
       const row = extractReservation(data);
 
       if(!row || !row.id){
-        showPayMsg("Reserva creada, pero respuesta inesperada (no pude obtener el ID). Abrí el debug para ver el JSON.", "err");
+        showPayMsg("Reserva creada, pero respuesta inesperada (no pude obtener el ID).", "err");
         setStatus("Error: respuesta inesperada.");
         setPayBusy(false);
         return;
@@ -1095,16 +1144,16 @@
       setStatus(`Error: ${msg}`);
       setPayBusy(false);
     }
-  });
+    });
 
-  // Enable sendProof only when file selected
-  proofFile?.addEventListener("change", ()=>{
+    // Enable sendProof only when file selected
+    proofFile?.addEventListener("change", ()=>{
     const hasFile = proofFile.files && proofFile.files.length > 0;
     sendProofBtn.disabled = !hasFile;
-  });
+    });
 
-  // Submit proof
-  sendProofBtn?.addEventListener("click", async ()=>{
+    // Submit proof
+    sendProofBtn?.addEventListener("click", async ()=>{
     clearProofMsg();
 
     const reservationId = transferSection.dataset.reservationId;
@@ -1152,18 +1201,18 @@
       sendProofBtn.disabled = false;
       sendProofBtn.classList.remove("opacity-60","cursor-not-allowed");
     }
-  });
+    });
 
-  el("transferDone").addEventListener("click", ()=>{
+    el("transferDone").addEventListener("click", ()=>{
     window.location.href = "index.html";
-  });
+    });
 
-  // init
-  refreshPickers();
-  updateMinBanner();
-  updateContinueState();
-  updatePriceUI();
-</script>
+    // init
+    refreshPickers();
+    updateMinBanner();
+    updateContinueState();
+    updatePriceUI();
+    </script>
 
-</body>
-</html>
+    </body>
+    </html>
