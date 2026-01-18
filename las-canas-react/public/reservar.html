@@ -96,6 +96,28 @@
       </div>
     </div>
 
+    <!-- PRECIOS (dinámico) -->
+    <div id="priceBanner" class="mt-4 p-4 rounded-lg bg-emerald-50 text-sm text-emerald-900 border border-emerald-200 hidden">
+      <div class="font-semibold mb-1">💰 Precio estimado</div>
+      <div class="grid sm:grid-cols-3 gap-2">
+        <div><strong>Por noche:</strong> <span id="nightPriceText">-</span></div>
+        <div><strong>Noches:</strong> <span id="nightsCountText">-</span></div>
+        <div><strong>Total:</strong> <span id="totalPriceText">-</span></div>
+      </div>
+      <div class="mt-2 text-xs text-emerald-800/80">
+        * Total estimado según tarifas de <strong>Marzo / Abril / Mayo</strong>. Seña: <strong>50%</strong>.
+      </div>
+    </div>
+
+    <!-- AVISO (bloqueo junio+) -->
+    <div id="bookingWindowBanner" class="mt-4 p-4 rounded-lg bg-blue-50 text-sm text-blue-900 border border-blue-200">
+      <div class="font-semibold mb-1">📅 Reservas habilitadas hasta mayo (inclusive)</div>
+      <div>
+        Por el momento el calendario está habilitado hasta el <strong>31/05/2026</strong>.
+        Junio en adelante se habilita más adelante.
+      </div>
+    </div>
+
     <button id="continue" disabled
       class="mt-5 w-full py-3 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 transition disabled:opacity-40 disabled:cursor-not-allowed">
       Continuar
@@ -128,6 +150,8 @@
       <div><strong>Personas:</strong> <span id="sumGuests">-</span></div>
       <div><strong>Check-in:</strong> <span id="sumCheckin">-</span> (14:00)</div>
       <div><strong>Check-out:</strong> <span id="sumCheckout">-</span> (10:00)</div>
+      <div><strong>Precio estimado:</strong> <span id="sumTotalPrice">-</span></div>
+      <div><strong>Seña (50%):</strong> <span id="sumDeposit">-</span></div>
       <div class="mt-2"><strong>Importante:</strong> Por el momento aceptamos <strong>solo transferencia bancaria</strong>.</div>
     </div>
 
@@ -316,6 +340,8 @@
   const sumGuests = el("sumGuests");
   const sumCheckin = el("sumCheckin");
   const sumCheckout = el("sumCheckout");
+  const sumTotalPrice = el("sumTotalPrice");
+  const sumDeposit = el("sumDeposit");
 
   const name = el("name");
   const dni = el("dni");
@@ -378,6 +404,103 @@
 
   function overlapsStay(ci, co, start, endExclusive){
     return ci < endExclusive && co > start;
+  }
+
+  // =========================================================
+  // BLOQUEO: reservas SOLO hasta MAYO inclusive
+  // =========================================================
+  const BOOKING_LAST_DATE = "2026-05-31"; // NO se puede elegir nada después de esta fecha
+  const BOOKING_CUTOFF = parseYMD(BOOKING_LAST_DATE); // 2026-05-31 00:00
+
+  function isAfterBookingWindow(date){
+    const d0 = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    return d0 > BOOKING_CUTOFF; // bloquea desde 01/06 en adelante
+  }
+
+  // =========================================================
+  // PRECIOS por noche por casa por mes (Mar/Abr/May)
+  // =========================================================
+  const PRICES_BY_MONTH = {
+    "2026-03": { LC1:120000, LC2:120000, LC3:130000, LC4:120000, LC5:110000 },
+    "2026-04": { LC1:120000, LC2:120000, LC3:130000, LC4:120000, LC5:110000 },
+    "2026-05": { LC1:120000, LC2:120000, LC3:120000, LC4:120000, LC5:100000 },
+  };
+
+  function fmtARS(n){
+    return "$ " + Number(n || 0).toLocaleString("es-AR");
+  }
+  function ymKey(date){
+    const y = date.getFullYear();
+    const m = String(date.getMonth()+1).padStart(2,"0");
+    return `${y}-${m}`;
+  }
+  function getNightPrice(date, houseCode){
+    const key = ymKey(date);
+    return PRICES_BY_MONTH[key]?.[houseCode] ?? null;
+  }
+
+  function calcStayTotal(ciYmd, coYmd, houseCode){
+    if (!ciYmd || !coYmd || !houseCode) return null;
+
+    const ci = parseYMD(ciYmd);
+    const co = parseYMD(coYmd);
+
+    const nights = Math.round((co - ci) / 86400000);
+    if (nights <= 0) return null;
+
+    let total = 0;
+    for (let i = 0; i < nights; i++){
+      const d = addDays(ci, i);
+      const price = getNightPrice(d, houseCode);
+      if (price == null) return null;
+      total += price;
+    }
+
+    return { nights, total, deposit: Math.round(total * 0.5) };
+  }
+
+  function updatePriceUI(){
+    const banner = el("priceBanner");
+    const nightPriceText = el("nightPriceText");
+    const nightsCountText = el("nightsCountText");
+    const totalPriceText = el("totalPriceText");
+
+    if (!banner || !nightPriceText || !nightsCountText || !totalPriceText) return;
+
+    if (!house.value || !checkin.value || !checkout.value){
+      banner.classList.add("hidden");
+      if (sumTotalPrice) sumTotalPrice.textContent = "-";
+      if (sumDeposit) sumDeposit.textContent = "-";
+      return;
+    }
+
+    const ci = parseYMD(checkin.value);
+
+    // Si por alguna razón cae fuera de ventana habilitada
+    if (isAfterBookingWindow(ci) || isAfterBookingWindow(parseYMD(checkout.value))){
+      banner.classList.add("hidden");
+      if (sumTotalPrice) sumTotalPrice.textContent = "-";
+      if (sumDeposit) sumDeposit.textContent = "-";
+      return;
+    }
+
+    const firstNightPrice = getNightPrice(ci, house.value);
+    const calc = calcStayTotal(checkin.value, checkout.value, house.value);
+
+    if (!calc || firstNightPrice == null){
+      banner.classList.add("hidden");
+      if (sumTotalPrice) sumTotalPrice.textContent = "-";
+      if (sumDeposit) sumDeposit.textContent = "-";
+      return;
+    }
+
+    banner.classList.remove("hidden");
+    nightPriceText.textContent = fmtARS(firstNightPrice);
+    nightsCountText.textContent = String(calc.nights);
+    totalPriceText.textContent = fmtARS(calc.total);
+
+    if (sumTotalPrice) sumTotalPrice.textContent = fmtARS(calc.total);
+    if (sumDeposit) sumDeposit.textContent = fmtARS(calc.deposit);
   }
 
   function getFirstAllowedCheckin(){
@@ -473,14 +596,12 @@
 
       const data = await res.json().catch(()=> ({}));
 
-      // ✅ IMPORTANTE (fix):
-      // El API de availability devuelve rangos como:
+      // El API devuelve rangos:
       //   start = check_in (inclusive)
       //   end   = check_out (EXCLUSIVO)
       blockedRanges = (data.blocked || []).map(r => {
         const start = parseYMD(r.start);
 
-        // compat: si algún día mandaras end_inclusive, acá lo soportamos:
         if (r.end_inclusive){
           const endInclusive = parseYMD(r.end_inclusive);
           const endExclusive = addDays(endInclusive, 1);
@@ -501,6 +622,7 @@
 
     refreshPickers();
     updateContinueState();
+    updatePriceUI();
   }
 
   function isPast(date){
@@ -512,6 +634,9 @@
 
   function isDateBlockedForCheckin(date){
     if (isPast(date)) return true;
+
+    // ✅ Bloqueo Junio+ (reservas solo hasta 31/05/2026)
+    if (isAfterBookingWindow(date)) return true;
 
     const d0 = new Date(date.getFullYear(), date.getMonth(), date.getDate());
 
@@ -532,6 +657,9 @@
   }
 
   function isCheckoutDisabled(date){
+    // ✅ Bloqueo Junio+ también para checkout
+    if (isAfterBookingWindow(date)) return true;
+
     const ciDate = fpCheckin?.selectedDates?.[0];
     if (!ciDate) return true;
 
@@ -578,10 +706,13 @@
       onChange: function(selectedDates){
         if (fpCheckout) fpCheckout.clear();
         updateMinBanner();
+        updateContinueState();
+        updatePriceUI();
 
         if (!selectedDates?.length){
           checkout.value = "";
           updateContinueState();
+          updatePriceUI();
           return;
         }
 
@@ -608,6 +739,7 @@
             onChange: function(){
               updateMinBanner();
               updateContinueState();
+              updatePriceUI();
             }
           });
 
@@ -626,6 +758,7 @@
             onChange: function(){
               updateMinBanner();
               updateContinueState();
+              updatePriceUI();
             }
           });
 
@@ -634,6 +767,7 @@
 
         updateMinBanner();
         updateContinueState();
+        updatePriceUI();
       }
     });
 
@@ -647,6 +781,7 @@
       onChange: function(){
         updateMinBanner();
         updateContinueState();
+        updatePriceUI();
       }
     });
   }
@@ -694,6 +829,8 @@
     // reset proof UI
     if (proofFile) proofFile.value = "";
     if (sendProofBtn) sendProofBtn.disabled = true;
+
+    updatePriceUI();
   }
 
   function enableGuestsForHouse(h){
@@ -727,6 +864,13 @@
 
     const ci = parseYMD(checkin.value);
     const co = parseYMD(checkout.value);
+
+    // ✅ Bloqueo Junio+ (por si alguien logra setear el input)
+    if (isAfterBookingWindow(ci) || isAfterBookingWindow(co)){
+      continueBtn.disabled = true;
+      setStatus("Por el momento solo se puede reservar hasta el 31/05/2026.");
+      return;
+    }
 
     const rule = getMinRule(checkin.value, checkout.value);
     if (rule.type === "fixed_block"){
@@ -799,6 +943,8 @@
     enableGuestsForHouse(h);
     await loadAvailability(h);
     updateMinBanner();
+    updateContinueState();
+    updatePriceUI();
   });
 
   guests.addEventListener("input", ()=>{
@@ -814,6 +960,7 @@
     refreshPickers();
     updateMinBanner();
     updateContinueState();
+    updatePriceUI();
   });
 
   continueBtn.addEventListener("click", ()=>{
@@ -842,6 +989,9 @@
     sumGuests.textContent = guests.value;
     sumCheckin.textContent = checkin.value;
     sumCheckout.textContent = checkout.value;
+
+    // asegurar que el precio quede reflejado en el resumen
+    updatePriceUI();
 
     paySection.classList.remove("hidden");
     paySection.scrollIntoView({behavior:"smooth"});
@@ -1016,6 +1166,8 @@
   // init
   refreshPickers();
   updateMinBanner();
+  updateContinueState();
+  updatePriceUI();
 </script>
 
 </body>
