@@ -523,7 +523,7 @@
     const y = date.getFullYear();
     const m = String(date.getMonth()+1).padStart(2,"0");
     const d = String(date.getDate()).padStart(2,"0");
-    return ${y}-${m}-${d};
+    return `${y}-${m}-${d}`;
   }
   function addDays(date, days){
     const out = new Date(date.getFullYear(), date.getMonth(), date.getDate());
@@ -562,7 +562,7 @@
   function ymKey(date){
     const y = date.getFullYear();
     const m = String(date.getMonth()+1).padStart(2,"0");
-    return ${y}-${m};
+    return `${y}-${m}`;
   }
   function getNightPrice(date, houseCode){
     const key = ymKey(date);
@@ -679,25 +679,25 @@
             type:"fixed_block",
             min: null,
             fixed: overlap,
-            label: Fechas fijas: ${overlap.checkin} → ${overlap.checkout}. Para excepciones consultá por WhatsApp.
+            label: `Fechas fijas: ${overlap.checkin} → ${overlap.checkout}. Para excepciones consultá por WhatsApp.`
           };
         }
         const nights = Math.round((parseYMD(overlap.checkout) - parseYMD(overlap.checkin)) / 86400000);
-        return { type:"fixed", min: nights, fixed: overlap, label:Fechas fijas: ${overlap.checkin} → ${overlap.checkout} (${nights} noches) };
+        return { type:"fixed", min: nights, fixed: overlap, label: `Fechas fijas: ${overlap.checkin} → ${overlap.checkout} (${nights} noches)` };
       }
     }
 
     const fixed = getFixedWindowForCheckin(ciYmd);
     if (fixed){
       const nights = Math.round((parseYMD(fixed.checkout) - parseYMD(fixed.checkin)) / 86400000);
-      return { type:"fixed", min: nights, fixed, label:Fechas fijas: ${fixed.checkin} → ${fixed.checkout} (${nights} noches) };
+      return { type:"fixed", min: nights, fixed, label: `Fechas fijas: ${fixed.checkin} → ${fixed.checkout} (${nights} noches)` };
     }
 
     if (ymdLE(ciYmd, MIN7_UNTIL)){
-      return { type:"min7", min: MIN_NIGHTS_STRICT, label:${MIN_NIGHTS_STRICT} noches mínimo (hasta ${MIN7_UNTIL}) };
+      return { type:"min7", min: MIN_NIGHTS_STRICT, label: `${MIN_NIGHTS_STRICT} noches mínimo (hasta ${MIN7_UNTIL})` };
     }
 
-    return { type:"min2", min: DEFAULT_MIN_NIGHTS, label:${DEFAULT_MIN_NIGHTS} noches mínimo };
+    return { type:"min2", min: DEFAULT_MIN_NIGHTS, label: `${DEFAULT_MIN_NIGHTS} noches mínimo` };
   }
 
   function updateMinBanner(){
@@ -864,7 +864,7 @@
             }
           });
 
-          setStatus(3) Estas fechas son fijas: check-out debe ser ${rule.fixed.checkout}.);
+          setStatus(`3) Estas fechas son fijas: check-out debe ser ${rule.fixed.checkout}.`);
         } else {
           const minCo = addDays(ci0, rule.min);
 
@@ -883,7 +883,7 @@
             }
           });
 
-          setStatus(3) Elegí el check-out (mínimo ${rule.min} noches).);
+          setStatus(`3) Elegí el check-out (mínimo ${rule.min} noches).`);
         }
 
         updateMinBanner();
@@ -962,16 +962,16 @@
 
     guests.disabled = false;
     guests.classList.remove("bg-brand-beige/25");
-    guests.placeholder = 1 a ${rule.max};
+    guests.placeholder = `1 a ${rule.max}`;
     guests.max = rule.max;
 
-    houseHint.textContent = ${rule.hint} Disponible desde ${getFirstAllowedCheckin()}.;
+    houseHint.textContent = `${rule.hint} Disponible desde ${getFirstAllowedCheckin()}.`;
     houseHint.classList.remove("hidden");
 
-    capacityText.textContent = ${rule.hint} Disponible desde ${getFirstAllowedCheckin()}.;
+    capacityText.textContent = `${rule.hint} Disponible desde ${getFirstAllowedCheckin()}.`;
     capacityBanner.classList.remove("hidden");
 
-    setStatus(2) Ahora elegí la cantidad de personas (máx ${rule.max}).);
+    setStatus(`2) Ahora elegí la cantidad de personas (máx ${rule.max}).`);
   }
 
   function updateContinueState(){
@@ -1004,21 +1004,21 @@
 
     if (rule.type === "fixed" && checkout.value !== rule.fixed.checkout){
       continueBtn.disabled = true;
-      setStatus(Estas fechas son fijas: check-out debe ser ${rule.fixed.checkout}.);
+      setStatus(`Estas fechas son fijas: check-out debe ser ${rule.fixed.checkout}.`);
       return;
     }
 
     const minCo = addDays(ci, rule.min);
     if (co < minCo){
       continueBtn.disabled = true;
-      setStatus(La estadía mínima para esas fechas es de ${rule.min} noches.);
+      setStatus(`La estadía mínima para esas fechas es de ${rule.min} noches.`);
       return;
     }
 
     for (const r of blockedRanges){
       if (overlapsStay(ci, co, r.start, r.endExclusive)){
         continueBtn.disabled = true;
-        setStatus(No disponible 😕 (ocupado del ${r.rawStart} al ${r.rawEnd}). Probá otras fechas.);
+        setStatus(`No disponible 😕 (ocupado del ${r.rawStart} al ${r.rawEnd}). Probá otras fechas.`);
         return;
       }
     }
@@ -1073,7 +1073,7 @@
     const h = Math.floor(total / 3600);
     const m = Math.floor((total % 3600) / 60);
     const s = total % 60;
-    return ${pad2(h)}:${pad2(m)}:${pad2(s)};
+    return `${pad2(h)}:${pad2(m)}:${pad2(s)}`;
   }
 
   function setBadge(status){
@@ -1120,7 +1120,7 @@
       if (holdCountdown) holdCountdown.textContent = formatCountdown(left);
 
       const pct = Math.max(0, Math.min(100, ((left) / totalWindow) * 100));
-      if (holdBar) holdBar.style.width = ${pct}%;
+      if (holdBar) holdBar.style.width = `${pct}%`;
 
       if (left <= 0){
         stopHoldTimer();
@@ -1299,9 +1299,9 @@
       const data = await res.json().catch(()=> ({}));
 
       if(!res.ok){
-        const msg = data.message || No se pudo crear la reserva (HTTP ${res.status});
+        const msg = data.message || `No se pudo crear la reserva (HTTP ${res.status})`;
         showPayMsg(msg, "err");
-        setStatus(Error: ${msg});
+        setStatus(`Error: ${msg}`);
         setPayBusy(false);
         return;
       }
@@ -1310,7 +1310,7 @@
         let msg = data.message || "No se pudo crear la reserva";
         if (Array.isArray(data.conflicts) && data.conflicts.length){
           const c = data.conflicts[0];
-          msg +=          ` (ocupado ${c.check_in} → ${c.check_out})`;
+          msg += ` (ocupado ${c.check_in} → ${c.check_out})`;
         }
         showPayMsg(msg, "err");
         setStatus(`Error: ${msg}`);
