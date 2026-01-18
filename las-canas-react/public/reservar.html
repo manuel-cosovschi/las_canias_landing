@@ -9,7 +9,7 @@
 
   <!-- favicon -->
   <link rel="icon" href="/logo.PNG" type="image/png" />
-    <link rel="apple-touch-icon" href="/logo.PNG" />
+  <link rel="apple-touch-icon" href="/logo.PNG" />
 
   <!-- Fonts (misma estética que index/terminos) -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -170,7 +170,7 @@
         </div>
       </div>
 
-      <!-- AVISO (mantenemos) -->
+      <!-- AVISO -->
       <div id="bookingWindowBanner" class="mt-4 p-4 rounded-2xl bg-white/70 border border-brand-beige">
         <div class="font-semibold mb-1">📅 Reservas habilitadas hasta mayo (inclusive)</div>
         <div class="text-sm text-brand-brown/90">
@@ -262,14 +262,24 @@
         Te reservamos el lugar <strong>por 6 horas</strong> (pendiente de transferencia).
       </p>
 
+      <!-- Resumen (AQUÍ VA LA SEÑA COMO EN TU SCREENSHOT) -->
       <div class="bg-white/70 p-4 rounded-2xl border border-brand-beige text-sm">
         <div><strong>ID de reserva:</strong> <span id="resId">-</span></div>
         <div><strong>Vence:</strong> <span id="resExpires">-</span></div>
+
         <div class="mt-2"><strong>Casa:</strong> <span id="resHouse">-</span></div>
         <div><strong>Fechas:</strong> <span id="resDates">-</span></div>
         <div><strong>Personas:</strong> <span id="resGuests">-</span></div>
+
+        <div class="mt-2">
+          <strong>Seña (50%):</strong> <span id="resDeposit">-</span>
+        </div>
+        <div class="text-xs text-brand-accent mt-1">
+          El <strong>saldo restante</strong> se coordina con los dueños cerca de la fecha de tu estadía.
+        </div>
       </div>
-      <!-- UX: Qué sigue ahora (checklist + HOLD) -->
+
+      <!-- UX: Qué sigue ahora -->
       <div class="mt-4 p-5 rounded-2xl bg-white/70 border border-brand-beige">
         <div class="flex items-center justify-between gap-3">
           <div class="font-semibold">Qué sigue ahora</div>
@@ -294,21 +304,21 @@
         </div>
 
         <div class="mt-4 grid sm:grid-cols-3 gap-3 text-sm">
-          <div id="step1" class="p-3 rounded-xl border border-brand-beige bg-white/60">
+          <div class="p-3 rounded-xl border border-brand-beige bg-white/60">
             <div class="font-semibold">1) Transferí la seña</div>
             <div class="text-brand-accent text-xs mt-1">
               Monto: <span id="uxDepositAmount">-</span>
             </div>
           </div>
 
-          <div id="step2" class="p-3 rounded-xl border border-brand-beige bg-white/60">
+          <div class="p-3 rounded-xl border border-brand-beige bg-white/60">
             <div class="font-semibold">2) Subí el comprobante</div>
             <div class="text-brand-accent text-xs mt-1">
               Abajo tenés el botón para enviarlo.
             </div>
           </div>
 
-          <div id="step3" class="p-3 rounded-xl border border-brand-beige bg-white/60">
+          <div class="p-3 rounded-xl border border-brand-beige bg-white/60">
             <div class="font-semibold">3) Confirmación final</div>
             <div class="text-brand-accent text-xs mt-1">
               Los dueños revisan el pago y confirman la reserva.
@@ -326,6 +336,8 @@
           </div>
         </div>
       </div>
+
+      <!-- Datos transferencia -->
       <div class="mt-4 p-4 rounded-2xl bg-brand-cream border border-brand-beige text-sm">
         <div class="font-semibold mb-2">Transferencia bancaria (seña 50%)</div>
 
@@ -348,12 +360,15 @@
         <div>Alias: <strong>Anacarla74</strong></div>
 
         <div class="mt-3">
-           <span id="resRef">-</span>
+          <strong>Concepto (poné este ID):</strong> <span id="resRef">-</span>
+        </div>
+        <div class="text-xs text-brand-accent mt-1">
+          Usá este ID como referencia en la transferencia para identificar tu reserva.
         </div>
       </div>
 
       <!-- SUBIR COMPROBANTE -->
-      <div class="mt-4 p-4 rounded-2xl bg-white/70 border border-brand-beige">
+      <div id="proofBox" class="mt-4 p-4 rounded-2xl bg-white/70 border border-brand-beige">
         <div class="font-semibold mb-2">📎 Subir comprobante de transferencia</div>
         <p class="text-sm text-brand-accent mb-3">
           Subí el comprobante para que le llegue a los dueños junto con la información de tu reserva.
@@ -411,7 +426,6 @@
   const MIN7_UNTIL = "2026-04-04";
 
   // Fechas fijas / findes que “se reserva así” (exacto)
-  // Interpretación: se permite SOLO esa ventana completa (checkin exacto -> checkout exacto).
   const FIXED_WINDOWS = [
     { checkin:"2026-04-30", checkout:"2026-05-03", label:"Finde fijo (30/04 a 03/05)" },
     { checkin:"2026-05-22", checkout:"2026-05-25", label:"Finde fijo (22/05 a 25/05)" },
@@ -468,7 +482,6 @@
 
   const minNightsText = el("minNightsText");
   const payMsg = el("payMsg");
-  const debugRaw = el("debugRaw");
 
   const payTransferBtn = el("payTransfer");
   const proofFile = el("proofFile");
@@ -486,7 +499,6 @@
   function clearPayMsg(){
     payMsg.classList.add("hidden");
     payMsg.textContent = "";
-    if (debugRaw) debugRaw.textContent = "";
   }
   function showProofMsg(msg, kind="info"){
     proofMsg.classList.remove("hidden");
@@ -511,7 +523,7 @@
     const y = date.getFullYear();
     const m = String(date.getMonth()+1).padStart(2,"0");
     const d = String(date.getDate()).padStart(2,"0");
-    return `${y}-${m}-${d}`;
+    return ${y}-${m}-${d};
   }
   function addDays(date, days){
     const out = new Date(date.getFullYear(), date.getMonth(), date.getDate());
@@ -539,7 +551,7 @@
   // PRECIOS por noche por casa por mes (Mar/Abr/May)
   // =========================================================
   const PRICES_BY_MONTH = {
-    "2026-03": { LC1:120000, LC2:120000, LC3:130000, LC4:120000, LC5:110000 },
+        "2026-03": { LC1:120000, LC2:120000, LC3:130000, LC4:120000, LC5:110000 },
     "2026-04": { LC1:120000, LC2:120000, LC3:130000, LC4:120000, LC5:110000 },
     "2026-05": { LC1:120000, LC2:120000, LC3:120000, LC4:120000, LC5:100000 },
   };
@@ -550,7 +562,7 @@
   function ymKey(date){
     const y = date.getFullYear();
     const m = String(date.getMonth()+1).padStart(2,"0");
-    return `${y}-${m}`;
+    return ${y}-${m};
   }
   function getNightPrice(date, houseCode){
     const key = ymKey(date);
@@ -577,6 +589,9 @@
     return { nights, total, deposit: Math.round(total * 0.5) };
   }
 
+  // Mantener cálculo en memoria para reutilizarlo en el paso de confirmación
+  let lastCalc = null;
+
   function updatePriceUI(){
     const banner = el("priceBanner");
     const nightPriceText = el("nightPriceText");
@@ -584,6 +599,8 @@
     const totalPriceText = el("totalPriceText");
 
     if (!banner || !nightPriceText || !nightsCountText || !totalPriceText) return;
+
+    lastCalc = null;
 
     if (!house.value || !checkin.value || !checkout.value){
       banner.classList.add("hidden");
@@ -610,6 +627,8 @@
       if (sumDeposit) sumDeposit.textContent = "-";
       return;
     }
+
+    lastCalc = calc;
 
     banner.classList.remove("hidden");
     nightPriceText.textContent = fmtARS(firstNightPrice);
@@ -660,25 +679,25 @@
             type:"fixed_block",
             min: null,
             fixed: overlap,
-            label: `Fechas fijas: ${overlap.checkin} → ${overlap.checkout}. Para excepciones consultá por WhatsApp.`
+            label: Fechas fijas: ${overlap.checkin} → ${overlap.checkout}. Para excepciones consultá por WhatsApp.
           };
         }
         const nights = Math.round((parseYMD(overlap.checkout) - parseYMD(overlap.checkin)) / 86400000);
-        return { type:"fixed", min: nights, fixed: overlap, label:`Fechas fijas: ${overlap.checkin} → ${overlap.checkout} (${nights} noches)` };
+        return { type:"fixed", min: nights, fixed: overlap, label:Fechas fijas: ${overlap.checkin} → ${overlap.checkout} (${nights} noches) };
       }
     }
 
     const fixed = getFixedWindowForCheckin(ciYmd);
     if (fixed){
       const nights = Math.round((parseYMD(fixed.checkout) - parseYMD(fixed.checkin)) / 86400000);
-      return { type:"fixed", min: nights, fixed, label:`Fechas fijas: ${fixed.checkin} → ${fixed.checkout} (${nights} noches)` };
+      return { type:"fixed", min: nights, fixed, label:Fechas fijas: ${fixed.checkin} → ${fixed.checkout} (${nights} noches) };
     }
 
     if (ymdLE(ciYmd, MIN7_UNTIL)){
-      return { type:"min7", min: MIN_NIGHTS_STRICT, label:`${MIN_NIGHTS_STRICT} noches mínimo (hasta ${MIN7_UNTIL})` };
+      return { type:"min7", min: MIN_NIGHTS_STRICT, label:${MIN_NIGHTS_STRICT} noches mínimo (hasta ${MIN7_UNTIL}) };
     }
 
-    return { type:"min2", min: DEFAULT_MIN_NIGHTS, label:`${DEFAULT_MIN_NIGHTS} noches mínimo` };
+    return { type:"min2", min: DEFAULT_MIN_NIGHTS, label:${DEFAULT_MIN_NIGHTS} noches mínimo };
   }
 
   function updateMinBanner(){
@@ -845,7 +864,7 @@
             }
           });
 
-          setStatus(`3) Estas fechas son fijas: check-out debe ser ${rule.fixed.checkout}.`);
+          setStatus(3) Estas fechas son fijas: check-out debe ser ${rule.fixed.checkout}.);
         } else {
           const minCo = addDays(ci0, rule.min);
 
@@ -864,7 +883,7 @@
             }
           });
 
-          setStatus(`3) Elegí el check-out (mínimo ${rule.min} noches).`);
+          setStatus(3) Elegí el check-out (mínimo ${rule.min} noches).);
         }
 
         updateMinBanner();
@@ -904,6 +923,7 @@
 
     availabilityLoaded = false;
     blockedRanges = [];
+    lastCalc = null;
 
     guestSection.classList.add("hidden");
     paySection.classList.add("hidden");
@@ -931,6 +951,9 @@
     if (proofFile) proofFile.value = "";
     if (sendProofBtn) sendProofBtn.disabled = true;
 
+    // reset UI de HOLD si existía
+    stopHoldTimer();
+
     updatePriceUI();
   }
 
@@ -939,16 +962,16 @@
 
     guests.disabled = false;
     guests.classList.remove("bg-brand-beige/25");
-    guests.placeholder = `1 a ${rule.max}`;
+    guests.placeholder = 1 a ${rule.max};
     guests.max = rule.max;
 
-    houseHint.textContent = `${rule.hint} Disponible desde ${getFirstAllowedCheckin()}.`;
+    houseHint.textContent = ${rule.hint} Disponible desde ${getFirstAllowedCheckin()}.;
     houseHint.classList.remove("hidden");
 
-    capacityText.textContent = `${rule.hint} Disponible desde ${getFirstAllowedCheckin()}.`;
+    capacityText.textContent = ${rule.hint} Disponible desde ${getFirstAllowedCheckin()}.;
     capacityBanner.classList.remove("hidden");
 
-    setStatus(`2) Ahora elegí la cantidad de personas (máx ${rule.max}).`);
+    setStatus(2) Ahora elegí la cantidad de personas (máx ${rule.max}).);
   }
 
   function updateContinueState(){
@@ -979,40 +1002,38 @@
       return;
     }
 
-    // fijo => checkout debe ser exacto
     if (rule.type === "fixed" && checkout.value !== rule.fixed.checkout){
       continueBtn.disabled = true;
-      setStatus(`Estas fechas son fijas: check-out debe ser ${rule.fixed.checkout}.`);
+      setStatus(Estas fechas son fijas: check-out debe ser ${rule.fixed.checkout}.);
       return;
     }
 
     const minCo = addDays(ci, rule.min);
     if (co < minCo){
       continueBtn.disabled = true;
-      setStatus(`La estadía mínima para esas fechas es de ${rule.min} noches.`);
+      setStatus(La estadía mínima para esas fechas es de ${rule.min} noches.);
       return;
     }
 
     for (const r of blockedRanges){
       if (overlapsStay(ci, co, r.start, r.endExclusive)){
         continueBtn.disabled = true;
-        setStatus(`No disponible 😕 (ocupado del ${r.rawStart} al ${r.rawEnd}). Probá otras fechas.`);
+        setStatus(No disponible 😕 (ocupado del ${r.rawStart} al ${r.rawEnd}). Probá otras fechas.);
         return;
       }
     }
 
     continueBtn.disabled = false;
     setStatus("4) Perfecto. Continuá para ingresar los datos del huésped.");
-    }
+  }
 
-    function validateGuestData(){
+  function validateGuestData(){
     const ok = name.value.trim() && dni.value.trim() && email.value.trim() && phone.value.trim();
     guestContinue.disabled = !ok;
     return ok;
-    }
+  }
 
-    // Extrae row/id de cualquier formato
-    function extractReservation(data){
+  function extractReservation(data){
     const candidates = [
       data?.row,
       data,
@@ -1028,10 +1049,155 @@
       if (c?.row?.id) return c.row;
     }
     return null;
+  }
+
+  // =========================================================
+  // HOLD UX: countdown + barra + expiración local
+  // =========================================================
+  let holdInterval = null;
+
+  function stopHoldTimer(){
+    if (holdInterval) clearInterval(holdInterval);
+    holdInterval = null;
+
+    const holdCountdown = el("holdCountdown");
+    const holdBar = el("holdBar");
+    if (holdCountdown) holdCountdown.textContent = "-";
+    if (holdBar) holdBar.style.width = "0%";
+  }
+
+  function pad2(n){ return String(n).padStart(2,"0"); }
+
+  function formatCountdown(ms){
+    const total = Math.max(0, Math.floor(ms / 1000));
+    const h = Math.floor(total / 3600);
+    const m = Math.floor((total % 3600) / 60);
+    const s = total % 60;
+    return ${pad2(h)}:${pad2(m)}:${pad2(s)};
+  }
+
+  function setBadge(status){
+    const badge = el("resStatusBadge");
+    if (!badge) return;
+
+    badge.className = "text-xs font-semibold px-3 py-1 rounded-full border";
+
+    if (status === "CONFIRMED"){
+      badge.classList.add("bg-emerald-100","text-emerald-900","border-emerald-200");
+      badge.textContent = "Estado: CONFIRMADA ✅";
+      return;
+    }
+    if (status === "PROOF_SENT"){
+      badge.classList.add("bg-blue-100","text-blue-900","border-blue-200");
+      badge.textContent = "Estado: Comprobante enviado";
+      return;
+    }
+    if (status === "EXPIRED"){
+      badge.classList.add("bg-red-100","text-red-900","border-red-200");
+      badge.textContent = "Estado: EXPIRADA";
+      return;
     }
 
-    // ---- Events ----
-    house.addEventListener("change", async ()=>{
+    badge.classList.add("bg-yellow-100","text-yellow-900","border-yellow-200");
+    badge.textContent = "Estado: HOLD (pendiente)";
+  }
+
+  function startHoldCountdown(expiresAtIso){
+    stopHoldTimer();
+
+    // Si el backend no manda expires_at, hacemos fallback a 6h desde ahora
+    const now = Date.now();
+    const expires = expiresAtIso ? Date.parse(expiresAtIso) : (now + 6*60*60*1000);
+    const totalWindow = Math.max(1, expires - now);
+
+    const holdCountdown = el("holdCountdown");
+    const holdBar = el("holdBar");
+
+    function tick(){
+      const t = Date.now();
+      const left = expires - t;
+
+      if (holdCountdown) holdCountdown.textContent = formatCountdown(left);
+
+      const pct = Math.max(0, Math.min(100, ((left) / totalWindow) * 100));
+      if (holdBar) holdBar.style.width = ${pct}%;
+
+      if (left <= 0){
+        stopHoldTimer();
+        setBadge("EXPIRED");
+
+        // bloquear UI de comprobante
+        const proofBox = el("proofBox");
+        if (proofBox){
+          proofBox.classList.add("opacity-60");
+        }
+        if (sendProofBtn) sendProofBtn.disabled = true;
+
+        showProofMsg("⛔ El HOLD expiró. Contactanos por WhatsApp para recoordinar disponibilidad.", "err");
+      }
+    }
+
+    tick();
+    holdInterval = setInterval(tick, 1000);
+  }
+
+  // =========================================================
+  // Polling estado de reserva (para “confirmada”)
+  // IMPORTANTE: esto requiere un endpoint backend.
+  // Si no existe, no rompe nada; solo no actualiza.
+  // =========================================================
+  const RESERVATION_STATUS_API = "/api/reservation-status"; 
+  let statusPollInterval = null;
+
+  function stopStatusPolling(){
+    if (statusPollInterval) clearInterval(statusPollInterval);
+    statusPollInterval = null;
+  }
+
+  async function pollReservationStatus(reservationId){
+    stopStatusPolling();
+    if (!reservationId) return;
+
+    async function check(){
+      try{
+        const res = await fetch(RESERVATION_STATUS_API, {
+          method:"POST",
+          headers:{ "Content-Type":"application/json" },
+          body: JSON.stringify({ id: reservationId })
+        });
+
+        if (!res.ok) return;
+
+        const data = await res.json().catch(()=> ({}));
+
+        // esperamos algo tipo: { ok:true, status:"CONFIRMED"|"PENDING"|"EXPIRED", expires_at:"..." }
+        const status = String(data.status || "").toUpperCase();
+
+        if (status === "CONFIRMED"){
+          setBadge("CONFIRMED");
+          stopStatusPolling();
+          stopHoldTimer();
+
+          showProofMsg("✅ ¡Reserva confirmada! Te contactaremos por WhatsApp/Email con los detalles.", "ok");
+          return;
+        }
+        if (status === "EXPIRED"){
+          setBadge("EXPIRED");
+          stopStatusPolling();
+          stopHoldTimer();
+          return;
+        }
+      } catch(e){
+        // silencioso
+      }
+    }
+
+    await check();
+    statusPollInterval = setInterval(check, 15000); // cada 15s
+  }
+
+  // ---- Events ----
+  house.addEventListener("change", async ()=>{
     resetAfterHouseChange();
 
     const h = house.value;
@@ -1045,9 +1211,9 @@
     updateMinBanner();
     updateContinueState();
     updatePriceUI();
-    });
+  });
 
-    guests.addEventListener("input", ()=>{
+  guests.addEventListener("input", ()=>{
     const h = house.value;
     if (!h) return;
 
@@ -1061,9 +1227,9 @@
     updateMinBanner();
     updateContinueState();
     updatePriceUI();
-    });
+  });
 
-    continueBtn.addEventListener("click", ()=>{
+  continueBtn.addEventListener("click", ()=>{
     continueBtn.classList.add("hidden");
 
     house.disabled = true;
@@ -1074,15 +1240,15 @@
     guestSection.classList.remove("hidden");
     guestSection.scrollIntoView({behavior:"smooth"});
     setStatus("5) Completá los datos del huésped para continuar.");
-    });
+  });
 
-    [name, dni, email, phone].forEach(inp=>{
+  [name, dni, email, phone].forEach(inp=>{
     inp.addEventListener("input", ()=>{
       if (validateGuestData()) setStatus("6) Listo. Ya podés continuar.");
     });
-    });
+  });
 
-    guestContinue.addEventListener("click", ()=>{
+  guestContinue.addEventListener("click", ()=>{
     guestContinue.classList.add("hidden");
 
     sumHouse.textContent = house.value;
@@ -1096,15 +1262,15 @@
     paySection.classList.remove("hidden");
     paySection.scrollIntoView({behavior:"smooth"});
     setStatus("7) Solicitá la reserva por transferencia.");
-    });
+  });
 
-    function setPayBusy(busy){
+  function setPayBusy(busy){
     payTransferBtn.disabled = busy;
     payTransferBtn.classList.toggle("opacity-60", busy);
     payTransferBtn.classList.toggle("cursor-not-allowed", busy);
-    }
+  }
 
-    payTransferBtn.addEventListener("click", async ()=>{
+  payTransferBtn.addEventListener("click", async ()=>{
     clearPayMsg();
     setPayBusy(true);
     setStatus("Enviando solicitud de reserva...");
@@ -1131,12 +1297,11 @@
       });
 
       const data = await res.json().catch(()=> ({}));
-      if (debugRaw) debugRaw.textContent = JSON.stringify(data, null, 2);
 
       if(!res.ok){
-        const msg = data.message || `No se pudo crear la reserva (HTTP ${res.status})`;
+        const msg = data.message || No se pudo crear la reserva (HTTP ${res.status});
         showPayMsg(msg, "err");
-        setStatus(`Error: ${msg}`);
+        setStatus(Error: ${msg});
         setPayBusy(false);
         return;
       }
@@ -1145,7 +1310,7 @@
         let msg = data.message || "No se pudo crear la reserva";
         if (Array.isArray(data.conflicts) && data.conflicts.length){
           const c = data.conflicts[0];
-          msg += ` (ocupado ${c.check_in} → ${c.check_out})`;
+          msg +=          ` (ocupado ${c.check_in} → ${c.check_out})`;
         }
         showPayMsg(msg, "err");
         setStatus(`Error: ${msg}`);
@@ -1162,19 +1327,38 @@
         return;
       }
 
-      // Mostrar confirmación
+      // =========================================================
+      // COMPLETAR DATOS EN CONFIRMACIÓN (incluye SEÑA en tu screenshot)
+      // =========================================================
+      const depositAmount = (lastCalc?.deposit != null) ? fmtARS(lastCalc.deposit) : "-";
+
       el("resId").textContent = row.id;
       el("resHouse").textContent = payload.house_code;
       el("resDates").textContent = `${payload.check_in} → ${payload.check_out}`;
       el("resGuests").textContent = String(payload.guests);
       el("resRef").textContent = row.id;
+
+      // expires_at puede venir ISO (ej: 2026-01-18T22:57:32.434Z)
       el("resExpires").textContent = row.expires_at ? row.expires_at : "-";
 
-      // Habilitar envío comprobante
+      // SEÑA visible en el resumen y en los 2 lugares UX
+      const resDeposit = el("resDeposit");
+      const uxDepositAmount = el("uxDepositAmount");
+      const uxDepositAmount2 = el("uxDepositAmount2");
+
+      if (resDeposit) resDeposit.textContent = depositAmount;
+      if (uxDepositAmount) uxDepositAmount.textContent = depositAmount;
+      if (uxDepositAmount2) uxDepositAmount2.textContent = depositAmount;
+
+      // Estado inicial
+      setBadge("HOLD");
+
+      // Habilitar envío comprobante (pero solo si hay archivo)
       if (sendProofBtn) sendProofBtn.disabled = true;
       if (proofFile) proofFile.value = "";
       clearProofMsg();
 
+      // Mostrar sección confirmación
       paySection.classList.add("hidden");
       transferSection.classList.remove("hidden");
       transferSection.scrollIntoView({behavior:"smooth"});
@@ -1182,7 +1366,7 @@
       showPayMsg("✅ Reserva registrada (HOLD por 6 horas).", "ok");
       setStatus("✅ Listo. Reserva registrada (HOLD por 6 horas).");
 
-      // guardar ID para submit-proof
+      // Guardar datos para submit-proof
       transferSection.dataset.reservationId = row.id;
       transferSection.dataset.guestEmail = payload.email;
       transferSection.dataset.guestName = payload.guest_name;
@@ -1192,6 +1376,10 @@
       transferSection.dataset.phone = payload.phone;
       transferSection.dataset.guests = String(payload.guests);
 
+      // Arrancar countdown HOLD + (opcional) polling status
+      startHoldCountdown(row.expires_at || null);
+      pollReservationStatus(row.id);
+
       setPayBusy(false);
     } catch(e){
       console.error(e);
@@ -1200,16 +1388,22 @@
       setStatus(`Error: ${msg}`);
       setPayBusy(false);
     }
-    });
+  });
 
-    // Enable sendProof only when file selected
-    proofFile?.addEventListener("change", ()=>{
+  // Enable sendProof only when file selected
+  proofFile?.addEventListener("change", ()=>{
     const hasFile = proofFile.files && proofFile.files.length > 0;
     sendProofBtn.disabled = !hasFile;
-    });
+  });
 
-    // Submit proof
-    sendProofBtn?.addEventListener("click", async ()=>{
+  function setProofBusy(busy){
+    sendProofBtn.disabled = busy;
+    sendProofBtn.classList.toggle("opacity-60", busy);
+    sendProofBtn.classList.toggle("cursor-not-allowed", busy);
+  }
+
+  // Submit proof
+  sendProofBtn?.addEventListener("click", async ()=>{
     clearProofMsg();
 
     const reservationId = transferSection.dataset.reservationId;
@@ -1218,9 +1412,23 @@
       return;
     }
 
+    // Si el HOLD expiró localmente, evitamos que suba
+    const badgeTxt = el("resStatusBadge")?.textContent || "";
+    if (badgeTxt.includes("EXPIRADA")){
+      showProofMsg("⛔ El HOLD ya expiró. Contactanos por WhatsApp para recoordinar.", "err");
+      return;
+    }
+
     const file = proofFile.files?.[0];
     if (!file){
       showProofMsg("Seleccioná un archivo (imagen o PDF).", "err");
+      return;
+    }
+
+    // Hard-limit simple: 10MB (para evitar errores típicos)
+    const MAX_MB = 10;
+    if (file.size > MAX_MB * 1024 * 1024){
+      showProofMsg(`El archivo es muy pesado (máx ${MAX_MB}MB). Probá con una foto más liviana o PDF comprimido.`, "err");
       return;
     }
 
@@ -1235,8 +1443,7 @@
     fd.append("guests", transferSection.dataset.guests || "");
     fd.append("proof", file, file.name);
 
-    sendProofBtn.disabled = true;
-    sendProofBtn.classList.add("opacity-60","cursor-not-allowed");
+    setProofBusy(true);
 
     try{
       const res = await fetch(SUBMIT_PROOF_API, { method:"POST", body: fd });
@@ -1245,30 +1452,36 @@
       if(!res.ok || data.ok === false){
         const msg = data.message || `No se pudo enviar el comprobante (HTTP ${res.status})`;
         showProofMsg(msg, "err");
-        sendProofBtn.disabled = false;
-        sendProofBtn.classList.remove("opacity-60","cursor-not-allowed");
+        setProofBusy(false);
         return;
       }
 
+      // OK
+      setBadge("PROOF_SENT");
       showProofMsg("✅ Comprobante enviado. En breve te confirmamos la reserva.", "ok");
+
+      // opcional: disparar un chequeo inmediato del estado
+      pollReservationStatus(reservationId);
     } catch(e){
       console.error(e);
       showProofMsg(e.message || "Error inesperado", "err");
-      sendProofBtn.disabled = false;
-      sendProofBtn.classList.remove("opacity-60","cursor-not-allowed");
+      setProofBusy(false);
     }
-    });
+  });
 
-    el("transferDone").addEventListener("click", ()=>{
+  el("transferDone").addEventListener("click", ()=>{
+    // limpieza timers por las dudas
+    stopHoldTimer();
+    stopStatusPolling();
     window.location.href = "index.html";
-    });
+  });
 
-    // init
-    refreshPickers();
-    updateMinBanner();
-    updateContinueState();
-    updatePriceUI();
-    </script>
+  // init
+  refreshPickers();
+  updateMinBanner();
+  updateContinueState();
+  updatePriceUI();
+</script>
 
-    </body>
-    </html>
+</body>
+</html>
