@@ -3,53 +3,214 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Admin - Las Cañas</title>
+  <title>Portal de Propietarios | Las Cañas</title>
+  <meta name="description" content="Panel de dueños para confirmar transferencias y bloquear fechas." />
 
+  <!-- favicon -->
+  <link rel="icon" href="/logo.PNG" type="image/png" />
+  <link rel="apple-touch-icon" href="/logo.PNG" />
+
+  <!-- Fonts (misma estética Las Cañas) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet"
+  />
+
+  <!-- Tailwind CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              beige: "#DED2B9",
+              cream: "#F5F1E9",
+              brown: "#4A3728",
+              accent: "#8C7662",
+            },
+          },
+        },
+      },
+    };
+  </script>
 
   <!-- Flatpickr -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
   <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
+
+  <style>
+    html { scroll-behavior: smooth; scroll-padding-top: 5rem; }
+    body { font-family: "Inter", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background: #F5F1E9; }
+    h1,h2,h3,.serif { font-family: "Playfair Display", serif; }
+    .logo-shadow { filter: drop-shadow(2px 4px 6px rgba(74,55,40,.20)); }
+
+    /* Flatpickr typography */
+    .flatpickr-calendar { font-family: "Inter", ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; }
+  </style>
 </head>
 
-<body class="bg-gray-50 text-gray-900">
-  <header class="bg-white shadow">
-    <div class="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
-      <a href="index.html" class="font-bold text-xl">← Las Cañas</a>
-      <button id="btnAuth" class="px-4 py-2 rounded-lg bg-slate-900 text-white font-semibold">
-        Iniciar sesión
-      </button>
+<body class="text-brand-brown overflow-x-hidden">
+
+  <!-- Header -->
+  <header class="sticky top-0 z-50 border-b border-brand-beige/60 bg-brand-cream/90 backdrop-blur">
+    <div class="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
+      <a href="index.html" class="flex items-center gap-3 group">
+        <img src="/logo.PNG" alt="Las Cañas" class="w-9 h-9 rounded-xl bg-white/70 p-1 logo-shadow" />
+        <div class="leading-tight">
+          <div class="serif text-lg font-bold tracking-tight">Las Cañas</div>
+          <div class="text-[10px] uppercase tracking-[0.3em] font-semibold text-brand-accent">Portal de propietarios</div>
+        </div>
+      </a>
+
+      <div class="flex items-center gap-2">
+        <button id="btnSecret"
+          class="hidden px-4 py-2 rounded-full border border-brand-beige bg-white/70 text-xs font-semibold hover:bg-white transition">
+          Clave dueños
+        </button>
+
+        <button id="btnAuth"
+          class="hidden px-4 py-2 rounded-full bg-brand-brown text-brand-cream text-[10px] font-black uppercase tracking-[0.22em] shadow-lg hover:opacity-90 transition">
+          Cerrar sesión
+        </button>
+      </div>
     </div>
   </header>
 
-  <main class="max-w-4xl mx-auto px-4 py-8">
-    <h1 class="text-2xl font-bold mb-2">Panel de Dueños</h1>
-    <p class="text-gray-600 mb-6">Confirmar transferencias y bloquear fechas.</p>
+  <main class="max-w-5xl mx-auto px-4 py-10">
+    <!-- Hero -->
+    <div class="mb-8">
+      <div class="flex items-start justify-between gap-4">
+        <div>
+          <h1 class="serif text-3xl sm:text-4xl font-bold tracking-tight">Panel de Dueños</h1>
+          <p class="text-brand-accent mt-2 max-w-2xl">
+            Confirmar transferencias, cancelar reservas y bloquear fechas.
+          </p>
+        </div>
 
-    <div id="status" class="mb-6 p-4 rounded-lg bg-gray-100 text-sm text-gray-700">
+        <div id="chipEnv" class="hidden sm:flex items-center gap-2 px-3 py-2 rounded-2xl bg-white/70 border border-brand-beige text-xs">
+          <span class="w-2 h-2 rounded-full bg-emerald-600"></span>
+          <span class="font-semibold">Online</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Status -->
+    <div id="status" class="mb-6 p-4 rounded-2xl bg-white/70 text-sm border border-brand-beige/70">
       Iniciá sesión para continuar.
     </div>
 
-    <section id="app" class="hidden">
-      <!-- Tabs -->
-      <div class="flex gap-2 mb-6">
-        <button id="tabBlock" class="px-4 py-2 rounded-lg bg-gray-100 border font-semibold">
-          Bloquear fechas
+    <!-- LOGIN INLINE -->
+    <section id="loginView" class="bg-white/75 rounded-2xl shadow-sm border border-brand-beige p-6 sm:p-10 max-w-xl mx-auto">
+      <div class="flex flex-col items-center text-center gap-3">
+        <div class="w-14 h-14 rounded-2xl bg-brand-beige/40 border border-brand-beige flex items-center justify-center">
+          <img src="/logo.PNG" alt="Las Cañas" class="w-9 h-9 object-contain logo-shadow" />
+        </div>
+        <div class="serif text-2xl font-bold">Las Cañas</div>
+        <div class="text-brand-accent text-sm">Acceso para propietarios</div>
+      </div>
+
+      <div class="mt-8 space-y-4">
+        <div>
+          <label class="block text-sm font-semibold mb-1">Email / Usuario</label>
+          <input id="loginUser"
+            class="w-full border border-brand-beige rounded-2xl p-3 bg-white/80 focus:outline-none focus:ring-2 focus:ring-brand-accent/40"
+            placeholder="propietario@lascanias.com"
+            autocomplete="username" />
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold mb-1">Contraseña</label>
+
+          <div class="relative">
+            <input id="loginPass" type="password"
+              class="w-full border border-brand-beige rounded-2xl p-3 pr-12 bg-white/80 focus:outline-none focus:ring-2 focus:ring-brand-accent/40"
+              placeholder="••••••••"
+              autocomplete="current-password" />
+
+            <button id="btnTogglePass" type="button"
+              class="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-2 rounded-xl text-xs font-semibold bg-brand-beige/40 hover:bg-brand-beige/60 transition"
+              aria-label="Mostrar/Ocultar contraseña">
+              Ver
+            </button>
+          </div>
+
+          <div class="mt-3 flex items-center justify-between gap-3">
+            <label class="inline-flex items-center gap-2 text-xs text-brand-accent">
+              <input id="rememberMe" type="checkbox" class="rounded border-brand-beige" />
+              Recordarme
+            </label>
+
+            <button id="btnOpenSecretFromLogin" type="button"
+              class="text-xs font-semibold text-brand-brown/70 hover:text-brand-accent transition">
+              Configurar clave dueños
+            </button>
+          </div>
+        </div>
+
+        <button id="btnDoLogin"
+          class="w-full py-3 rounded-2xl bg-brand-brown text-brand-cream font-semibold hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed">
+          Iniciar sesión
         </button>
-        <button id="tabTransfers" class="px-4 py-2 rounded-lg bg-white border font-semibold">
-          Transferencias
-        </button>
+
+        <div id="loginErr" class="hidden text-sm text-red-700"></div>
+
+        <p class="text-xs text-brand-accent pt-2">
+          Tip: si cambiás credenciales en Netlify, cerrá sesión y volvé a entrar.
+        </p>
+      </div>
+    </section>
+
+    <!-- APP -->
+    <section id="app" class="hidden mt-8">
+      <!-- Toolbar -->
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+        <!-- Tabs -->
+        <div class="flex flex-wrap gap-2">
+          <button id="tabBlock"
+            class="px-4 py-2 rounded-full bg-brand-beige/40 border border-brand-beige font-semibold text-sm hover:bg-brand-beige/55 transition">
+            Bloquear fechas
+          </button>
+          <button id="tabTransfers"
+            class="px-4 py-2 rounded-full bg-white/70 border border-brand-beige font-semibold text-sm hover:bg-white transition">
+            Transferencias
+          </button>
+        </div>
+
+        <!-- Actions -->
+        <div class="flex items-center gap-2">
+          <button id="btnRefresh"
+            class="hidden px-4 py-2 rounded-full bg-brand-brown text-brand-cream text-xs font-semibold hover:opacity-90 transition">
+            Actualizar pendientes
+          </button>
+
+          <div class="hidden sm:flex items-center gap-2 px-3 py-2 rounded-2xl bg-white/70 border border-brand-beige text-xs">
+            <span class="font-semibold">Owner Secret:</span>
+            <span id="secretBadge" class="text-brand-accent">No configurado</span>
+          </div>
+        </div>
       </div>
 
       <!-- BLOQUEAR FECHAS -->
-      <div id="viewBlock" class="bg-white rounded-xl shadow p-6">
-        <h2 class="text-xl font-semibold mb-4">Bloqueo manual</h2>
+      <div id="viewBlock" class="bg-white/75 rounded-2xl shadow-sm border border-brand-beige p-6">
+        <div class="flex items-start justify-between gap-4 mb-4">
+          <div>
+            <h2 class="serif text-xl sm:text-2xl font-bold">Bloqueo manual</h2>
+            <p class="text-xs text-brand-accent mt-1">Esto impacta la disponibilidad del calendario de reservas.</p>
+          </div>
+          <span class="text-xs font-semibold px-3 py-1 rounded-full bg-brand-beige/50 border border-brand-beige/80">
+            Calendario
+          </span>
+        </div>
 
         <div class="grid sm:grid-cols-2 gap-4">
           <div>
-            <label class="block text-sm font-medium mb-1">Casa</label>
-            <select id="house" class="w-full border rounded-lg p-3 bg-white">
+            <label class="block text-sm font-semibold mb-1">Casa</label>
+            <select id="house"
+              class="w-full border border-brand-beige rounded-2xl p-3 bg-white/80 focus:outline-none focus:ring-2 focus:ring-brand-accent/40">
               <option value="LC1">Las Cañas 1</option>
               <option value="LC2">Las Cañas 2</option>
               <option value="LC3">Las Cañas 3</option>
@@ -59,39 +220,73 @@
           </div>
 
           <div>
-            <label class="block text-sm font-medium mb-1">Motivo</label>
-            <input id="note" class="w-full border rounded-lg p-3" placeholder="Ej: mantenimiento" />
+            <label class="block text-sm font-semibold mb-1">Motivo</label>
+            <input id="note"
+              class="w-full border border-brand-beige rounded-2xl p-3 bg-white/80 focus:outline-none focus:ring-2 focus:ring-brand-accent/40"
+              placeholder="Ej: mantenimiento" />
           </div>
 
           <div>
-            <label class="block text-sm font-medium mb-1">Check-in</label>
-            <input id="checkin" type="text" class="w-full border rounded-lg p-3 bg-white" placeholder="Elegí fecha" />
+            <label class="block text-sm font-semibold mb-1">Check-in</label>
+            <input id="checkin" type="text"
+              class="w-full border border-brand-beige rounded-2xl p-3 bg-white/80 focus:outline-none focus:ring-2 focus:ring-brand-accent/40"
+              placeholder="Elegí fecha" />
           </div>
 
           <div>
-            <label class="block text-sm font-medium mb-1">Check-out</label>
-            <input id="checkout" type="text" class="w-full border rounded-lg p-3 bg-white" placeholder="Elegí fecha" />
+            <label class="block text-sm font-semibold mb-1">Check-out</label>
+            <input id="checkout" type="text"
+              class="w-full border border-brand-beige rounded-2xl p-3 bg-white/80 focus:outline-none focus:ring-2 focus:ring-brand-accent/40"
+              placeholder="Elegí fecha" />
           </div>
         </div>
 
         <button id="btnBlock"
-          class="mt-5 w-full py-3 rounded-lg bg-red-600 text-white font-semibold hover:bg-red-700">
+          class="mt-5 w-full py-3 rounded-2xl bg-brand-brown text-brand-cream font-semibold hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed">
           Bloquear fechas
         </button>
 
-        <p class="mt-3 text-xs text-gray-500">
+        <p class="mt-3 text-xs text-brand-accent">
           Tip: Check-out debe ser posterior al check-in.
         </p>
       </div>
 
       <!-- TRANSFERENCIAS -->
-      <div id="viewTransfers" class="bg-white rounded-xl shadow p-6 hidden">
-        <div class="flex items-center justify-between mb-4">
-          <h2 class="text-xl font-semibold">Transferencias pendientes</h2>
-          <button id="btnRefresh"
-            class="px-4 py-2 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700">
-            Actualizar
-          </button>
+      <div id="viewTransfers" class="bg-white/75 rounded-2xl shadow-sm border border-brand-beige p-6 hidden">
+        <div class="flex items-start justify-between gap-3 mb-4">
+          <div>
+            <h2 class="serif text-xl sm:text-2xl font-bold">Transferencias pendientes</h2>
+            <p class="text-xs text-brand-accent mt-1">Confirmá o cancelá. Esto dispara tus flujos en n8n.</p>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <div class="px-3 py-2 rounded-2xl bg-white/70 border border-brand-beige text-xs">
+              <span class="font-semibold">Pendientes:</span>
+              <span id="pendingCount" class="text-brand-accent font-semibold">-</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Search / filters -->
+        <div class="grid sm:grid-cols-3 gap-3 mb-5">
+          <div class="sm:col-span-2">
+            <label class="block text-xs font-semibold text-brand-accent mb-1">Buscar</label>
+            <input id="searchInput"
+              class="w-full border border-brand-beige rounded-2xl p-3 bg-white/80 focus:outline-none focus:ring-2 focus:ring-brand-accent/40"
+              placeholder="ID, casa, nombre, teléfono..." />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-brand-accent mb-1">Casa</label>
+            <select id="filterHouse"
+              class="w-full border border-brand-beige rounded-2xl p-3 bg-white/80 focus:outline-none focus:ring-2 focus:ring-brand-accent/40">
+              <option value="">Todas</option>
+              <option value="LC1">LC1</option>
+              <option value="LC2">LC2</option>
+              <option value="LC3">LC3</option>
+              <option value="LC4">LC4</option>
+              <option value="LC5">LC5</option>
+            </select>
+          </div>
         </div>
 
         <div id="pendingList" class="space-y-3 text-sm"></div>
@@ -99,107 +294,208 @@
     </section>
   </main>
 
-  <!-- LOGIN MODAL -->
-  <div id="loginModal" class="fixed inset-0 hidden items-center justify-center bg-black/50 p-4 z-[1000]">
-    <div class="w-full max-w-md rounded-2xl bg-white shadow-xl p-6">
-      <div class="flex items-center justify-between mb-3">
-        <h3 class="text-lg font-bold">Ingresar</h3>
-        <button id="btnCloseModal" class="text-gray-500 hover:text-gray-800">✕</button>
-      </div>
-
-      <p class="text-sm text-gray-600 mb-4">
-        Acceso solo para dueños.
-      </p>
-
-      <div class="space-y-3">
-        <div>
-          <label class="block text-sm font-medium mb-1">Usuario</label>
-          <input id="loginUser" class="w-full border rounded-lg p-3" placeholder="Usuario" autocomplete="username" />
-        </div>
-        <div>
-          <label class="block text-sm font-medium mb-1">Contraseña</label>
-          <input id="loginPass" type="password" class="w-full border rounded-lg p-3" placeholder="••••••••" autocomplete="current-password" />
-        </div>
-
-        <button id="btnDoLogin" class="w-full py-3 rounded-lg bg-slate-900 text-white font-semibold">
-          Entrar
-        </button>
-
-        <div id="loginErr" class="hidden text-sm text-red-600"></div>
-
-        <p class="text-xs text-gray-500 pt-2">
-          Tip: si cambiás credenciales en Netlify, cerrá sesión y volvé a entrar.
-        </p>
-      </div>
-    </div>
-  </div>
-
-  <!-- OWNER SECRET MODAL (NO hardcode, evita error de secrets scanning) -->
+  <!-- SECRET MODAL (NO hardcode) -->
   <div id="secretModal" class="fixed inset-0 hidden items-center justify-center bg-black/50 p-4 z-[1100]">
-    <div class="w-full max-w-md rounded-2xl bg-white shadow-xl p-6">
+    <div class="w-full max-w-md rounded-2xl bg-white shadow-xl p-6 border border-brand-beige">
       <div class="flex items-center justify-between mb-3">
-        <h3 class="text-lg font-bold">Clave de propietarios</h3>
-        <button id="btnCloseSecretModal" class="text-gray-500 hover:text-gray-800">✕</button>
+        <h3 class="text-lg font-bold serif">Clave de propietarios</h3>
+        <button id="btnCloseSecretModal" class="text-brand-brown/60 hover:text-brand-brown">✕</button>
       </div>
 
-      <p class="text-sm text-gray-600 mb-4">
+      <p class="text-sm text-brand-accent mb-4">
         Ingresá la clave para autorizar acciones (header <span class="font-mono">x-lc-secret</span>).
       </p>
 
       <div class="space-y-3">
         <div>
-          <label class="block text-sm font-medium mb-1">Owner Secret</label>
-          <input id="ownerSecretInput" type="password" class="w-full border rounded-lg p-3" placeholder="Clave" autocomplete="off" />
+          <label class="block text-sm font-semibold mb-1">Owner Secret</label>
+          <input id="ownerSecretInput" type="password"
+            class="w-full border border-brand-beige rounded-2xl p-3 bg-white/80 focus:outline-none focus:ring-2 focus:ring-brand-accent/40"
+            placeholder="Clave" autocomplete="off" />
         </div>
 
         <div class="flex gap-2">
-          <button id="btnSaveSecret" class="flex-1 py-3 rounded-lg bg-slate-900 text-white font-semibold">
+          <button id="btnSaveSecret"
+            class="flex-1 py-3 rounded-2xl bg-brand-brown text-brand-cream font-semibold hover:opacity-90 transition">
             Guardar
           </button>
-          <button id="btnClearSecret" class="py-3 px-4 rounded-lg bg-gray-200 font-semibold">
+          <button id="btnClearSecret"
+            class="py-3 px-4 rounded-2xl bg-brand-beige/50 border border-brand-beige font-semibold hover:bg-brand-beige/70 transition">
             Limpiar
           </button>
         </div>
 
-        <div id="secretErr" class="hidden text-sm text-red-600"></div>
+        <div id="secretErr" class="hidden text-sm text-red-700"></div>
 
-        <p class="text-xs text-gray-500 pt-2">
+        <p class="text-xs text-brand-accent pt-2">
           Se guarda en este navegador (localStorage).
         </p>
       </div>
     </div>
   </div>
 
+  <!-- ACTION MODAL (Confirm / Cancel) -->
+  <div id="actionModal" class="fixed inset-0 hidden items-center justify-center bg-black/50 p-4 z-[1200]">
+    <div class="w-full max-w-lg rounded-2xl bg-white shadow-xl p-6 border border-brand-beige">
+      <div class="flex items-start justify-between gap-3 mb-2">
+        <div>
+          <h3 id="actionTitle" class="text-lg font-bold serif">Acción</h3>
+          <p id="actionSubtitle" class="text-sm text-brand-accent">-</p>
+        </div>
+        <button id="btnCloseActionModal" class="text-brand-brown/60 hover:text-brand-brown">✕</button>
+      </div>
+
+      <div class="mt-4 bg-brand-cream border border-brand-beige rounded-2xl p-4 text-sm">
+        <div class="grid sm:grid-cols-2 gap-2">
+          <div><strong>ID:</strong> <span id="a_id">-</span></div>
+          <div><strong>Casa:</strong> <span id="a_house">-</span></div>
+          <div class="sm:col-span-2"><strong>Fechas:</strong> <span id="a_dates">-</span></div>
+          <div class="sm:col-span-2"><strong>Huésped:</strong> <span id="a_guest">-</span></div>
+          <div class="sm:col-span-2"><strong>Vence:</strong> <span id="a_expires">-</span></div>
+        </div>
+      </div>
+
+      <div id="confirmFields" class="mt-4 hidden">
+        <label class="block text-sm font-semibold mb-1">Referencia de pago (payment_ref)</label>
+        <input id="paymentRefInput"
+          class="w-full border border-brand-beige rounded-2xl p-3 bg-white/80 focus:outline-none focus:ring-2 focus:ring-brand-accent/40"
+          placeholder="Ej: Transferencia confirmada por dueño" />
+        <p class="text-xs text-brand-accent mt-2">
+          Esto se guarda en la fila (y lo podés ver en Sheets).
+        </p>
+      </div>
+
+      <div id="cancelFields" class="mt-4 hidden">
+        <label class="block text-sm font-semibold mb-1">Motivo de cancelación (reason)</label>
+        <input id="cancelReasonInput"
+          class="w-full border border-brand-beige rounded-2xl p-3 bg-white/80 focus:outline-none focus:ring-2 focus:ring-brand-accent/40"
+          placeholder="Ej: No se acreditó el pago / Cancelado por dueño" />
+      </div>
+
+      <div id="actionErr" class="hidden mt-4 text-sm text-red-700"></div>
+
+      <div class="mt-6 flex flex-col sm:flex-row gap-2">
+        <button id="btnActionPrimary"
+          class="flex-1 py-3 rounded-2xl bg-brand-brown text-brand-cream font-semibold hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed">
+          Confirmar
+        </button>
+        <button id="btnActionSecondary"
+          class="py-3 px-4 rounded-2xl bg-white/70 border border-brand-beige font-semibold hover:bg-white transition">
+          Cancelar
+        </button>
+      </div>
+
+      <p class="mt-3 text-xs text-brand-accent">
+        Tip: al confirmar/cancelar, tus flujos n8n pueden enviar email automáticamente al huésped.
+      </p>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="fixed bottom-5 left-1/2 -translate-x-1/2 hidden z-[1300]">
+    <div id="toastInner" class="px-4 py-3 rounded-2xl shadow-xl border text-sm bg-white">
+      -
+    </div>
+  </div>
+
 <script>
   const el = (id) => document.getElementById(id);
 
+  // UI elements
   const statusBox = el("status");
   const app = el("app");
+  const loginView = el("loginView");
+
   const btnAuth = el("btnAuth");
+  const btnSecret = el("btnSecret");
+  const chipEnv = el("chipEnv");
 
   const tabBlock = el("tabBlock");
   const tabTransfers = el("tabTransfers");
   const viewBlock = el("viewBlock");
   const viewTransfers = el("viewTransfers");
 
-  const loginModal = el("loginModal");
-  const btnCloseModal = el("btnCloseModal");
+  const btnRefresh = el("btnRefresh");
+  const pendingList = el("pendingList");
+  const pendingCount = el("pendingCount");
+
+  const searchInput = el("searchInput");
+  const filterHouse = el("filterHouse");
+
+  // Login elements
   const btnDoLogin = el("btnDoLogin");
   const loginUser = el("loginUser");
   const loginPass = el("loginPass");
   const loginErr = el("loginErr");
+  const rememberMe = el("rememberMe");
+  const btnTogglePass = el("btnTogglePass");
+  const btnOpenSecretFromLogin = el("btnOpenSecretFromLogin");
 
+  // Secret modal
   const secretModal = el("secretModal");
   const btnCloseSecretModal = el("btnCloseSecretModal");
   const btnSaveSecret = el("btnSaveSecret");
   const btnClearSecret = el("btnClearSecret");
   const ownerSecretInput = el("ownerSecretInput");
   const secretErr = el("secretErr");
+  const secretBadge = el("secretBadge");
 
-  const AUTH_KEY = "lc_admin_basic";       // Basic (admin user:pass) en base64
-  const OWNER_KEY = "lc_owner_secret";     // x-lc-secret (guardado local, NO en código)
+  // Action modal
+  const actionModal = el("actionModal");
+  const btnCloseActionModal = el("btnCloseActionModal");
+  const actionTitle = el("actionTitle");
+  const actionSubtitle = el("actionSubtitle");
+  const actionErr = el("actionErr");
+  const btnActionPrimary = el("btnActionPrimary");
+  const btnActionSecondary = el("btnActionSecondary");
+
+  const confirmFields = el("confirmFields");
+  const cancelFields = el("cancelFields");
+  const paymentRefInput = el("paymentRefInput");
+  const cancelReasonInput = el("cancelReasonInput");
+
+  // Action summary fields
+  const a_id = el("a_id");
+  const a_house = el("a_house");
+  const a_dates = el("a_dates");
+  const a_guest = el("a_guest");
+  const a_expires = el("a_expires");
+
+  // Toast
+  const toast = el("toast");
+  const toastInner = el("toastInner");
+  let toastTimer = null;
+
+  // Keys
+  const AUTH_KEY = "lc_admin_basic";             // Basic (admin user:pass) base64
+  const OWNER_KEY = "lc_owner_secret";           // x-lc-secret in localStorage
+  const REMEMBER_USER_KEY = "lc_admin_remember_user";
+  const REMEMBER_ON_KEY = "lc_admin_remember_on";
+
+  // API endpoints (Netlify functions)
+  const EP_ADMIN_LOGIN = "/.netlify/functions/admin-login";
+  const EP_AVAILABILITY = "/.netlify/functions/availability";
+  const EP_OWNER_BLOCKS = "/.netlify/functions/owner-blocks";
+  const EP_LIST_PENDING = "/.netlify/functions/list-pending";
+  const EP_CONFIRM_TRANSFER = "/.netlify/functions/confirm-transfer";
+  const EP_CANCEL_RESERVATION = "/.netlify/functions/cancel-reservation";
 
   function setStatus(msg) { statusBox.textContent = msg; }
+
+  function showToast(msg, type="info") {
+    if (toastTimer) clearTimeout(toastTimer);
+
+    toast.classList.remove("hidden");
+    toastInner.textContent = msg;
+    toastInner.className = "px-4 py-3 rounded-2xl shadow-xl border text-sm bg-white";
+
+    if (type === "ok") toastInner.classList.add("border-emerald-200", "bg-emerald-50", "text-emerald-900");
+    else if (type === "err") toastInner.classList.add("border-red-200", "bg-red-50", "text-red-900");
+    else toastInner.classList.add("border-brand-beige", "bg-white", "text-brand-brown");
+
+    toastTimer = setTimeout(() => toast.classList.add("hidden"), 2800);
+  }
+
   function showLoginError(msg) {
     loginErr.textContent = msg;
     loginErr.classList.remove("hidden");
@@ -218,15 +514,13 @@
     secretErr.classList.add("hidden");
   }
 
-  function openModal() {
-    clearLoginError();
-    loginModal.classList.remove("hidden");
-    loginModal.classList.add("flex");
-    setTimeout(() => loginUser.focus(), 50);
+  function showActionError(msg) {
+    actionErr.textContent = msg;
+    actionErr.classList.remove("hidden");
   }
-  function closeModal() {
-    loginModal.classList.add("hidden");
-    loginModal.classList.remove("flex");
+  function clearActionError() {
+    actionErr.textContent = "";
+    actionErr.classList.add("hidden");
   }
 
   function openSecretModal() {
@@ -240,12 +534,28 @@
     secretModal.classList.remove("flex");
   }
 
+  function openActionModal() {
+    clearActionError();
+    actionModal.classList.remove("hidden");
+    actionModal.classList.add("flex");
+  }
+  function closeActionModal() {
+    actionModal.classList.add("hidden");
+    actionModal.classList.remove("flex");
+  }
+
   function getAuth() { return localStorage.getItem(AUTH_KEY); }
   function clearAuth() { localStorage.removeItem(AUTH_KEY); }
 
   function getOwnerSecret() { return localStorage.getItem(OWNER_KEY); }
   function setOwnerSecret(v) { localStorage.setItem(OWNER_KEY, v); }
   function clearOwnerSecret() { localStorage.removeItem(OWNER_KEY); }
+
+  function refreshSecretBadge() {
+    const has = !!getOwnerSecret();
+    if (secretBadge) secretBadge.textContent = has ? "Configurado ✅" : "No configurado";
+    if (btnSecret) btnSecret.classList.toggle("hidden", !getAuth());
+  }
 
   // Base64 UTF-8 real (soporta ñ)
   function b64utf8(str) {
@@ -296,7 +606,7 @@
     }
 
     if (!res.ok) {
-      // Si falta x-lc-secret, pedimos por modal (NO prompt con ejemplo)
+      // Si falta x-lc-secret, abrimos modal
       const msg = String(data.message || "").toLowerCase();
       const needsOwner =
         msg.includes("x-lc-secret") ||
@@ -310,7 +620,6 @@
         openSecretModal();
         throw new Error("Falta Owner Secret. Ingresalo para continuar.");
       }
-
       throw new Error(data.message || "Error");
     }
 
@@ -323,11 +632,15 @@
     viewBlock.classList.toggle("hidden", !isBlock);
     viewTransfers.classList.toggle("hidden", isBlock);
 
-    tabBlock.classList.toggle("bg-gray-100", isBlock);
-    tabTransfers.classList.toggle("bg-gray-100", !isBlock);
+    // Show refresh only on transfers
+    btnRefresh.classList.toggle("hidden", isBlock);
 
-    tabBlock.classList.toggle("bg-white", !isBlock);
-    tabTransfers.classList.toggle("bg-white", isBlock);
+    // Button styles
+    tabBlock.classList.toggle("bg-brand-beige/40", isBlock);
+    tabBlock.classList.toggle("bg-white/70", !isBlock);
+
+    tabTransfers.classList.toggle("bg-brand-beige/40", !isBlock);
+    tabTransfers.classList.toggle("bg-white/70", isBlock);
   }
 
   tabBlock.onclick = () => showTab("block");
@@ -424,7 +737,7 @@
   async function loadAvailabilityAndUpdatePickers() {
     try {
       const house = el("house").value;
-      const res = await fetch(`/.netlify/functions/availability?house_code=${encodeURIComponent(house)}`, { method: "GET" });
+      const res = await fetch(`${EP_AVAILABILITY}?house_code=${encodeURIComponent(house)}`, { method: "GET" });
       const data = await res.json().catch(() => ({}));
 
       const ranges = []
@@ -442,7 +755,8 @@
   });
 
   // BLOQUEAR
-  el("btnBlock").onclick = async () => {
+  const btnBlock = el("btnBlock");
+  btnBlock.onclick = async () => {
     try {
       const inD = parseDMY(el("checkin").value);
       const outD = parseDMY(el("checkout").value);
@@ -450,8 +764,10 @@
       if (!inD || !outD) return setStatus("Elegí check-in y check-out.");
       if (outD <= inD) return setStatus("Check-out debe ser posterior al check-in.");
 
+      btnBlock.disabled = true;
       setStatus("Bloqueando...");
-      const out = await apiFetch("/.netlify/functions/owner-blocks", {
+
+      const out = await apiFetch(EP_OWNER_BLOCKS, {
         method: "POST",
         body: {
           house_code: el("house").value,
@@ -462,113 +778,336 @@
       });
 
       setStatus(`✅ Bloqueado (${out.id || "OK"})`);
+      showToast("Bloqueo creado ✅", "ok");
+
       el("note").value = "";
       fpIn && fpIn.clear();
       fpOut && fpOut.clear();
       await loadAvailabilityAndUpdatePickers();
     } catch (e) {
       setStatus(`❌ ${e.message}`);
+      showToast(e.message || "Error", "err");
+    } finally {
+      btnBlock.disabled = false;
     }
   };
 
   // TRANSFERENCIAS
-  function renderPending(items) {
-    const box = el("pendingList");
-    box.innerHTML = "";
+  let pendingRaw = [];
 
-    if (!items.length) {
-      box.innerHTML = `<div class="p-4 bg-gray-50 rounded-lg">No hay pendientes.</div>`;
+  function itemMatchesSearch(item, q) {
+    if (!q) return true;
+    const t = String(q).toLowerCase().trim();
+    const blob = [
+      item.id,
+      item.house_code,
+      item.check_in,
+      item.check_out,
+      item.guest_name,
+      item.phone,
+      item.email,
+    ].filter(Boolean).join(" ").toLowerCase();
+    return blob.includes(t);
+  }
+
+  function itemMatchesHouse(item, h) {
+    if (!h) return true;
+    return String(item.house_code || "") === h;
+  }
+
+  function humanizeExpire(expiresAt) {
+    if (!expiresAt) return "-";
+    return expiresAt;
+  }
+
+  function renderPending(items) {
+    pendingList.innerHTML = "";
+
+    const q = (searchInput?.value || "").trim();
+    const h = (filterHouse?.value || "").trim();
+
+    const filtered = (items || []).filter(it => itemMatchesSearch(it, q) && itemMatchesHouse(it, h));
+
+    if (pendingCount) pendingCount.textContent = String(filtered.length);
+
+    if (!filtered.length) {
+      pendingList.innerHTML = `<div class="p-4 bg-white/70 border border-brand-beige rounded-2xl">No hay pendientes con esos filtros.</div>`;
       return;
     }
 
-    items.forEach(r => {
+    filtered.forEach(r => {
       const div = document.createElement("div");
-      div.className = "p-4 border rounded-lg bg-white";
+      div.className = "p-4 border border-brand-beige rounded-2xl bg-white/80";
+
+      const guest = (r.guest_name || "-") + (r.phone ? ` — ${r.phone}` : "");
+      const email = r.email ? ` · ${r.email}` : "";
+
       div.innerHTML = `
-        <div class="font-semibold">${r.id} — ${r.house_code}</div>
-        <div>${r.check_in} → ${r.check_out}</div>
-        <div>${r.guest_name || "-"} — ${r.phone || "-"}</div>
-        <div class="text-xs text-gray-500">Vence: ${r.expires_at || "-"}</div>
-        <div class="mt-3 flex gap-2">
-          <button class="confirm px-3 py-2 bg-green-600 text-white rounded-lg font-semibold" data-id="${r.id}">
-            Confirmar
-          </button>
-          <button class="cancel px-3 py-2 bg-gray-200 rounded-lg font-semibold" data-id="${r.id}">
-            Cancelar
-          </button>
+        <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+          <div class="min-w-0">
+            <div class="flex items-center gap-2">
+              <div class="font-semibold">${r.id}</div>
+              <span class="text-xs font-semibold px-3 py-1 rounded-full bg-brand-beige/50 border border-brand-beige/80">
+                ${r.house_code}
+              </span>
+            </div>
+            <div class="text-sm text-brand-brown/90 mt-1">${r.check_in} → ${r.check_out}</div>
+            <div class="text-xs text-brand-accent mt-1">${guest}${email}</div>
+            <div class="text-xs text-brand-accent mt-1">Vence: ${humanizeExpire(r.expires_at)}</div>
+          </div>
+
+          <div class="flex flex-wrap gap-2">
+            <button
+              class="btnConfirm px-4 py-2 rounded-full bg-emerald-700 text-white text-xs font-semibold hover:opacity-90 transition"
+              data-id="${r.id}">
+              Confirmar
+            </button>
+            <button
+              class="btnCancel px-4 py-2 rounded-full bg-white/70 border border-brand-beige text-xs font-semibold hover:bg-white transition"
+              data-id="${r.id}">
+              Cancelar
+            </button>
+          </div>
         </div>
       `;
-      box.appendChild(div);
+
+      pendingList.appendChild(div);
     });
 
-    box.querySelectorAll(".confirm").forEach(btn => {
-      btn.onclick = async () => {
-        try {
-          const id = btn.dataset.id;
-          const ref = prompt("Referencia de pago (payment_ref):", "Confirmado por dueño");
-          if (ref === null) return;
-
-          setStatus("Confirmando...");
-          await apiFetch("/.netlify/functions/confirm-transfer", {
-            method: "POST",
-            body: { id, payment_ref: ref }
-          });
-
-          setStatus(`✅ Confirmada: ${id}`);
-          await loadPending();
-          await loadAvailabilityAndUpdatePickers();
-        } catch (e) {
-          setStatus(`❌ ${e.message}`);
-        }
+    pendingList.querySelectorAll(".btnConfirm").forEach(btn => {
+      btn.onclick = () => {
+        const id = btn.dataset.id;
+        const row = pendingRaw.find(x => String(x.id) === String(id));
+        openConfirmModal(row);
       };
     });
 
-    box.querySelectorAll(".cancel").forEach(btn => {
-      btn.onclick = async () => {
-        try {
-          const id = btn.dataset.id;
-          const reason = prompt("Motivo de cancelación (reason):", "Cancelado por dueño");
-          if (reason === null) return;
-
-          setStatus("Cancelando...");
-          await apiFetch("/.netlify/functions/cancel-reservation", {
-            method: "POST",
-            body: { id, reason }
-          });
-
-          setStatus(`✅ Cancelada: ${id}`);
-          await loadPending();
-          await loadAvailabilityAndUpdatePickers();
-        } catch (e) {
-          setStatus(`❌ ${e.message}`);
-        }
+    pendingList.querySelectorAll(".btnCancel").forEach(btn => {
+      btn.onclick = () => {
+        const id = btn.dataset.id;
+        const row = pendingRaw.find(x => String(x.id) === String(id));
+        openCancelModal(row);
       };
     });
   }
 
   async function loadPending() {
-    const out = await apiFetch("/.netlify/functions/list-pending", { method: "GET", body: null });
+    const out = await apiFetch(EP_LIST_PENDING, { method: "GET", body: null });
     const items = out.items || out.holds || [];
     const count = out.count ?? items.length;
+
+    pendingRaw = items;
     renderPending(items);
+
     return count;
   }
 
-  el("btnRefresh").onclick = async () => {
+  // Filters re-render
+  searchInput?.addEventListener("input", () => renderPending(pendingRaw));
+  filterHouse?.addEventListener("change", () => renderPending(pendingRaw));
+
+  btnRefresh.onclick = async () => {
     try {
+      btnRefresh.disabled = true;
       setStatus("Cargando pendientes...");
       const c = await loadPending();
       setStatus(`✅ Lista actualizada. Pendientes: ${c}`);
+      showToast("Pendientes actualizados ✅", "ok");
     } catch (e) {
       setStatus(`❌ ${e.message}`);
+      showToast(e.message || "Error", "err");
+    } finally {
+      btnRefresh.disabled = false;
     }
   };
+
+  // ACTION MODAL LOGIC
+  let currentAction = null; // { type: "confirm"|"cancel", row }
+
+  function fillActionSummary(row) {
+    a_id.textContent = row?.id || "-";
+    a_house.textContent = row?.house_code || "-";
+    a_dates.textContent = (row?.check_in && row?.check_out) ? `${row.check_in} → ${row.check_out}` : "-";
+    a_guest.textContent = (row?.guest_name || "-") + (row?.phone ? ` — ${row.phone}` : "");
+    a_expires.textContent = row?.expires_at || "-";
+  }
+
+  function setActionBusy(busy) {
+    btnActionPrimary.disabled = busy;
+    btnActionSecondary.disabled = busy;
+    btnActionPrimary.classList.toggle("opacity-60", busy);
+    btnActionPrimary.classList.toggle("cursor-not-allowed", busy);
+  }
+
+  function openConfirmModal(row) {
+    currentAction = { type: "confirm", row };
+    clearActionError();
+
+    actionTitle.textContent = "Confirmar transferencia";
+    actionSubtitle.textContent = "Esto actualiza la reserva como CONFIRMADA (y dispara tu automatización).";
+
+    confirmFields.classList.remove("hidden");
+    cancelFields.classList.add("hidden");
+
+    paymentRefInput.value = "Confirmado por dueño";
+    cancelReasonInput.value = "";
+
+    btnActionPrimary.textContent = "Confirmar";
+    btnActionSecondary.textContent = "Volver";
+
+    fillActionSummary(row);
+    openActionModal();
+    setTimeout(() => paymentRefInput.focus(), 50);
+  }
+
+  function openCancelModal(row) {
+    currentAction = { type: "cancel", row };
+    clearActionError();
+
+    actionTitle.textContent = "Cancelar reserva";
+    actionSubtitle.textContent = "Esto cancela la reserva (y puede liberar fechas / disparar tu automatización).";
+
+    confirmFields.classList.add("hidden");
+    cancelFields.classList.remove("hidden");
+
+    cancelReasonInput.value = "Cancelado por dueño";
+    paymentRefInput.value = "";
+
+    btnActionPrimary.textContent = "Cancelar";
+    btnActionSecondary.textContent = "Volver";
+
+    fillActionSummary(row);
+    openActionModal();
+    setTimeout(() => cancelReasonInput.focus(), 50);
+  }
+
+  btnCloseActionModal.onclick = closeActionModal;
+  actionModal.addEventListener("click", (e) => { if (e.target === actionModal) closeActionModal(); });
+
+  btnActionSecondary.onclick = () => closeActionModal();
+
+  btnActionPrimary.onclick = async () => {
+    try {
+      if (!currentAction?.row?.id) return showActionError("No se encontró la reserva.");
+
+      setActionBusy(true);
+
+      const id = currentAction.row.id;
+
+      if (currentAction.type === "confirm") {
+        const ref = (paymentRefInput.value || "").trim();
+        if (!ref) return showActionError("Ingresá una referencia de pago.");
+
+        setStatus("Confirmando...");
+        await apiFetch(EP_CONFIRM_TRANSFER, { method:"POST", body: { id, payment_ref: ref } });
+
+        setStatus(`✅ Confirmada: ${id}`);
+        showToast(`Confirmada ✅ ${id}`, "ok");
+      }
+
+      if (currentAction.type === "cancel") {
+        const reason = (cancelReasonInput.value || "").trim();
+        if (!reason) return showActionError("Ingresá un motivo de cancelación.");
+
+        setStatus("Cancelando...");
+        await apiFetch(EP_CANCEL_RESERVATION, { method:"POST", body: { id, reason } });
+
+        setStatus(`✅ Cancelada: ${id}`);
+        showToast(`Cancelada ✅ ${id}`, "ok");
+      }
+
+      closeActionModal();
+
+      // refresh
+      await loadPending();
+      await loadAvailabilityAndUpdatePickers();
+    } catch (e) {
+      showActionError(e.message || "Error");
+      showToast(e.message || "Error", "err");
+      setStatus(`❌ ${e.message || "Error"}`);
+    } finally {
+      setActionBusy(false);
+    }
+  };
+
+  // SECRET MODAL handlers
+  btnCloseSecretModal.onclick = closeSecretModal;
+  secretModal.addEventListener("click", (e) => { if (e.target === secretModal) closeSecretModal(); });
+
+  btnClearSecret.onclick = () => {
+    clearOwnerSecret();
+    ownerSecretInput.value = "";
+    clearSecretError();
+    refreshSecretBadge();
+    setStatus("Owner Secret limpiado.");
+    showToast("Owner Secret limpiado", "ok");
+  };
+
+  btnSaveSecret.onclick = async () => {
+    try {
+      clearSecretError();
+      const val = (ownerSecretInput.value || "").trim();
+      if (!val) return showSecretError("Ingresá una clave.");
+
+      // Validación simple: probamos list-pending con el secret
+      const res = await fetch(EP_LIST_PENDING, {
+        method: "GET",
+        headers: {
+          "Authorization": `Basic ${getAuth()}`,
+          "x-lc-secret": val,
+        }
+      });
+
+      if (!res.ok) return showSecretError("Clave inválida o no autorizada.");
+
+      setOwnerSecret(val);
+      closeSecretModal();
+      refreshSecretBadge();
+      setStatus("✅ Owner Secret guardado.");
+      showToast("Owner Secret guardado ✅", "ok");
+    } catch (e) {
+      showSecretError(e.message || "Error guardando clave.");
+      showToast(e.message || "Error", "err");
+    }
+  };
+
+  // Buttons to open secret
+  btnSecret.onclick = openSecretModal;
+  btnOpenSecretFromLogin.onclick = openSecretModal;
+
+  // Toggle password
+  btnTogglePass.onclick = () => {
+    const isPass = loginPass.type === "password";
+    loginPass.type = isPass ? "text" : "password";
+    btnTogglePass.textContent = isPass ? "Ocultar" : "Ver";
+  };
+
+  // Remember me
+  function loadRememberedUser() {
+    const on = localStorage.getItem(REMEMBER_ON_KEY) === "1";
+    const u = localStorage.getItem(REMEMBER_USER_KEY) || "";
+    rememberMe.checked = on;
+    if (on && u) loginUser.value = u;
+  }
+  function saveRememberedUser() {
+    if (rememberMe.checked) {
+      localStorage.setItem(REMEMBER_ON_KEY, "1");
+      localStorage.setItem(REMEMBER_USER_KEY, (loginUser.value || "").trim());
+    } else {
+      localStorage.setItem(REMEMBER_ON_KEY, "0");
+      localStorage.removeItem(REMEMBER_USER_KEY);
+    }
+  }
+  rememberMe.addEventListener("change", saveRememberedUser);
+  loginUser.addEventListener("input", () => {
+    if (rememberMe.checked) saveRememberedUser();
+  });
 
   // LOGIN FLOW
   async function tryLogin(user, pass) {
     const basic = b64utf8(`${user}:${pass}`);
 
-    const res = await fetch("/.netlify/functions/admin-login", {
+    const res = await fetch(EP_ADMIN_LOGIN, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -583,92 +1122,102 @@
     localStorage.setItem(AUTH_KEY, basic);
   }
 
-  function refreshUI() {
-    const auth = getAuth();
-    if (auth) {
-      btnAuth.textContent = "Cerrar sesión";
-      app.classList.remove("hidden");
-      setStatus("Panel habilitado ✅");
-      loadAvailabilityAndUpdatePickers();
-
-      // Si falta owner secret, lo pedimos por modal (sin hardcode)
-      if (!getOwnerSecret()) openSecretModal();
-    } else {
-      btnAuth.textContent = "Iniciar sesión";
-      app.classList.add("hidden");
-      setStatus("Iniciá sesión para continuar.");
-    }
+  function setLoginBusy(busy) {
+    btnDoLogin.disabled = busy;
+    btnDoLogin.classList.toggle("opacity-60", busy);
+    btnDoLogin.classList.toggle("cursor-not-allowed", busy);
   }
-
-  btnAuth.onclick = () => {
-    if (getAuth()) {
-      clearAuth();
-      refreshUI();
-    } else {
-      openModal();
-    }
-  };
-
-  btnCloseModal.onclick = closeModal;
-  loginModal.addEventListener("click", (e) => {
-    if (e.target === loginModal) closeModal();
-  });
 
   btnDoLogin.onclick = async () => {
     try {
       clearLoginError();
+      setLoginBusy(true);
+
       const u = (loginUser.value || "").trim();
       const p = (loginPass.value || "").trim();
-      if (!u || !p) return showLoginError("Completá usuario y contraseña.");
+      if (!u || !p) {
+        setLoginBusy(false);
+        return showLoginError("Completá usuario y contraseña.");
+      }
 
       await tryLogin(u, p);
-      closeModal();
+      saveRememberedUser();
       refreshUI();
+
+      showToast("Sesión iniciada ✅", "ok");
     } catch (e) {
       showLoginError(e.message);
+      showToast(e.message || "Error", "err");
+    } finally {
+      setLoginBusy(false);
     }
   };
 
-  // Secret modal handlers
-  btnCloseSecretModal.onclick = closeSecretModal;
-  secretModal.addEventListener("click", (e) => {
-    if (e.target === secretModal) closeSecretModal();
+  // Enter key submits login
+  loginPass.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") btnDoLogin.click();
+  });
+  loginUser.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") btnDoLogin.click();
   });
 
-  btnClearSecret.onclick = () => {
-    clearOwnerSecret();
-    ownerSecretInput.value = "";
-    clearSecretError();
-    setStatus("Owner Secret limpiado.");
-  };
+  function refreshUI() {
+    const auth = getAuth();
 
-  btnSaveSecret.onclick = async () => {
-    try {
-      clearSecretError();
-      const val = (ownerSecretInput.value || "").trim();
-      if (!val) return showSecretError("Ingresá una clave.");
+    chipEnv.classList.toggle("hidden", !auth);
 
-      // Validación simple: probamos list-pending con el secret
-      const res = await fetch("/.netlify/functions/list-pending", {
-        method: "GET",
-        headers: {
-          "Authorization": `Basic ${getAuth()}`,
-          "x-lc-secret": val,
-        }
-      });
+    if (auth) {
+      // show dashboard
+      btnAuth.classList.remove("hidden");
+      btnAuth.textContent = "Cerrar sesión";
 
-      if (!res.ok) return showSecretError("Clave inválida o no autorizada.");
+      btnSecret.classList.remove("hidden");
 
-      setOwnerSecret(val);
-      closeSecretModal();
-      setStatus("✅ Owner Secret guardado.");
-    } catch (e) {
-      showSecretError(e.message || "Error guardando clave.");
+      loginView.classList.add("hidden");
+      app.classList.remove("hidden");
+
+      setStatus("Panel habilitado ✅");
+
+      // init pickers & pending when logged
+      loadAvailabilityAndUpdatePickers();
+      refreshSecretBadge();
+
+      // Transfers refresh visible only when transfers tab
+      btnRefresh.classList.toggle("hidden", viewTransfers.classList.contains("hidden"));
+
+      // Ask owner secret if missing (no hardcode)
+      if (!getOwnerSecret()) {
+        showToast("Falta la clave de dueños", "err");
+        openSecretModal();
+      } else {
+        // Load pending silently when entering app
+        loadPending().then(c => {
+          if (pendingCount) pendingCount.textContent = String(c);
+        }).catch(()=>{});
+      }
+    } else {
+      // show login
+      btnAuth.classList.add("hidden");
+      btnSecret.classList.add("hidden");
+
+      app.classList.add("hidden");
+      loginView.classList.remove("hidden");
+
+      setStatus("Iniciá sesión para continuar.");
+      refreshSecretBadge();
     }
+  }
+
+  btnAuth.onclick = () => {
+    clearAuth();
+    refreshUI();
+    showToast("Sesión cerrada", "ok");
   };
 
   // init
+  loadRememberedUser();
   refreshUI();
 </script>
+
 </body>
 </html>
