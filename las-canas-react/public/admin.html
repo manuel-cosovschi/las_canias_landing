@@ -815,10 +815,36 @@
     return String(item.house_code || "") === h;
   }
 
-  function humanizeExpire(expiresAt) {
-    if (!expiresAt) return "-";
-    return expiresAt;
-  }
+  function parseExpiresMs(expiresAt) {
+  if (!expiresAt) return NaN;
+  const ms = Date.parse(expiresAt);
+  if (Number.isFinite(ms)) return ms;
+
+  // fallback por si viene "YYYY-MM-DD HH:mm:ss" sin Z (muy común en sheets)
+  // Intento simple: reemplazar espacio por "T"
+  const ms2 = Date.parse(String(expiresAt).replace(" ", "T"));
+  return ms2;
+}
+
+function pad2(n){ return String(n).padStart(2,"0"); }
+
+function formatCountdown(msLeft){
+  const total = Math.max(0, Math.floor(msLeft / 1000));
+  const h = Math.floor(total / 3600);
+  const m = Math.floor((total % 3600) / 60);
+  const s = total % 60;
+  return `${pad2(h)}:${pad2(m)}:${pad2(s)}`;
+}
+
+function isExpiringSoon(msLeft){
+  return Number.isFinite(msLeft) && msLeft > 0 && msLeft <= 60 * 60 * 1000; // 1h
+}
+
+function humanizeExpire(expiresAt) {
+  if (!expiresAt) return "-";
+  // mostramos tal cual pero prolijo
+  return String(expiresAt);
+}
 
   function renderPending(items) {
     pendingList.innerHTML = "";
@@ -853,7 +879,13 @@
             </div>
             <div class="text-sm text-brand-brown/90 mt-1">${r.check_in} → ${r.check_out}</div>
             <div class="text-xs text-brand-accent mt-1">${guest}${email}</div>
-            <div class="text-xs text-brand-accent mt-1">Vence: ${humanizeExpire(r.expires_at)}</div>
+            <div class="text-xs text-brand-accent mt-1 flex items-center gap-2">
+              <span>Vence: ${humanizeExpire(r.expires_at)}</span>
+              <span
+                class="countdown hidden px-2 py-1 rounded-full border text-[10px] font-semibold"
+                data-expires="${(r.expires_at || "").replace(/"/g, '&quot;')}"
+              >-</span>
+            </div>
           </div>
 
           <div class="flex flex-wrap gap-2">
@@ -889,7 +921,56 @@
         openCancelModal(row);
       };
     });
+    startCountdownTicker();
   }
+
+  let countdownInterval = null;
+
+function stopCountdownTicker(){
+  if (countdownInterval) clearInterval(countdownInterval);
+  countdownInterval = null;
+}
+
+function updateCountdowns(){
+  const nodes = document.querySelectorAll(".countdown[data-expires]");
+  const now = Date.now();
+
+  nodes.forEach(node => {
+    const raw = node.getAttribute("data-expires") || "";
+    const expMs = parseExpiresMs(raw);
+
+    if (!Number.isFinite(expMs)){
+      node.classList.add("hidden");
+      return;
+    }
+
+    const left = expMs - now;
+
+    // si ya venció
+    if (left <= 0){
+      node.classList.remove("hidden");
+      node.textContent = "EXPIRADA";
+      node.className = "countdown px-2 py-1 rounded-full border text-[10px] font-semibold bg-red-50 text-red-800 border-red-200";
+      return;
+    }
+
+    // mostrar countdown
+    node.classList.remove("hidden");
+    node.textContent = formatCountdown(left);
+
+    if (isExpiringSoon(left)){
+      node.className = "countdown px-2 py-1 rounded-full border text-[10px] font-semibold bg-yellow-50 text-yellow-900 border-yellow-200";
+    } else {
+      node.className = "countdown px-2 py-1 rounded-full border text-[10px] font-semibold bg-white/70 text-brand-brown border-brand-beige";
+    }
+  });
+}
+
+function startCountdownTicker(){
+  stopCountdownTicker();
+  updateCountdowns();
+  countdownInterval = setInterval(updateCountdowns, 1000);
+}
 
   async function loadPending() {
     const out = await apiFetch(EP_LIST_PENDING, { method: "GET", body: null });
