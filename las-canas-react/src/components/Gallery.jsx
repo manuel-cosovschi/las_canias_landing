@@ -24,7 +24,6 @@ export default function Gallery() {
       { src: "/Imagenes Postales/IMG_4863.MOV", alt: "" },
       { src: "/Imagenes Postales/IMG_5496.MOV", alt: "" },
       { src: "/Imagenes Postales/IMG_5601.MOV", alt: "" },
-      { src: "/Imagenes Postales/IMG_5601.MOV", alt: "" }, // (si es duplicado, borralo)
     ],
     []
   );
