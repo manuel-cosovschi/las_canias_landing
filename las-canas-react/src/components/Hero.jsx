@@ -4,6 +4,8 @@ export default function Hero() {
       id="home"
       className="relative min-h-screen flex items-center justify-center overflow-hidden pt-28 md:pt-36 pb-32"
     >
+        {/* ✅ H1 SEO – invisible pero indexable */}
+      <h1 className="sr-only">Las Cañas Mar de Cobo</h1>
       <div className="absolute inset-0 z-0">
         <img
           src="/entradaVista1.jpg"

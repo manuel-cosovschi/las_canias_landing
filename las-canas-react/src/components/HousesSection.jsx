@@ -44,11 +44,38 @@ const housesData = [
       "Ideal familias",
     ],
     images: [
-      img("/Casa 1 Imagenes/entradacasa1.JPG"),
-      img("/Casa 1 Imagenes/living1.JPG"),
-      img("/Casa 1 Imagenes/cocina1.JPG"),
-      img("/Casa 1 Imagenes/patio1.JPG"),
-    ],
+        // AFUERA / ENTRADA
+        img("/Casa 1 Imagenes/Entrada1LC1.jpeg"),
+        img("/Casa 1 Imagenes/Entrada2LC1.jpeg"),
+        img("/Casa 1 Imagenes/EntradaadLC1.jpeg"),
+        img("/Casa 1 Imagenes/MesaEntradaLC1.jpeg"),
+        img("/Casa 1 Imagenes/MesaEntrada2LC1.jpeg"),
+
+        // TRANSICIÓN / ESCALERA / PASILLO
+        img("/Casa 1 Imagenes/EscaleraLC1.jpeg"),
+        img("/Casa 1 Imagenes/PasilloLC1.jpeg"),
+
+        // LIVING / ESTAR
+        img("/Casa 1 Imagenes/LivingEntradaLC1.jpeg"),
+        img("/Casa 1 Imagenes/FULLLivingLC1.jpeg"),
+        img("/Casa 1 Imagenes/Living+CocinaLC1.jpeg"),
+        img("/Casa 1 Imagenes/Living+Cocina1LC1.jpeg"),
+
+        // HABITACIÓN
+        img("/Casa 1 Imagenes/Habitacion1LC1.jpeg"),
+
+        // BAÑOS
+        img("/Casa 1 Imagenes/Baño1LC1.jpeg"),
+        img("/Casa 1 Imagenes/Ducha1LC1.jpeg"),
+        img("/Casa 1 Imagenes/ToiletteLC1.jpeg"),
+
+        // PATIO / PARQUE
+        img("/Casa 1 Imagenes/patio1.JPG"),
+        img("/Casa 1 Imagenes/patio1extra.JPG"),
+        img("/Casa 1 Imagenes/Patio1LC1.jpeg"),
+        img("/Casa 1 Imagenes/Patio2LC1.jpeg"),
+        img("/Casa 1 Imagenes/vistapatio1LC1.JPG"),
+        ],
   },
   {
     id: 2,
@@ -66,11 +93,32 @@ const housesData = [
     },
     highlights: ["2 Smart TVs", "Parrilla privada", "Parque"],
     images: [
-      img("/Casa 2 Imagenes/entrada2.JPG"),
-      img("/Casa 2 Imagenes/entradaafuera2.JPG"),
-      img("/Casa 2 Imagenes/cama2.JPG"),
-      img("/Casa 2 Imagenes/parrilla2.JPG"),
-    ],
+        // AFUERA / ENTRADA
+        img("/Casa 2 Imagenes/Bienvenida1LC2.jpeg"),
+        img("/Casa 2 Imagenes/Bienvenida2LC2.jpeg"),
+        img("/Casa 2 Imagenes/EntradaLC2.jpeg"),
+        img("/Casa 2 Imagenes/EntradaInteriorLC2.jpeg"),
+
+        // TRANSICIÓN / ESCALERA
+        img("/Casa 2 Imagenes/Escalera1LC2.jpeg"),
+        img("/Casa 2 Imagenes/SubidaLC2.jpeg"),
+
+        // LIVING / COCINA
+        img("/Casa 2 Imagenes/LivingLC2.jpeg"),
+        img("/Casa 2 Imagenes/Living1LC2.jpeg"),
+        img("/Casa 2 Imagenes/Living+CocinaLC2.jpeg"),
+
+        // HABITACIONES
+        img("/Casa 2 Imagenes/Habitacion1LC2.jpeg"),
+        img("/Casa 2 Imagenes/Habitacion2LC2.jpeg"),
+
+        // BAÑOS
+        img("/Casa 2 Imagenes/BañoLC2.jpeg"),
+        img("/Casa 2 Imagenes/ToiletteLC2.jpeg"),
+
+        // PATIO
+        img("/Casa 2 Imagenes/PatioLC2.jpeg"),
+        ],
   },
   {
     id: 3,
@@ -89,11 +137,36 @@ const housesData = [
     },
     highlights: ["Más capacidad", "Parrilla privada", "Parque"],
     images: [
-      img("/Casa 3 Imagenes/livingEntrada3extra.JPG"),
-      img("/Casa 3 Imagenes/living3.JPG"),
-      img("/Casa 3 Imagenes/cocina3.JPG"),
-      img("/Casa 3 Imagenes/patio3.JPG"),
-    ],
+        // AFUERA / ENTRADA
+        img("/Casa 3 Imagenes/EntradaLC3.jpeg"),
+
+        // TRANSICIÓN / ESCALERAS
+        img("/Casa 3 Imagenes/Escalera1LC3.jpeg"),
+        img("/Casa 3 Imagenes/Escalera2LC3.jpeg"),
+
+        // LIVING / COMEDOR
+        img("/Casa 3 Imagenes/LivingEntradaLC3extra.JPG"),
+        img("/Casa 3 Imagenes/LivingLC3.jpeg"),
+        img("/Casa 3 Imagenes/Living1LC3.jpeg"),
+        img("/Casa 3 Imagenes/Living+ComedorLC3.jpeg"),
+
+        // COCINA / COMEDOR (DETALLE)
+        img("/Casa 3 Imagenes/Cocina+ComedorLC3.jpeg"),
+        img("/Casa 3 Imagenes/Comedor1LC3.jpeg"),
+
+        // HABITACIONES
+        img("/Casa 3 Imagenes/Habitacion1LC3.jpeg"),
+        img("/Casa 3 Imagenes/Habitacion1BLC3.jpeg"),
+        img("/Casa 3 Imagenes/HabitacionLC3.jpeg"),
+        img("/Casa 3 Imagenes/VistaHabitacionLC3.jpeg"),
+
+        // BAÑOS
+        img("/Casa 3 Imagenes/BañoLC3.jpeg"),
+        img("/Casa 3 Imagenes/Toilette1LC3.jpeg"),
+
+        // PATIO
+        img("/Casa 3 Imagenes/PatioLC3.jpeg"),
+        ],
   },
   {
     id: 4,
@@ -110,8 +183,36 @@ const housesData = [
       extra: "Capacidad ideal: 3 adultos",
     },
     highlights: ["Planta baja", "Parrilla privada", "Parque"],
-    images: [],
-    comingSoon: true,
+    images: [
+        // AFUERA / ENTRADA
+        img("/Casa 4 Imagenes/VistaEntradaLC4.jpeg"),
+        img("/Casa 4 Imagenes/EntradaLC4.jpeg"),
+
+        // LIVING / COCINA
+        img("/Casa 4 Imagenes/LivingLC4.jpeg"),
+        img("/Casa 4 Imagenes/Living1LC4.jpeg"),
+        img("/Casa 4 Imagenes/Living+ComidaLC4.jpeg"),
+        img("/Casa 4 Imagenes/Living+CocinaLC4.jpeg"),
+        img("/Casa 4 Imagenes/Living+Cocina1LC4.jpeg"),
+        img("/Casa 4 Imagenes/CocinaLC4.jpeg"),
+        img("/Casa 4 Imagenes/Cocina1LC4.jpeg"),
+
+        // HABITACIÓN
+        img("/Casa 4 Imagenes/Habitacion1LC4.jpeg"),
+        img("/Casa 4 Imagenes/HabitacionLC4.jpeg"),
+
+        // BAÑO
+        img("/Casa 4 Imagenes/BañoLC4.jpeg"),
+        img("/Casa 4 Imagenes/Ducha1LC4.jpeg"),
+        img("/Casa 4 Imagenes/Ducha2LC4.jpeg"),
+        img("/Casa 4 Imagenes/DuchaLC4.jpeg"),
+        img("/Casa 4 Imagenes/ToiletteLC4.jpeg"),
+
+        // PATIO
+        img("/Casa 4 Imagenes/PatioLC4.jpeg"),
+        img("/Casa 4 Imagenes/Patio1LC4.jpeg"),
+        img("/Casa 4 Imagenes/Patio2LC4.jpeg"),
+        ],
   },
   {
     id: 5,
@@ -128,8 +229,32 @@ const housesData = [
       extra: "Máximo: 2 adultos + 1 menor",
     },
     highlights: ["Planta baja", "Parrilla privada", "Parque"],
-    images: [],
-    comingSoon: true,
+    images: [
+        // AFUERA / ENTRADA
+        img("/Casa 5 Imagenes/BienvenidaLC5.jpeg"),
+        img("/Casa 5 Imagenes/EntradaLC5.jpeg"),
+        img("/Casa 5 Imagenes/EntradaInteriorLC5.jpeg"),
+
+        // LIVING / COMEDOR
+        img("/Casa 5 Imagenes/Living+ComedorLC5.jpeg"),
+        img("/Casa 5 Imagenes/Living+Comedor1LC5.jpeg"),
+        img("/Casa 5 Imagenes/Living+ComedorLC5.jpeg"), // (si queda duplicado, lo sacás)
+        img("/Casa 5 Imagenes/PasilloLC5.jpeg"),
+
+        // HABITACIÓN
+        img("/Casa 5 Imagenes/HabitacionLC5.jpeg"),
+
+        // BAÑOS
+        img("/Casa 5 Imagenes/BañoLC5.jpeg"),
+        img("/Casa 5 Imagenes/DuchaLC5.jpeg"),
+        img("/Casa 5 Imagenes/Toilette1LC5.jpeg"),
+        img("/Casa 5 Imagenes/ToiletteLC5.jpeg"),
+
+        // PATIO
+        img("/Casa 5 Imagenes/Patio1LC5.jpeg"),
+        img("/Casa 5 Imagenes/PatioLC5.jpeg"),
+        img("/Casa 5 Imagenes/VistaDesdePatioLC5.jpeg"),
+        ],
   },
 ];
 

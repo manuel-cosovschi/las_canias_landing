@@ -30,10 +30,10 @@ export default function About() {
               </p>
               <p>
                 Las Cañas comenzó hace 10 años y poco a poco, con mucho amor y dedicación, fue haciéndose realidad.
-                Hoy tenemos <span className="italic font-medium">5 casas</span> y seguimos mejorando.
+                Hoy tenemos <span className="italic font-medium">5 casas</span> y siempre buscamos seguir mejorando.
               </p>
               <p>
-                Esperamos que encuentren aquí, aunque sea una partecita, todo lo que amamos de este lugar… ❤️
+                Cuando vienen tratamos de transmitirles la belleza de este lugar y deseamos que se lleven la sensación de plenitud y bienestar que sentimos nosotros estando acá… ❤️
               </p>
             </div>
 
