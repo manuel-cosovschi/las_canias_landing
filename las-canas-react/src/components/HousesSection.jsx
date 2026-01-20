@@ -15,12 +15,14 @@ const COMMON = {
     "Parrilla privada",
     "Parque",
   ],
-  notes: [
-    "No incluye sábanas",
+
+  // ✅ solo cosas que SÍ incluye (con tilde en UI)
+  includes: [
     "Toallas de manos y toallones",
-    "Sin aire / sin calefacción (ventiladores)",
+    "Calefacción",
+    "2 ventiladores grandes de pie",
+    "Mosquiteros",
     "Ducha exterior",
-    "No se aceptan mascotas",
   ],
 };
 
@@ -465,14 +467,28 @@ export default function HousesSection() {
                     </div>
                   )}
 
-                  {/* Incluye (lo importante que preguntan) */}
+                  {/* ✅ Aclaración sábanas (fuera de Incluye) */}
+                  <div className="rounded-[1.5rem] border border-brand-beige/70 bg-brand-cream/50 p-5 mb-6">
+                    <div className="text-[9px] font-black uppercase tracking-[0.22em] text-brand-brown/60 mb-2">
+                      Aclaración
+                    </div>
+                    <p className="text-sm text-brand-brown/70 leading-relaxed font-light">
+                      Cada huésped debe traer sus sábanas.
+                    </p>
+                  </div>
+
+                  {/* ✅ Incluye (solo cosas que SÍ incluye, con tilde) */}
                   <div className="rounded-[1.5rem] border border-brand-beige/70 bg-white p-5 mb-8">
                     <div className="text-[9px] font-black uppercase tracking-[0.22em] text-brand-brown/60 mb-3">
                       Incluye
                     </div>
+
                     <ul className="grid grid-cols-1 gap-2 text-sm text-brand-brown/70 font-light">
-                      {COMMON.notes.map((t) => (
-                        <li key={t}>• {t}</li>
+                      {COMMON.includes.map((t) => (
+                        <li key={t} className="flex items-start gap-2">
+                          <span className="mt-[1px] text-brand-accent font-black">✓</span>
+                          <span>{t}</span>
+                        </li>
                       ))}
                     </ul>
                   </div>
