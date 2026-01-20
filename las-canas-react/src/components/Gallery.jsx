@@ -6,7 +6,7 @@ export default function Gallery() {
       // ✅ IMÁGENES (carpeta: /public/Imagenes Postales/)
       { src: "/Imagenes Postales/entradaVista1.jpg", alt: "Entrada" },
       { src: "/Imagenes Postales/portonEntrada.JPG", alt: "Portón de entrada" },
-      { src: "/Imagenes Postales/autosentrada.jpg", alt: "Estacionamiento" },
+      { src: "/Imagenes Postales/autos1.JPG", alt: "Estacionamiento" },
       { src: "/Imagenes Postales/IMG_5916 2.jpeg", alt: "Postal" },
       { src: "/Imagenes Postales/IMG_6009.jpeg", alt: "Postal" },
       { src: "/Imagenes Postales/IMG_6013.jpeg", alt: "Postal" },
@@ -16,16 +16,16 @@ export default function Gallery() {
       { src: "/Imagenes Postales/IMG_6057.jpeg", alt: "Postal" },
 
       // ✅ VIDEOS (carpeta: /public/Imagenes Postales/)
-      { src: "/Imagenes Postales/IMG_4104.MOV", alt: "Video del complejo" },
-      { src: "/Imagenes Postales/IMG_4108.MOV", alt: "Video del complejo" },
-      { src: "/Imagenes Postales/IMG_4112.MOV", alt: "Video del complejo" },
-      { src: "/Imagenes Postales/IMG_4133.MOV", alt: "Video del complejo" },
-      { src: "/Imagenes Postales/IMG_4249.MOV", alt: "Video del complejo" },
-      { src: "/Imagenes Postales/IMG_4593.MOV", alt: "Video del complejo" },
-      { src: "/Imagenes Postales/IMG_4863.MOV", alt: "Video del complejo" },
-      { src: "/Imagenes Postales/IMG_5496.MOV", alt: "Video del complejo" },
-      { src: "/Imagenes Postales/IMG_5601.MOV", alt: "Video del complejo" },
-      { src: "/Imagenes Postales/IMG_5601.MOV", alt: "Video del complejo" }, // (si es duplicado, borralo)
+      { src: "/Imagenes Postales/IMG_4104.MOV", alt: "" },
+      { src: "/Imagenes Postales/IMG_4108.MOV", alt: "" },
+      { src: "/Imagenes Postales/IMG_4112.MOV", alt: "" },
+      { src: "/Imagenes Postales/IMG_4133.MOV", alt: "" },
+      { src: "/Imagenes Postales/IMG_4249.MOV", alt: "" },
+      { src: "/Imagenes Postales/IMG_4593.MOV", alt: "" },
+      { src: "/Imagenes Postales/IMG_4863.MOV", alt: "" },
+      { src: "/Imagenes Postales/IMG_5496.MOV", alt: "" },
+      { src: "/Imagenes Postales/IMG_5601.MOV", alt: "" },
+      { src: "/Imagenes Postales/IMG_5601.MOV", alt: "" }, // (si es duplicado, borralo)
     ],
     []
   );
