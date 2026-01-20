@@ -47,16 +47,15 @@ const housesData = [
         // AFUERA / ENTRADA
         img("/Casa 1 Imagenes/Entrada1LC1.jpeg"),
         img("/Casa 1 Imagenes/Entrada2LC1.jpeg"),
-        img("/Casa 1 Imagenes/EntradaadLC1.jpeg"),
+        img("/Casa 1 Imagenes/EntradaILC1.jpeg"),
+        img("/Casa 1 Imagenes/MesaEntrada1LC1.jpeg"),
         img("/Casa 1 Imagenes/MesaEntradaLC1.jpeg"),
-        img("/Casa 1 Imagenes/MesaEntrada2LC1.jpeg"),
 
         // TRANSICIÓN / ESCALERA / PASILLO
         img("/Casa 1 Imagenes/EscaleraLC1.jpeg"),
         img("/Casa 1 Imagenes/PasilloLC1.jpeg"),
 
         // LIVING / ESTAR
-        img("/Casa 1 Imagenes/LivingEntradaLC1.jpeg"),
         img("/Casa 1 Imagenes/FULLLivingLC1.jpeg"),
         img("/Casa 1 Imagenes/Living+CocinaLC1.jpeg"),
         img("/Casa 1 Imagenes/Living+Cocina1LC1.jpeg"),
@@ -73,7 +72,6 @@ const housesData = [
         img("/Casa 1 Imagenes/patio1.JPG"),
         img("/Casa 1 Imagenes/patio1extra.JPG"),
         img("/Casa 1 Imagenes/Patio1LC1.jpeg"),
-        img("/Casa 1 Imagenes/Patio2LC1.jpeg"),
         img("/Casa 1 Imagenes/vistapatio1LC1.JPG"),
         ],
   },
@@ -94,9 +92,9 @@ const housesData = [
     highlights: ["2 Smart TVs", "Parrilla privada", "Parque"],
     images: [
         // AFUERA / ENTRADA
+        img("/Casa 2 Imagenes/EntradaLC2.jpeg"),
         img("/Casa 2 Imagenes/Bienvenida1LC2.jpeg"),
         img("/Casa 2 Imagenes/Bienvenida2LC2.jpeg"),
-        img("/Casa 2 Imagenes/EntradaLC2.jpeg"),
         img("/Casa 2 Imagenes/EntradaInteriorLC2.jpeg"),
 
         // TRANSICIÓN / ESCALERA
@@ -104,7 +102,6 @@ const housesData = [
         img("/Casa 2 Imagenes/SubidaLC2.jpeg"),
 
         // LIVING / COCINA
-        img("/Casa 2 Imagenes/LivingLC2.jpeg"),
         img("/Casa 2 Imagenes/Living1LC2.jpeg"),
         img("/Casa 2 Imagenes/Living+CocinaLC2.jpeg"),
 
@@ -191,7 +188,6 @@ const housesData = [
         // LIVING / COCINA
         img("/Casa 4 Imagenes/LivingLC4.jpeg"),
         img("/Casa 4 Imagenes/Living1LC4.jpeg"),
-        img("/Casa 4 Imagenes/Living+ComidaLC4.jpeg"),
         img("/Casa 4 Imagenes/Living+CocinaLC4.jpeg"),
         img("/Casa 4 Imagenes/Living+Cocina1LC4.jpeg"),
         img("/Casa 4 Imagenes/CocinaLC4.jpeg"),
