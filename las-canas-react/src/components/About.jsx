@@ -25,7 +25,7 @@ export default function About() {
 
             <div className="space-y-6 text-lg text-brand-brown/70 leading-relaxed font-light">
                 <p>
-                    Hoy les queremos contar quiénes somos… Desde chicos, y sin conocernos, ambos
+                    Hoy les queremos contar quiénes somos… desde chicos y sin conocernos, ambos
                     sentimos que{" "}
                     <span className="text-brand-brown font-medium">Mar de Cobo</span> era nuestro
                     lugar en el mundo.
