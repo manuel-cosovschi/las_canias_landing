@@ -161,7 +161,7 @@ export default function HousesSection() {
                 A 1 cuadra de la playa
               </p>
               <p className="text-xs text-brand-brown/60 leading-relaxed italic">
-                Entorno tranquilo, ideal para descansar.
+                Entorno tranquilo, ideal para relajar.
               </p>
             </div>
           </div>
