@@ -842,8 +842,27 @@ function isExpiringSoon(msLeft){
 
 function humanizeExpire(expiresAt) {
   if (!expiresAt) return "-";
-  // mostramos tal cual pero prolijo
-  return String(expiresAt);
+
+  const ms = parseExpiresMs(expiresAt);
+  if (!Number.isFinite(ms)) return String(expiresAt);
+
+  const d = new Date(ms);
+
+  const date = new Intl.DateTimeFormat("es-AR", {
+    timeZone: "America/Argentina/Buenos_Aires",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  }).format(d);
+
+  const time = new Intl.DateTimeFormat("es-AR", {
+    timeZone: "America/Argentina/Buenos_Aires",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).format(d);
+
+  return `${date} ${time} (AR)`;
 }
 
   function renderPending(items) {
@@ -1010,7 +1029,7 @@ function startCountdownTicker(){
     a_house.textContent = row?.house_code || "-";
     a_dates.textContent = (row?.check_in && row?.check_out) ? `${row.check_in} → ${row.check_out}` : "-";
     a_guest.textContent = (row?.guest_name || "-") + (row?.phone ? ` — ${row.phone}` : "");
-    a_expires.textContent = row?.expires_at || "-";
+    a_expires.textContent = humanizeExpire(row?.expires_at);
   }
 
   function setActionBusy(busy) {
