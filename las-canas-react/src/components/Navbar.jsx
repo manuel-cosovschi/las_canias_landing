@@ -21,6 +21,15 @@ export default function Navbar() {
     };
   }, []);
 
+  // ✅ Bloquear scroll cuando el menú mobile está abierto (evita bugs iOS/Safari)
+  useEffect(() => {
+    if (mobileOpen) document.body.style.overflow = "hidden";
+    else document.body.style.overflow = "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [mobileOpen]);
+
   const links = [
     { name: "Inicio", href: "#home" },
     { name: "Quiénes Somos", href: "#about" },
@@ -40,6 +49,11 @@ export default function Navbar() {
     isScrolled ? "text-brand-brown" : "text-brand-brown md:text-white lg:text-brand-brown"
   }`;
 
+  const closeAll = () => {
+    setMobileOpen(false);
+    setDropOpen(false);
+  };
+
   return (
     <nav
       className={`fixed top-0 w-full z-50 transition-all duration-500 ${
@@ -52,13 +66,13 @@ export default function Navbar() {
           href="#home"
           aria-label="Ir al inicio - Las Cañas"
           className="flex items-center gap-4 group"
-          onClick={() => setMobileOpen(false)}
+          onClick={closeAll}
         >
-          <div className="w-12 h-12 md:w-14 md:h-14 flex items-center justify-center rounded-full overflow-hidden bg-brand-beige/40 border border-white/30 shadow-sm">
+          {/* ✅ Logo SIN fondo circular (arregla el “círculo blanco” raro arriba del todo) */}
+          <div className="w-12 h-12 md:w-14 md:h-14 flex items-center justify-center overflow-hidden">
             <img
-              src="/logo.PNG" // ✅ así se accede en Vite (sale de /public)
-              alt=""
-              aria-hidden="true"
+              src="/logo.PNG"
+              alt="Las Cañas"
               className="w-full h-full object-contain logo-shadow block select-none"
               draggable="false"
               loading="eager"
@@ -66,9 +80,7 @@ export default function Navbar() {
                 e.currentTarget.style.display = "none";
                 const parent = e.currentTarget.parentElement;
                 if (parent) {
-                  parent.classList.add("flex");
-                  parent.classList.add("items-center");
-                  parent.classList.add("justify-center");
+                  parent.classList.add("flex", "items-center", "justify-center");
                   parent.innerHTML =
                     '<span class="serif font-bold text-brand-brown select-none">LC</span>';
                 }
@@ -127,7 +139,7 @@ export default function Navbar() {
                 <a
                   key={it.name}
                   href={it.href}
-                  className="block px-6 py-4 text-[11px] font-black tracking-[0.22em] uppercase text-brand-brown hover:bg-brand-cream hover:text-brand-accent transition-colors border-b border-gray-50 last:border-0"
+                  className="block px-6 py-4 text-[11px] font-black tracking-[0.22em] uppercase text-brand-brown hover:bg-brand-cream hover:text-brand-accent transition-colors border-b border-gray-100 last:border-b-0"
                   onClick={() => setDropOpen(false)}
                 >
                   {it.name}
@@ -147,7 +159,7 @@ export default function Navbar() {
           <li className="flex items-center">
             <a
               href="/reservar.html"
-              className="bg-brand-brown hover:bg-black text-brand-cream px-10 py-4 rounded-full text-[10px] font-black uppercase tracking-[0.24em] transition-all shadow-xl hover:shadow-brand-brown/30"
+              className="bg-brand-brown hover:bg-black text-brand-cream px-10 py-4 rounded-full text-[10px] font-black uppercase tracking-[0.24em] transition-all shadow-xl hover:shadow-brand-brown/50"
             >
               Reservar
             </a>
@@ -156,9 +168,11 @@ export default function Navbar() {
 
         {/* Mobile button */}
         <button
-          className="lg:hidden p-2 text-brand-brown"
+          className={`lg:hidden p-2 ${
+            isScrolled ? "text-brand-brown" : "text-brand-brown md:text-white"
+          }`}
           onClick={() => setMobileOpen((v) => !v)}
-          aria-label="Abrir menú"
+          aria-label={mobileOpen ? "Cerrar menú" : "Abrir menú"}
           type="button"
         >
           <div
@@ -166,11 +180,7 @@ export default function Navbar() {
               mobileOpen ? "rotate-45 translate-y-2" : ""
             }`}
           />
-          <div
-            className={`w-6 h-0.5 bg-current mb-1.5 transition-all ${
-              mobileOpen ? "opacity-0" : ""
-            }`}
-          />
+          <div className={`w-6 h-0.5 bg-current mb-1.5 transition-all ${mobileOpen ? "opacity-0" : ""}`} />
           <div
             className={`w-6 h-0.5 bg-current transition-all ${
               mobileOpen ? "-rotate-45 -translate-y-2" : ""
@@ -179,70 +189,91 @@ export default function Navbar() {
         </button>
       </div>
 
-      {/* Mobile overlay */}
-      <div
-        className={`fixed inset-0 bg-brand-cream z-40 flex flex-col items-center justify-center space-y-8 transition-transform duration-700 ${
-          mobileOpen ? "translate-x-0" : "translate-x-full"
-        }`}
-      >
-        <button
-          className="absolute top-6 right-6 p-4 text-4xl text-brand-brown"
-          onClick={() => setMobileOpen(false)}
-          type="button"
-        >
-          &times;
-        </button>
-
-        <div className="w-24 h-24 mb-2 rounded-full overflow-hidden bg-brand-beige/40 border border-white/30 shadow-sm flex items-center justify-center">
-          <img
-            src="/logo.PNG"
-            alt=""
-            aria-hidden="true"
-            className="w-full h-full object-contain block select-none"
-            draggable="false"
-            onError={(e) => (e.currentTarget.style.display = "none")}
+      {/* ✅ Mobile overlay PRO: fixed + backdrop (no se desfasa aunque estés scrolleado) */}
+      {mobileOpen && (
+        <div className="fixed inset-0 z-[999] lg:hidden">
+          {/* Backdrop */}
+          <button
+            className="absolute inset-0 bg-black/30 backdrop-blur-[2px]"
+            onClick={() => setMobileOpen(false)}
+            aria-label="Cerrar menú"
+            type="button"
           />
+
+          {/* Panel */}
+          <div className="absolute top-0 left-0 right-0 bg-brand-cream border-b border-brand-beige/60 shadow-2xl">
+            <div className="px-6 pt-5 pb-7">
+              {/* header panel */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <img
+                    src="/logo.PNG"
+                    alt="Las Cañas"
+                    className="w-10 h-10 object-contain logo-shadow"
+                    draggable="false"
+                  />
+                  <div className="leading-none">
+                    <div className="serif text-lg font-bold text-brand-brown">Las Cañas</div>
+                    <div className="text-[9px] uppercase tracking-[0.3em] font-semibold text-brand-accent mt-1">
+                      Mar de Cobo
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  className="p-3 rounded-2xl hover:bg-brand-beige/40 transition text-brand-brown"
+                  onClick={() => setMobileOpen(false)}
+                  aria-label="Cerrar"
+                  type="button"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* links */}
+              <nav className="mt-7 flex flex-col gap-6 text-brand-brown">
+                {links.map((l) => (
+                  <a
+                    key={l.name}
+                    href={l.href}
+                    className="serif text-3xl leading-none tracking-wide"
+                    onClick={closeAll}
+                  >
+                    {l.name}
+                  </a>
+                ))}
+
+                {extra.map((l) => (
+                  <a
+                    key={l.name}
+                    href={l.href}
+                    className="serif text-2xl leading-none tracking-wide text-brand-brown/90 hover:text-brand-accent transition-colors"
+                    onClick={closeAll}
+                  >
+                    {l.name}
+                  </a>
+                ))}
+
+                <a
+                  href="/reservar.html"
+                  className="mt-2 inline-flex items-center justify-center bg-brand-brown hover:bg-black text-brand-cream px-10 py-5 rounded-full text-[10px] font-black uppercase tracking-[0.24em] transition-all shadow-xl"
+                  onClick={closeAll}
+                >
+                  Reservar ahora
+                </a>
+
+                <a
+                  href="/admin.html"
+                  className="text-xs font-black uppercase tracking-[0.22em] text-brand-brown/60 hover:text-brand-accent transition-colors"
+                  onClick={closeAll}
+                >
+                  Acceso propietarios
+                </a>
+              </nav>
+            </div>
+          </div>
         </div>
-
-        {[...links].map((l) => (
-          <a
-            key={l.name}
-            href={l.href}
-            className="text-2xl font-bold text-brand-brown serif tracking-wider hover:text-brand-accent transition-colors"
-            onClick={() => setMobileOpen(false)}
-          >
-            {l.name}
-          </a>
-        ))}
-
-        {/* Explorar items también en mobile */}
-        {extra.map((l) => (
-          <a
-            key={l.name}
-            href={l.href}
-            className="text-lg font-bold text-brand-brown serif tracking-wider hover:text-brand-accent transition-colors"
-            onClick={() => setMobileOpen(false)}
-          >
-            {l.name}
-          </a>
-        ))}
-
-        <a
-          href="/reservar.html"
-          className="bg-brand-brown text-brand-cream px-12 py-5 rounded-full text-sm font-black uppercase tracking-widest shadow-2xl mt-6"
-          onClick={() => setMobileOpen(false)}
-        >
-          Reservar ahora
-        </a>
-
-        <a
-          href="/admin.html"
-          className="text-xs font-black uppercase tracking-[0.22em] text-brand-brown/60 hover:text-brand-accent"
-          onClick={() => setMobileOpen(false)}
-        >
-          Acceso propietarios
-        </a>
-      </div>
+      )}
     </nav>
   );
 }
