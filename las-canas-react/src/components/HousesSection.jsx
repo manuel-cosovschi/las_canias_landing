@@ -2,13 +2,47 @@ import { useEffect, useMemo, useState } from "react";
 
 const img = (path) => encodeURI(path);
 
+/**
+ * Datos según Master Doc (baños/ambientes/camas/observaciones + servicios comunes).
+ * Fuente: Las Cañas - Master Doc.pdf  [oai_citation:1‡Las Cañas - Master Doc.pdf](sediment://file_00000000aa9c720eb8e8202bff6133a1)
+ */
+const COMMON = {
+  badges: [
+    "WiFi (Starlink)",
+    "Smart TV",
+    "Cocina equipada",
+    "Parrilla privada",
+    "Parque",
+  ],
+  notes: [
+    "No incluye sábanas",
+    "Toallas de manos y toallones",
+    "Sin aire / sin calefacción (ventiladores)",
+    "Ducha exterior",
+    "No se aceptan mascotas",
+  ],
+};
+
 const housesData = [
   {
     id: 1,
+    code: "LC1",
     title: "Las Cañas 1",
-    people: "Hasta 4",
+    people: "Hasta 4/5",
     description:
-      "Equipada, cómoda y a 1 cuadra de la playa. WiFi, Smart TV 42”, cocina completa, parrilla y parque privado. No se aceptan mascotas.",
+      "Equipada, cómoda y a 1 cuadra de la playa. Ideal para familias. No se aceptan mascotas.",
+    details: {
+      ambientes: "2",
+      plantas: "2 plantas",
+      banos: "2 (1 baño + 1 toilette)",
+      camas: "3 (1 queen + 2 singles)",
+      extra: "Para 5: colchón extra (si hay niño)",
+    },
+    highlights: [
+      "A 1 cuadra de la playa",
+      "Parque y parrilla privada",
+      "Ideal familias",
+    ],
     images: [
       img("/Casa 1 Imagenes/entradacasa1.JPG"),
       img("/Casa 1 Imagenes/living1.JPG"),
@@ -18,10 +52,19 @@ const housesData = [
   },
   {
     id: 2,
+    code: "LC2",
     title: "Las Cañas 2",
     people: "Hasta 4",
     description:
-      "Única con 2 TVs Smart de 42” (living y habitación). WiFi, cocina completa, parrilla y parque. No se aceptan mascotas.",
+      "Única con 2 Smart TVs (living y habitación). Cómoda y funcional. No se aceptan mascotas.",
+    details: {
+      ambientes: "2",
+      plantas: "2 plantas",
+      banos: "2 (1 baño + 1 toilette)",
+      camas: "4",
+      extra: "Ocupación ideal: 2 adultos + 2 niños (o 3 adultos + 1 niño)",
+    },
+    highlights: ["2 Smart TVs", "Parrilla privada", "Parque"],
     images: [
       img("/Casa 2 Imagenes/entrada2.JPG"),
       img("/Casa 2 Imagenes/entradaafuera2.JPG"),
@@ -31,10 +74,20 @@ const housesData = [
   },
   {
     id: 3,
+    code: "LC3",
     title: "Las Cañas 3",
     people: "Hasta 6",
     description:
-      "Ideal para familias y grupos. WiFi, Smart TV, cocina completa, parrilla y parque. No se aceptan mascotas.",
+      "Ideal para familias y grupos tranquilos. Amplia y práctica. No se aceptan mascotas.",
+    details: {
+      ambientes: "3",
+      plantas: "2 plantas",
+      banos: "2 (1 baño + 1 toilette)",
+      camas: "5 + carrito",
+      extra:
+        "Para 6: recomendado que haya al menos 1 niño/adolescente (por cucheta y carrito).",
+    },
+    highlights: ["Más capacidad", "Parrilla privada", "Parque"],
     images: [
       img("/Casa 3 Imagenes/livingEntrada3extra.JPG"),
       img("/Casa 3 Imagenes/living3.JPG"),
@@ -44,19 +97,37 @@ const housesData = [
   },
   {
     id: 4,
+    code: "LC4",
     title: "Las Cañas 4",
     people: "Hasta 4",
     description:
-      "Ideal para 3 adultos o 2 adultos y 2 niños. A 1 cuadra de la playa. WiFi, Smart TV, parrilla y parque. No se aceptan mascotas.",
+      "Ideal para 3 adultos o 2 adultos y 2 niños. Planta baja. No se aceptan mascotas.",
+    details: {
+      ambientes: "2",
+      plantas: "Planta baja",
+      banos: "1 baño",
+      camas: "4",
+      extra: "Capacidad ideal: 3 adultos",
+    },
+    highlights: ["Planta baja", "Parrilla privada", "Parque"],
     images: [],
     comingSoon: true,
   },
   {
     id: 5,
+    code: "LC5",
     title: "Las Cañas 5",
-    people: "Hasta 3",
+    people: "2 adultos + 1 niño",
     description:
-      "Ideal para 2 adultos y 1 niño. A 1 cuadra de la playa. WiFi, Smart TV, parrilla y parque. No se aceptan mascotas.",
+      "Ideal para parejas o familia chica. Planta baja. No se aceptan mascotas.",
+    details: {
+      ambientes: "2",
+      plantas: "Planta baja",
+      banos: "2 (1 baño + 1 toilette)",
+      camas: "2 + futón",
+      extra: "Máximo: 2 adultos + 1 menor",
+    },
+    highlights: ["Planta baja", "Parrilla privada", "Parque"],
     images: [],
     comingSoon: true,
   },
@@ -69,6 +140,25 @@ function clampStyle(lines = 4) {
     WebkitBoxOrient: "vertical",
     overflow: "hidden",
   };
+}
+
+function InfoChip({ label, value }) {
+  return (
+    <div className="rounded-2xl border border-brand-beige/70 bg-brand-cream/40 px-4 py-3">
+      <div className="text-[9px] font-black uppercase tracking-[0.22em] text-brand-brown/60">
+        {label}
+      </div>
+      <div className="text-sm font-semibold text-brand-brown mt-1">{value}</div>
+    </div>
+  );
+}
+
+function Pill({ children }) {
+  return (
+    <span className="inline-flex items-center rounded-full border border-brand-beige/70 bg-white px-4 py-2 text-[10px] font-black uppercase tracking-[0.22em] text-brand-brown/70">
+      {children}
+    </span>
+  );
 }
 
 export default function HousesSection() {
@@ -203,16 +293,55 @@ export default function HousesSection() {
                 </div>
 
                 <div className="p-10 flex flex-col flex-1">
-                  <h3 className="text-3xl font-bold mb-4 serif italic text-brand-brown">
+                  <h3 className="text-3xl font-bold mb-3 serif italic text-brand-brown">
                     {h.title}
                   </h3>
 
+                  {/* Chips principales */}
+                  <div className="flex flex-wrap gap-2 mb-6">
+                    {COMMON.badges.map((b) => (
+                      <Pill key={b}>{b}</Pill>
+                    ))}
+                  </div>
+
                   <p
-                    className="text-brand-brown/60 mb-8 text-sm leading-relaxed font-light"
+                    className="text-brand-brown/60 mb-6 text-sm leading-relaxed font-light"
                     style={clampStyle(4)}
                   >
                     {h.description}
                   </p>
+
+                  {/* Detalles por casa */}
+                  <div className="grid grid-cols-2 gap-3 mb-6">
+                    <InfoChip label="Ambientes" value={h.details.ambientes} />
+                    <InfoChip label="Baños" value={h.details.banos} />
+                    <InfoChip label="Camas" value={h.details.camas} />
+                    <InfoChip label="Distribución" value={h.details.plantas} />
+                  </div>
+
+                  {/* Observaciones importantes */}
+                  {h.details?.extra && (
+                    <div className="rounded-[1.5rem] border border-brand-beige/70 bg-brand-cream/50 p-5 mb-6">
+                      <div className="text-[9px] font-black uppercase tracking-[0.22em] text-brand-brown/60 mb-2">
+                        Nota
+                      </div>
+                      <p className="text-sm text-brand-brown/70 leading-relaxed font-light">
+                        {h.details.extra}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Incluye (lo importante que preguntan) */}
+                  <div className="rounded-[1.5rem] border border-brand-beige/70 bg-white p-5 mb-8">
+                    <div className="text-[9px] font-black uppercase tracking-[0.22em] text-brand-brown/60 mb-3">
+                      Incluye
+                    </div>
+                    <ul className="grid grid-cols-1 gap-2 text-sm text-brand-brown/70 font-light">
+                      {COMMON.notes.map((t) => (
+                        <li key={t}>• {t}</li>
+                      ))}
+                    </ul>
+                  </div>
 
                   <div className="mt-auto">
                     <div className="flex gap-3">
@@ -251,7 +380,6 @@ export default function HousesSection() {
                             key={i}
                             type="button"
                             onClick={() => {
-                              // abrir en el índice correspondiente de esa casa
                               setActiveHouse({ title: h.title, images: h.images });
                               setIdx(i + 1);
                               setLightboxOpen(true);
