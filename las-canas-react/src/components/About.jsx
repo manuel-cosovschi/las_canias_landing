@@ -6,7 +6,7 @@ export default function About() {
           <div className="w-full lg:w-1/2 relative">
             <div className="aspect-[4/5] rounded-2xl overflow-hidden shadow-2xl rotate-2 hover:rotate-0 transition-transform duration-500">
               <img
-                src="portada.heic"
+                src="/portada.jpeg"
                 alt="Las Cañas"
                 className="w-full h-full object-cover"
               />
