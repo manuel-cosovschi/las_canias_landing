@@ -39,14 +39,14 @@ export default function Hero() {
               />
               <div className="w-32 h-[1px] bg-brand-brown/30 mb-4" />
               <p className="text-brand-brown font-black tracking-[0.35em] uppercase text-[9px] md:text-[10px] opacity-80">
-                Refugio de Mar · Estancia Única
+                Refugio de Mar
               </p>
             </div>
           </div>
         </div>
 
         <p className="text-xl md:text-3xl text-brand-brown max-w-2xl mx-auto mb-14 serif italic leading-relaxed font-light drop-shadow-sm">
-          “Donde descansa el silencio, <br className="hidden md:block" /> a solo cien pasos del mar.”
+          “Donde descansa el silencio, <br className="hidden md:block" /> a 1 cuadra del mar.”
         </p>
 
         <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 
 const img = (path) => encodeURI(path);
+const vid = (path) => encodeURI(path);
 
 /**
  * Datos según Master Doc (baños/ambientes/camas/observaciones + servicios comunes).
@@ -44,36 +45,40 @@ const housesData = [
       "Ideal familias",
     ],
     images: [
-        // AFUERA / ENTRADA
-        img("/Casa 1 Imagenes/Entrada1LC1.jpeg"),
-        img("/Casa 1 Imagenes/Entrada2LC1.jpeg"),
-        img("/Casa 1 Imagenes/EntradaILC1.jpeg"),
-        img("/Casa 1 Imagenes/MesaEntrada1LC1.jpeg"),
-        img("/Casa 1 Imagenes/MesaEntradaLC1.jpeg"),
+      // AFUERA / ENTRADA
+      img("/Casa 1 Imagenes/Entrada1LC1.jpeg"),
+      img("/Casa 1 Imagenes/Entrada2LC1.jpeg"),
+      img("/Casa 1 Imagenes/EntradaILC1.jpeg"),
+      img("/Casa 1 Imagenes/MesaEntrada1LC1.jpeg"),
+      img("/Casa 1 Imagenes/MesaEntradaLC1.jpeg"),
 
-        // TRANSICIÓN / ESCALERA / PASILLO
-        img("/Casa 1 Imagenes/EscaleraLC1.jpeg"),
-        img("/Casa 1 Imagenes/PasilloLC1.jpeg"),
+      // VIDEO (siempre lo ponemos después de la entrada para que “arranque” afuera)
+      vid("/Casa 1 Imagenes/video1.MP4"),
+      vid("/Casa 1 Imagenes/video1extra.MP4"),
 
-        // LIVING / ESTAR
-        img("/Casa 1 Imagenes/FULLLivingLC1.jpeg"),
-        img("/Casa 1 Imagenes/Living+CocinaLC1.jpeg"),
-        img("/Casa 1 Imagenes/Living+Cocina1LC1.jpeg"),
+      // TRANSICIÓN / ESCALERA / PASILLO
+      img("/Casa 1 Imagenes/EscaleraLC1.jpeg"),
+      img("/Casa 1 Imagenes/PasilloLC1.jpeg"),
 
-        // HABITACIÓN
-        img("/Casa 1 Imagenes/Habitacion1LC1.jpeg"),
+      // LIVING / ESTAR
+      img("/Casa 1 Imagenes/FULLLivingLC1.jpeg"),
+      img("/Casa 1 Imagenes/Living+CocinaLC1.jpeg"),
+      img("/Casa 1 Imagenes/Living+Cocina1LC1.jpeg"),
 
-        // BAÑOS
-        img("/Casa 1 Imagenes/Baño1LC1.jpeg"),
-        img("/Casa 1 Imagenes/Ducha1LC1.jpeg"),
-        img("/Casa 1 Imagenes/ToiletteLC1.jpeg"),
+      // HABITACIÓN
+      img("/Casa 1 Imagenes/Habitacion1LC1.jpeg"),
 
-        // PATIO / PARQUE
-        img("/Casa 1 Imagenes/patio1.JPG"),
-        img("/Casa 1 Imagenes/patio1extra.JPG"),
-        img("/Casa 1 Imagenes/Patio1LC1.jpeg"),
-        img("/Casa 1 Imagenes/vistapatio1LC1.JPG"),
-        ],
+      // BAÑOS
+      img("/Casa 1 Imagenes/Baño1LC1.jpeg"),
+      img("/Casa 1 Imagenes/Ducha1LC1.jpeg"),
+      img("/Casa 1 Imagenes/ToiletteLC1.jpeg"),
+
+      // PATIO / PARQUE
+      img("/Casa 1 Imagenes/patio1.JPG"),
+      img("/Casa 1 Imagenes/patio1extra.JPG"),
+      img("/Casa 1 Imagenes/Patio1LC1.jpeg"),
+      img("/Casa 1 Imagenes/vistapatio1LC1.JPG"),
+    ],
   },
   {
     id: 2,
@@ -91,31 +96,31 @@ const housesData = [
     },
     highlights: ["2 Smart TVs", "Parrilla privada", "Parque"],
     images: [
-        // AFUERA / ENTRADA
-        img("/Casa 2 Imagenes/EntradaLC2.jpeg"),
-        img("/Casa 2 Imagenes/Bienvenida1LC2.jpeg"),
-        img("/Casa 2 Imagenes/Bienvenida2LC2.jpeg"),
-        img("/Casa 2 Imagenes/EntradaInteriorLC2.jpeg"),
+      // AFUERA / ENTRADA
+      img("/Casa 2 Imagenes/EntradaLC2.jpeg"),
+      img("/Casa 2 Imagenes/Bienvenida1LC2.jpeg"),
+      img("/Casa 2 Imagenes/Bienvenida2LC2.jpeg"),
+      img("/Casa 2 Imagenes/EntradaInteriorLC2.jpeg"),
 
-        // TRANSICIÓN / ESCALERA
-        img("/Casa 2 Imagenes/Escalera1LC2.jpeg"),
-        img("/Casa 2 Imagenes/SubidaLC2.jpeg"),
+      // TRANSICIÓN / ESCALERA
+      img("/Casa 2 Imagenes/Escalera1LC2.jpeg"),
+      img("/Casa 2 Imagenes/SubidaLC2.jpeg"),
 
-        // LIVING / COCINA
-        img("/Casa 2 Imagenes/Living1LC2.jpeg"),
-        img("/Casa 2 Imagenes/Living+CocinaLC2.jpeg"),
+      // LIVING / COCINA
+      img("/Casa 2 Imagenes/Living1LC2.jpeg"),
+      img("/Casa 2 Imagenes/Living+CocinaLC2.jpeg"),
 
-        // HABITACIONES
-        img("/Casa 2 Imagenes/Habitacion1LC2.jpeg"),
-        img("/Casa 2 Imagenes/Habitacion2LC2.jpeg"),
+      // HABITACIONES
+      img("/Casa 2 Imagenes/Habitacion1LC2.jpeg"),
+      img("/Casa 2 Imagenes/Habitacion2LC2.jpeg"),
 
-        // BAÑOS
-        img("/Casa 2 Imagenes/BañoLC2.jpeg"),
-        img("/Casa 2 Imagenes/ToiletteLC2.jpeg"),
+      // BAÑOS
+      img("/Casa 2 Imagenes/BañoLC2.jpeg"),
+      img("/Casa 2 Imagenes/ToiletteLC2.jpeg"),
 
-        // PATIO
-        img("/Casa 2 Imagenes/PatioLC2.jpeg"),
-        ],
+      // PATIO
+      img("/Casa 2 Imagenes/PatioLC2.jpeg"),
+    ],
   },
   {
     id: 3,
@@ -130,40 +135,41 @@ const housesData = [
       banos: "2 (1 baño + 1 toilette)",
       camas: "5 + carrito",
       extra:
-        "Para 6: recomendado que haya al menos 1 niño/adolescente (por cucheta y carrito).",
+        "Ideal para 5. Capacidad máxima: 6 personas (incluye 1 niño y 1 adolescente).",
     },
     highlights: ["Más capacidad", "Parrilla privada", "Parque"],
     images: [
-        // AFUERA / ENTRADA
-        img("/Casa 3 Imagenes/EntradaLC3.jpeg"),
+      // AFUERA / ENTRADA
+      img("/Casa 3 Imagenes/EntradaLC3.jpeg"),
 
-        // TRANSICIÓN / ESCALERAS
-        img("/Casa 3 Imagenes/Escalera1LC3.jpeg"),
-        img("/Casa 3 Imagenes/Escalera2LC3.jpeg"),
+      // VIDEO (ideal cerca de entrada para “recorrido”)
+      vid("/Casa 3 Imagenes/videoLC3.MP4"),
 
-        // LIVING / COMEDOR
-        img("/Casa 3 Imagenes/LivingEntradaLC3extra.JPG"),
-        img("/Casa 3 Imagenes/LivingLC3.jpeg"),
-        img("/Casa 3 Imagenes/Living1LC3.jpeg"),
-        img("/Casa 3 Imagenes/Living+ComedorLC3.jpeg"),
+      // TRANSICIÓN / ESCALERAS
+      img("/Casa 3 Imagenes/Escalera1LC3.jpeg"),
+      img("/Casa 3 Imagenes/Escalera2LC3.jpeg"),
 
-        // COCINA / COMEDOR (DETALLE)
-        img("/Casa 3 Imagenes/Cocina+ComedorLC3.jpeg"),
-        img("/Casa 3 Imagenes/Comedor1LC3.jpeg"),
+      // LIVING / COMEDOR
+      img("/Casa 3 Imagenes/Living1LC3.jpeg"),
+      img("/Casa 3 Imagenes/Living+ComedorLC3.jpeg"),
 
-        // HABITACIONES
-        img("/Casa 3 Imagenes/Habitacion1LC3.jpeg"),
-        img("/Casa 3 Imagenes/Habitacion1BLC3.jpeg"),
-        img("/Casa 3 Imagenes/HabitacionLC3.jpeg"),
-        img("/Casa 3 Imagenes/VistaHabitacionLC3.jpeg"),
+      // COCINA / COMEDOR (DETALLE)
+      img("/Casa 3 Imagenes/Cocina+ComedorLC3.jpeg"),
+      img("/Casa 3 Imagenes/Comedor1LC3.jpeg"),
 
-        // BAÑOS
-        img("/Casa 3 Imagenes/BañoLC3.jpeg"),
-        img("/Casa 3 Imagenes/Toilette1LC3.jpeg"),
+      // HABITACIONES
+      img("/Casa 3 Imagenes/Habitacion1LC3.jpeg"),
+      img("/Casa 3 Imagenes/Habitacion1BLC3.jpeg"),
+      img("/Casa 3 Imagenes/HabitacionLC3.jpeg"),
+      img("/Casa 3 Imagenes/VistaHabitacionLC3.jpeg"),
 
-        // PATIO
-        img("/Casa 3 Imagenes/PatioLC3.jpeg"),
-        ],
+      // BAÑOS
+      img("/Casa 3 Imagenes/BañoLC3.jpeg"),
+      img("/Casa 3 Imagenes/Toilette1LC3.jpeg"),
+
+      // PATIO
+      img("/Casa 3 Imagenes/PatioLC3.jpeg"),
+    ],
   },
   {
     id: 4,
@@ -171,44 +177,45 @@ const housesData = [
     title: "Las Cañas 4",
     people: "Hasta 4",
     description:
-      "Ideal para 3 adultos o 2 adultos y 2 niños. Planta baja. No se aceptan mascotas.",
+      "Planta baja. Cómoda y práctica para familias. No se aceptan mascotas.",
     details: {
       ambientes: "2",
       plantas: "Planta baja",
       banos: "1 baño",
       camas: "4",
-      extra: "Capacidad ideal: 3 adultos",
+      extra:
+        "Ideal para 2/3 adultos. Capacidad máxima: 2 adultos + 2 niños pequeños, o 3 adultos + 1 niño pequeño.",
     },
     highlights: ["Planta baja", "Parrilla privada", "Parque"],
     images: [
-        // AFUERA / ENTRADA
-        img("/Casa 4 Imagenes/VistaEntradaLC4.jpeg"),
-        img("/Casa 4 Imagenes/EntradaLC4.jpeg"),
+      // AFUERA / ENTRADA
+      img("/Casa 4 Imagenes/EntradaLC4.jpeg"),
+      img("/Casa 4 Imagenes/VistaEntradaLC4.jpeg"),
 
-        // LIVING / COCINA
-        img("/Casa 4 Imagenes/LivingLC4.jpeg"),
-        img("/Casa 4 Imagenes/Living1LC4.jpeg"),
-        img("/Casa 4 Imagenes/Living+CocinaLC4.jpeg"),
-        img("/Casa 4 Imagenes/Living+Cocina1LC4.jpeg"),
-        img("/Casa 4 Imagenes/CocinaLC4.jpeg"),
-        img("/Casa 4 Imagenes/Cocina1LC4.jpeg"),
+      // LIVING / COCINA
+      img("/Casa 4 Imagenes/LivingLC4.jpeg"),
+      img("/Casa 4 Imagenes/Living1LC4.jpeg"),
+      img("/Casa 4 Imagenes/Living+CocinaLC4.jpeg"),
+      img("/Casa 4 Imagenes/Living+Cocina1LC4.jpeg"),
+      img("/Casa 4 Imagenes/CocinaLC4.jpeg"),
+      img("/Casa 4 Imagenes/Cocina1LC4.jpeg"),
 
-        // HABITACIÓN
-        img("/Casa 4 Imagenes/Habitacion1LC4.jpeg"),
-        img("/Casa 4 Imagenes/HabitacionLC4.jpeg"),
+      // HABITACIÓN
+      img("/Casa 4 Imagenes/Habitacion1LC4.jpeg"),
+      img("/Casa 4 Imagenes/HabitacionLC4.jpeg"),
 
-        // BAÑO
-        img("/Casa 4 Imagenes/BañoLC4.jpeg"),
-        img("/Casa 4 Imagenes/Ducha1LC4.jpeg"),
-        img("/Casa 4 Imagenes/Ducha2LC4.jpeg"),
-        img("/Casa 4 Imagenes/DuchaLC4.jpeg"),
-        img("/Casa 4 Imagenes/ToiletteLC4.jpeg"),
+      // BAÑO
+      img("/Casa 4 Imagenes/BañoLC4.jpeg"),
+      img("/Casa 4 Imagenes/Ducha1LC4.jpeg"),
+      img("/Casa 4 Imagenes/Ducha2LC4.jpeg"),
+      img("/Casa 4 Imagenes/DuchaLC4.jpeg"),
+      img("/Casa 4 Imagenes/ToiletteLC4.jpeg"),
 
-        // PATIO
-        img("/Casa 4 Imagenes/PatioLC4.jpeg"),
-        img("/Casa 4 Imagenes/Patio1LC4.jpeg"),
-        img("/Casa 4 Imagenes/Patio2LC4.jpeg"),
-        ],
+      // PATIO
+      img("/Casa 4 Imagenes/PatioLC4.jpeg"),
+      img("/Casa 4 Imagenes/Patio1LC4.jpeg"),
+      img("/Casa 4 Imagenes/Patio2LC4.jpeg"),
+    ],
   },
   {
     id: 5,
@@ -220,37 +227,38 @@ const housesData = [
     details: {
       ambientes: "2",
       plantas: "Planta baja",
-      banos: "2 (1 baño + 1 toilette)",
+      banos: "1 baño",
       camas: "2 + futón",
       extra: "Máximo: 2 adultos + 1 menor",
     },
     highlights: ["Planta baja", "Parrilla privada", "Parque"],
     images: [
-        // AFUERA / ENTRADA
-        img("/Casa 5 Imagenes/BienvenidaLC5.jpeg"),
-        img("/Casa 5 Imagenes/EntradaLC5.jpeg"),
-        img("/Casa 5 Imagenes/EntradaInteriorLC5.jpeg"),
+      // AFUERA / ENTRADA
+      img("/Casa 5 Imagenes/EntradaLC5.jpeg"),
+      img("/Casa 5 Imagenes/BienvenidaLC5.jpeg"),
+      img("/Casa 5 Imagenes/EntradaInteriorLC5.jpeg"),
 
-        // LIVING / COMEDOR
-        img("/Casa 5 Imagenes/Living+ComedorLC5.jpeg"),
-        img("/Casa 5 Imagenes/Living+Comedor1LC5.jpeg"),
-        img("/Casa 5 Imagenes/Living+ComedorLC5.jpeg"), // (si queda duplicado, lo sacás)
-        img("/Casa 5 Imagenes/PasilloLC5.jpeg"),
+      // LIVING / COMEDOR
+      img("/Casa 5 Imagenes/Living+ComedorLC5.jpeg"),
+      img("/Casa 5 Imagenes/Living+Comedor1LC5.jpeg"),
+      img("/Casa 5 Imagenes/PasilloLC5.jpeg"),
 
-        // HABITACIÓN
-        img("/Casa 5 Imagenes/HabitacionLC5.jpeg"),
+      // HABITACIÓN
+      img("/Casa 5 Imagenes/HabitacionLC5.jpeg"),
 
-        // BAÑOS
-        img("/Casa 5 Imagenes/BañoLC5.jpeg"),
-        img("/Casa 5 Imagenes/DuchaLC5.jpeg"),
-        img("/Casa 5 Imagenes/Toilette1LC5.jpeg"),
-        img("/Casa 5 Imagenes/ToiletteLC5.jpeg"),
+      // BAÑO
+      img("/Casa 5 Imagenes/BañoLC5.jpeg"),
+      img("/Casa 5 Imagenes/DuchaLC5.jpeg"),
 
-        // PATIO
-        img("/Casa 5 Imagenes/Patio1LC5.jpeg"),
-        img("/Casa 5 Imagenes/PatioLC5.jpeg"),
-        img("/Casa 5 Imagenes/VistaDesdePatioLC5.jpeg"),
-        ],
+      // TOILETTE (si realmente existen estas fotos y son baño “chico”, dejalas; si no existen, borrarlas)
+      img("/Casa 5 Imagenes/Toilette1LC5.jpeg"),
+      img("/Casa 5 Imagenes/ToiletteLC5.jpeg"),
+
+      // PATIO
+      img("/Casa 5 Imagenes/Patio1LC5.jpeg"),
+      img("/Casa 5 Imagenes/PatioLC5.jpeg"),
+      img("/Casa 5 Imagenes/VistaDesdePatioLC5.jpeg"),
+    ],
   },
 ];
 
@@ -292,6 +300,11 @@ export default function HousesSection() {
 
   const images = activeHouse?.images || [];
   const current = images[idx];
+
+  const isVideo = (src) => {
+    const s = String(src || "").toLowerCase();
+    return s.endsWith(".mp4") || s.includes(".mp4?");
+  };
 
   const openGallery = (house) => {
     if (!house?.images?.length) return; // no abre si no hay
@@ -506,14 +519,31 @@ export default function HousesSection() {
                               setLightboxOpen(true);
                             }}
                             className="rounded-xl overflow-hidden border border-brand-beige/60 hover:scale-[1.03] transition-transform"
-                            aria-label={`Abrir foto ${i + 2} de ${h.title}`}
+                            aria-label={`Abrir item ${i + 2} de ${h.title}`}
                           >
-                            <img
-                              src={src}
-                              alt={`${h.title} ${i + 2}`}
-                              className="w-full h-full aspect-square object-cover"
-                              loading="lazy"
-                            />
+                            {isVideo(src) ? (
+                              <div className="relative w-full h-full">
+                                <video
+                                  src={src}
+                                  className="w-full h-full aspect-square object-cover"
+                                  muted
+                                  playsInline
+                                  preload="metadata"
+                                />
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                  <div className="bg-black/45 text-white text-[10px] font-black uppercase tracking-widest px-3 py-2 rounded-full">
+                                    Video
+                                  </div>
+                                </div>
+                              </div>
+                            ) : (
+                              <img
+                                src={src}
+                                alt={`${h.title} ${i + 2}`}
+                                className="w-full h-full aspect-square object-cover"
+                                loading="lazy"
+                              />
+                            )}
                           </button>
                         ))}
                       </div>
@@ -560,14 +590,24 @@ export default function HousesSection() {
                 </button>
               </div>
 
-              {/* image */}
+              {/* media */}
               <div className="relative w-full aspect-video bg-black">
-                <img
-                  src={current}
-                  alt={`${activeHouse.title} foto ${idx + 1}`}
-                  className="w-full h-full object-contain select-none"
-                  draggable="false"
-                />
+                {isVideo(current) ? (
+                  <video
+                    src={current}
+                    className="w-full h-full object-contain select-none"
+                    controls
+                    playsInline
+                    preload="metadata"
+                  />
+                ) : (
+                  <img
+                    src={current}
+                    alt={`${activeHouse.title} foto ${idx + 1}`}
+                    className="w-full h-full object-contain select-none"
+                    draggable="false"
+                  />
+                )}
 
                 <button
                   type="button"
@@ -605,9 +645,26 @@ export default function HousesSection() {
                   className={`shrink-0 w-20 h-14 rounded-xl overflow-hidden border transition-all ${
                     i === idx ? "border-white/80" : "border-white/20 hover:border-white/40"
                   }`}
-                  aria-label={`Ir a foto ${i + 1}`}
+                  aria-label={`Ir a item ${i + 1}`}
                 >
-                  <img src={src} alt="" className="w-full h-full object-cover" />
+                  {isVideo(src) ? (
+                    <div className="relative w-full h-full">
+                      <video
+                        src={src}
+                        className="w-full h-full object-cover"
+                        muted
+                        playsInline
+                        preload="metadata"
+                      />
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="bg-black/55 text-white text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-full">
+                          Video
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <img src={src} alt="" className="w-full h-full object-cover" />
+                  )}
                 </button>
               ))}
             </div>
