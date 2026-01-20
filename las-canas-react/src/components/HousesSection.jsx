@@ -128,7 +128,7 @@ const housesData = [
     id: 3,
     code: "LC3",
     title: "Las Cañas 3",
-    people: "Hasta 6",
+    people: "Hasta 5",
     description:
       "Ideal para familias y grupos tranquilos. Amplia y práctica. No se aceptan mascotas.",
     details: {

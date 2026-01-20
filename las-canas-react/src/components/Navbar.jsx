@@ -41,6 +41,10 @@ export default function Navbar() {
   const extra = [
     { name: "Galería", href: "#gallery" },
     { name: "Ubicación", href: "#location" },
+
+    // ✅ NUEVO: después de Ubicación
+    { name: "Tips y sugerencias", href: "/tips+sugerencias.html" },
+
     { name: "Contacto", href: "#contact" },
     { name: "Términos", href: "/terminos.html" },
   ];
@@ -68,7 +72,7 @@ export default function Navbar() {
           className="flex items-center gap-4 group"
           onClick={closeAll}
         >
-          {/* ✅ Logo SIN fondo circular (arregla el “círculo blanco” raro arriba del todo) */}
+          {/* ✅ Logo SIN fondo circular */}
           <div className="w-12 h-12 md:w-14 md:h-14 flex items-center justify-center overflow-hidden">
             <img
               src="/logo.PNG"
@@ -189,10 +193,9 @@ export default function Navbar() {
         </button>
       </div>
 
-      {/* ✅ Mobile overlay PRO: fixed + backdrop (no se desfasa aunque estés scrolleado) */}
+      {/* ✅ Mobile overlay */}
       {mobileOpen && (
         <div className="fixed inset-0 z-[999] lg:hidden">
-          {/* Backdrop */}
           <button
             className="absolute inset-0 bg-black/30 backdrop-blur-[2px]"
             onClick={() => setMobileOpen(false)}
@@ -200,10 +203,8 @@ export default function Navbar() {
             type="button"
           />
 
-          {/* Panel */}
           <div className="absolute top-0 left-0 right-0 bg-brand-cream border-b border-brand-beige/60 shadow-2xl">
             <div className="px-6 pt-5 pb-7">
-              {/* header panel */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <img
@@ -230,7 +231,6 @@ export default function Navbar() {
                 </button>
               </div>
 
-              {/* links */}
               <nav className="mt-7 flex flex-col gap-6 text-brand-brown">
                 {links.map((l) => (
                   <a

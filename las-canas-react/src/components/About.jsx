@@ -24,17 +24,36 @@ export default function About() {
             </h2>
 
             <div className="space-y-6 text-lg text-brand-brown/70 leading-relaxed font-light">
-              <p>
-                Hoy les queremos contar quiénes somos... Descubrimos hace muchos años que{" "}
-                <span className="text-brand-brown font-medium">Mar de Cobo</span> era nuestro lugar en el mundo.
-              </p>
-              <p>
-                Las Cañas comenzó hace 10 años y poco a poco, con mucho amor y dedicación, fue haciéndose realidad.
-                Hoy tenemos <span className="italic font-medium">5 casas</span> y siempre buscamos seguir mejorando.
-              </p>
-              <p>
-                Cuando vienen tratamos de transmitirles la belleza de este lugar y deseamos que se lleven la sensación de plenitud y bienestar que sentimos nosotros estando acá… ❤️
-              </p>
+                <p>
+                    Hoy les queremos contar quiénes somos… Desde chicos, y sin conocernos, ambos
+                    sentimos que{" "}
+                    <span className="text-brand-brown font-medium">Mar de Cobo</span> era nuestro
+                    lugar en el mundo.
+                </p>
+
+                <p>
+                    <span className="text-brand-brown font-medium">Las Cañas</span> comenzó como
+                    un sueño que se hizo realidad hace{" "}
+                    <span className="italic font-medium">más de 10 años</span>.
+                </p>
+
+                <p>
+                    Hoy tenemos{" "}
+                    <span className="text-brand-brown font-medium">5 casas</span> y estamos
+                    orgullosos de todo lo construido en este camino recorrido, siempre buscando
+                    seguir mejorando.
+                </p>
+
+                <p>
+                    Cuando vienen a{" "}
+                    <span className="text-brand-brown font-medium">Las Cañas</span> tratamos de
+                    transmitirles la belleza de este lugar y deseamos que se lleven la sensación
+                    de plenitud y bienestar que sentimos nosotros estando acá…
+                </p>
+
+                <p className="text-brand-brown font-semibold serif italic">
+                    ¡Sean bienvenidos!
+                </p>
             </div>
 
             <div className="mt-10 flex items-center gap-6">
