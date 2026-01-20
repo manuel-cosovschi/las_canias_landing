@@ -28,7 +28,7 @@ const housesData = [
     id: 1,
     code: "LC1",
     title: "Las Cañas 1",
-    people: "Hasta 4/5",
+    people: "Hasta 4",
     description:
       "Equipada, cómoda y a 1 cuadra de la playa. Ideal para familias. No se aceptan mascotas.",
     details: {
