@@ -36,7 +36,7 @@ const housesData = [
       plantas: "2 plantas",
       banos: "2 (1 baño + 1 toilette)",
       camas: "3 (1 queen + 2 singles)",
-      extra: "Para 5: colchón extra (si hay niño)",
+      extra: "PIdeal para familias: espacios bien separados y buena privacidad",
     },
     highlights: [
       "A 1 cuadra de la playa",
