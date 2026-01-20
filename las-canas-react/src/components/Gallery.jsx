@@ -3,12 +3,29 @@ import { useEffect, useMemo, useState } from "react";
 export default function Gallery() {
   const images = useMemo(
     () => [
-      { src: "/entradaVista1.jpg", alt: "Entrada" },
-      { src: "/portonEntrada.JPG", alt: "Portón" },
-      { src: "/autosentrada.jpg", alt: "Estacionamiento" },
-      { src: "/entradaVista1.jpg", alt: "Mar de Cobo" },
-      // ✅ cuando tengas más, solo agregás acá:
-      // { src: "/galeria/01.jpg", alt: "Parque" },
+      // ✅ IMÁGENES (carpeta: /public/Imagenes Postales/)
+      { src: "/Imagenes Postales/entradaVista1.jpg", alt: "Entrada" },
+      { src: "/Imagenes Postales/portonEntrada.JPG", alt: "Portón de entrada" },
+      { src: "/Imagenes Postales/autosentrada.jpg", alt: "Estacionamiento" },
+      { src: "/Imagenes Postales/IMG_5916 2.jpeg", alt: "Postal" },
+      { src: "/Imagenes Postales/IMG_6009.jpeg", alt: "Postal" },
+      { src: "/Imagenes Postales/IMG_6013.jpeg", alt: "Postal" },
+      { src: "/Imagenes Postales/IMG_6017.jpeg", alt: "Postal" },
+      { src: "/Imagenes Postales/IMG_6038.jpeg", alt: "Postal" },
+      { src: "/Imagenes Postales/IMG_6055.jpeg", alt: "Postal" },
+      { src: "/Imagenes Postales/IMG_6057.jpeg", alt: "Postal" },
+
+      // ✅ VIDEOS (carpeta: /public/Imagenes Postales/)
+      { src: "/Imagenes Postales/IMG_4104.MOV", alt: "Video del complejo" },
+      { src: "/Imagenes Postales/IMG_4108.MOV", alt: "Video del complejo" },
+      { src: "/Imagenes Postales/IMG_4112.MOV", alt: "Video del complejo" },
+      { src: "/Imagenes Postales/IMG_4133.MOV", alt: "Video del complejo" },
+      { src: "/Imagenes Postales/IMG_4249.MOV", alt: "Video del complejo" },
+      { src: "/Imagenes Postales/IMG_4593.MOV", alt: "Video del complejo" },
+      { src: "/Imagenes Postales/IMG_4863.MOV", alt: "Video del complejo" },
+      { src: "/Imagenes Postales/IMG_5496.MOV", alt: "Video del complejo" },
+      { src: "/Imagenes Postales/IMG_5601.MOV", alt: "Video del complejo" },
+      { src: "/Imagenes Postales/IMG_5601.MOV", alt: "Video del complejo" }, // (si es duplicado, borralo)
     ],
     []
   );
@@ -17,6 +34,11 @@ export default function Gallery() {
   const [idx, setIdx] = useState(0);
 
   const current = images[idx];
+
+  const isVideo = (src) => {
+    const s = String(src || "").toLowerCase();
+    return s.endsWith(".mp4") || s.endsWith(".mov") || s.includes(".mp4?") || s.includes(".mov?");
+  };
 
   const openAt = (i) => {
     setIdx(i);
@@ -86,31 +108,55 @@ export default function Gallery() {
 
         {/* ✅ Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {images.map((img, i) => (
-            <button
-              key={i}
-              type="button"
-              onClick={() => openAt(i)}
-              className="group relative overflow-hidden rounded-2xl aspect-square shadow-lg transition-all hover:shadow-2xl focus:outline-none focus:ring-2 focus:ring-brand-beige"
-              aria-label={`Ver foto: ${img.alt}`}
-            >
-              <img
-                src={img.src}
-                alt={img.alt}
-                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                loading="lazy"
-              />
+          {images.map((item, i) => {
+            const video = isVideo(item.src);
 
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-6">
-                <p className="text-white font-medium">{img.alt}</p>
-              </div>
+            return (
+              <button
+                key={i}
+                type="button"
+                onClick={() => openAt(i)}
+                className="group relative overflow-hidden rounded-2xl aspect-square shadow-lg transition-all hover:shadow-2xl focus:outline-none focus:ring-2 focus:ring-brand-beige"
+                aria-label={`Ver: ${item.alt}`}
+              >
+                {video ? (
+                  <div className="relative w-full h-full">
+                    <video
+                      src={item.src}
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                      muted
+                      playsInline
+                      preload="metadata"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-6">
+                      <p className="text-white font-medium">{item.alt}</p>
+                    </div>
+                    <div className="absolute top-4 right-4 bg-white/85 backdrop-blur px-3 py-2 rounded-full text-[10px] font-black uppercase tracking-widest text-brand-brown opacity-0 group-hover:opacity-100 transition-opacity">
+                      Video
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <img
+                      src={item.src}
+                      alt={item.alt}
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                      loading="lazy"
+                    />
 
-              {/* hint */}
-              <div className="absolute top-4 right-4 bg-white/80 backdrop-blur px-3 py-2 rounded-full text-[10px] font-black uppercase tracking-widest text-brand-brown opacity-0 group-hover:opacity-100 transition-opacity">
-                Ver
-              </div>
-            </button>
-          ))}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-6">
+                      <p className="text-white font-medium">{item.alt}</p>
+                    </div>
+
+                    {/* hint */}
+                    <div className="absolute top-4 right-4 bg-white/80 backdrop-blur px-3 py-2 rounded-full text-[10px] font-black uppercase tracking-widest text-brand-brown opacity-0 group-hover:opacity-100 transition-opacity">
+                      Ver
+                    </div>
+                  </>
+                )}
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -124,7 +170,7 @@ export default function Gallery() {
           }}
           role="dialog"
           aria-modal="true"
-          aria-label="Galería - imagen ampliada"
+          aria-label="Galería - ampliada"
         >
           <div className="w-full max-w-5xl">
             <div className="relative bg-black/40 rounded-3xl border border-white/10 overflow-hidden shadow-2xl">
@@ -144,14 +190,24 @@ export default function Gallery() {
                 </button>
               </div>
 
-              {/* image */}
+              {/* media */}
               <div className="relative w-full aspect-video bg-black">
-                <img
-                  src={current.src}
-                  alt={current.alt}
-                  className="w-full h-full object-contain select-none"
-                  draggable="false"
-                />
+                {isVideo(current.src) ? (
+                  <video
+                    src={current.src}
+                    className="w-full h-full object-contain select-none"
+                    controls
+                    playsInline
+                    preload="metadata"
+                  />
+                ) : (
+                  <img
+                    src={current.src}
+                    alt={current.alt}
+                    className="w-full h-full object-contain select-none"
+                    draggable="false"
+                  />
+                )}
 
                 {/* nav buttons */}
                 <button
@@ -194,12 +250,29 @@ export default function Gallery() {
                   }`}
                   aria-label={`Ir a: ${im.alt}`}
                 >
-                  <img
-                    src={im.src}
-                    alt={im.alt}
-                    className="w-full h-full object-cover"
-                    loading="lazy"
-                  />
+                  {isVideo(im.src) ? (
+                    <div className="relative w-full h-full">
+                      <video
+                        src={im.src}
+                        className="w-full h-full object-cover"
+                        muted
+                        playsInline
+                        preload="metadata"
+                      />
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="bg-black/55 text-white text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-full">
+                          Video
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <img
+                      src={im.src}
+                      alt={im.alt}
+                      className="w-full h-full object-cover"
+                      loading="lazy"
+                    />
+                  )}
                 </button>
               ))}
             </div>
