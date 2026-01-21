@@ -33,14 +33,14 @@ export default function About() {
 
                 <p>
                     <span className="text-brand-brown font-medium">Las Cañas</span> comenzó como
-                    un sueño que se hizo realidad hace{" "}
+                    un sueño que empezo a hacerse realidad hace{" "}
                     <span className="italic font-medium">más de 10 años</span>.
                 </p>
 
                 <p>
                     Hoy tenemos{" "}
                     <span className="text-brand-brown font-medium">5 casas</span> y estamos
-                    orgullosos de todo lo construido en este camino recorrido, siempre buscando
+                    orgullosos de todo lo construido en este camino recorrido, siempre buscamos
                     seguir mejorando.
                 </p>
 
