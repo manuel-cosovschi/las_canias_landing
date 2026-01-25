@@ -510,6 +510,7 @@
   const a_dates = el("a_dates");
   const a_guest = el("a_guest");
   const a_expires = el("a_expires");
+  const a_expires_label = el("a_expires_label");
 
   // Toast
   const toast = el("toast");
@@ -700,6 +701,8 @@
 
   tabConfirmed.classList.toggle("bg-brand-beige/40", isConfirmed);
   tabConfirmed.classList.toggle("bg-white/70", !isConfirmed);
+
+  if (!isTransfers) stopCountdownTicker();
 }
 
   tabBlock.onclick = () => showTab("block");
@@ -1195,12 +1198,20 @@ confirmedFilterHouse?.addEventListener("change", () => renderConfirmed(confirmed
   let currentAction = null; // { type: "confirm"|"cancel", row }
 
   function fillActionSummary(row) {
-    a_id.textContent = row?.id || "-";
-    a_house.textContent = row?.house_code || "-";
-    a_dates.textContent = (row?.check_in && row?.check_out) ? `${row.check_in} → ${row.check_out}` : "-";
-    a_guest.textContent = (row?.guest_name || "-") + (row?.phone ? ` — ${row.phone}` : "");
+  a_id.textContent = row?.id || "-";
+  a_house.textContent = row?.house_code || "-";
+  a_dates.textContent = (row?.check_in && row?.check_out) ? `${row.check_in} → ${row.check_out}` : "-";
+  a_guest.textContent = (row?.guest_name || "-") + (row?.phone ? ` — ${row.phone}` : "");
+
+  // Label dinámico según acción
+  if (currentAction?.type === "cancel_confirmed") {
+    a_expires_label.textContent = "Estado:";
+    a_expires.textContent = "CONFIRMED";
+  } else {
+    a_expires_label.textContent = "Vence:";
     a_expires.textContent = humanizeExpire(row?.expires_at);
   }
+}
 
   function setActionBusy(busy) {
     btnActionPrimary.disabled = busy;
@@ -1320,14 +1331,15 @@ confirmedFilterHouse?.addEventListener("change", () => renderConfirmed(confirmed
 
       closeActionModal();
 
-      // refresh
-      await loadPending();
+      // refresh inteligente según acción
       await loadAvailabilityAndUpdatePickers();
 
-      // si estoy viendo confirmadas, refresco también
-      if (!viewConfirmed.classList.contains("hidden")) {
+      if (currentAction.type === "cancel_confirmed") {
         await loadConfirmed();
-    }
+      } else {
+        // confirm o cancel (pendientes/hold)
+        await loadPending();
+      }
     } catch (e) {
       showActionError(e.message || "Error");
       showToast(e.message || "Error", "err");
