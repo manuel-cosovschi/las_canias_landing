@@ -178,6 +178,10 @@
             class="px-4 py-2 rounded-full bg-white/70 border border-brand-beige font-semibold text-sm hover:bg-white transition">
             Transferencias
           </button>
+          <button id="tabConfirmed"
+            class="px-4 py-2 rounded-full bg-white/70 border border-brand-beige font-semibold text-sm hover:bg-white transition">
+            Confirmadas
+          </button>
         </div>
 
         <!-- Actions -->
@@ -290,6 +294,45 @@
         </div>
 
         <div id="pendingList" class="space-y-3 text-sm"></div>
+      </div>
+      <!-- CONFIRMADAS -->
+      <div id="viewConfirmed" class="bg-white/75 rounded-2xl shadow-sm border border-brand-beige p-6 hidden">
+        <div class="flex items-start justify-between gap-3 mb-4">
+          <div>
+            <h2 class="serif text-xl sm:text-2xl font-bold">Reservas confirmadas</h2>
+            <p class="text-xs text-brand-accent mt-1">Reservas con seña pagada (CONFIRMED). Podés cancelar desde acá.</p>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <div class="px-3 py-2 rounded-2xl bg-white/70 border border-brand-beige text-xs">
+              <span class="font-semibold">Confirmadas:</span>
+              <span id="confirmedCount" class="text-brand-accent font-semibold">-</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid sm:grid-cols-3 gap-3 mb-5">
+          <div class="sm:col-span-2">
+            <label class="block text-xs font-semibold text-brand-accent mb-1">Buscar</label>
+            <input id="confirmedSearchInput"
+              class="w-full border border-brand-beige rounded-2xl p-3 bg-white/80 focus:outline-none focus:ring-2 focus:ring-brand-accent/40"
+              placeholder="ID, casa, nombre, teléfono..." />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-brand-accent mb-1">Casa</label>
+            <select id="confirmedFilterHouse"
+              class="w-full border border-brand-beige rounded-2xl p-3 bg-white/80 focus:outline-none focus:ring-2 focus:ring-brand-accent/40">
+              <option value="">Todas</option>
+              <option value="LC1">LC1</option>
+              <option value="LC2">LC2</option>
+              <option value="LC3">LC3</option>
+              <option value="LC4">LC4</option>
+              <option value="LC5">LC5</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="confirmedList" class="space-y-3 text-sm"></div>
       </div>
     </section>
   </main>
@@ -414,6 +457,13 @@
   const tabTransfers = el("tabTransfers");
   const viewBlock = el("viewBlock");
   const viewTransfers = el("viewTransfers");
+  const tabConfirmed = el("tabConfirmed");
+  const viewConfirmed = el("viewConfirmed");
+
+  const confirmedList = el("confirmedList");
+  const confirmedCount = el("confirmedCount");
+  const confirmedSearchInput = el("confirmedSearchInput");
+  const confirmedFilterHouse = el("confirmedFilterHouse");
 
   const btnRefresh = el("btnRefresh");
   const pendingList = el("pendingList");
@@ -479,7 +529,9 @@
   const EP_LIST_PENDING = "/.netlify/functions/list-pending";
   const EP_CONFIRM_TRANSFER = "/.netlify/functions/confirm-transfer";
   const EP_CANCEL_RESERVATION = "/.netlify/functions/cancel-reservation";
-
+  // NUEVO (confirmadas)
+  const EP_LIST_CONFIRMED = "/.netlify/functions/list-confirmed";
+  const EP_CANCEL_CONFIRMED = "/.netlify/functions/cancel-confirmed";
   function setStatus(msg) { statusBox.textContent = msg; }
 
   function showToast(msg, type="info") {
@@ -628,20 +680,27 @@
 
   // Tabs
   function showTab(which) {
-    const isBlock = which === "block";
-    viewBlock.classList.toggle("hidden", !isBlock);
-    viewTransfers.classList.toggle("hidden", isBlock);
+  const isBlock = which === "block";
+  const isTransfers = which === "transfers";
+  const isConfirmed = which === "confirmed";
 
-    // Show refresh only on transfers
-    btnRefresh.classList.toggle("hidden", isBlock);
+  viewBlock.classList.toggle("hidden", !isBlock);
+  viewTransfers.classList.toggle("hidden", !isTransfers);
+  viewConfirmed.classList.toggle("hidden", !isConfirmed);
 
-    // Button styles
-    tabBlock.classList.toggle("bg-brand-beige/40", isBlock);
-    tabBlock.classList.toggle("bg-white/70", !isBlock);
+  // Refresh button solo para TRANSFERS (pendientes)
+  btnRefresh.classList.toggle("hidden", !isTransfers);
 
-    tabTransfers.classList.toggle("bg-brand-beige/40", !isBlock);
-    tabTransfers.classList.toggle("bg-white/70", isBlock);
-  }
+  // estilos tabs
+  tabBlock.classList.toggle("bg-brand-beige/40", isBlock);
+  tabBlock.classList.toggle("bg-white/70", !isBlock);
+
+  tabTransfers.classList.toggle("bg-brand-beige/40", isTransfers);
+  tabTransfers.classList.toggle("bg-white/70", !isTransfers);
+
+  tabConfirmed.classList.toggle("bg-brand-beige/40", isConfirmed);
+  tabConfirmed.classList.toggle("bg-white/70", !isConfirmed);
+}
 
   tabBlock.onclick = () => showTab("block");
 
@@ -655,6 +714,17 @@
       setStatus(`❌ ${e.message}`);
     }
   };
+
+  tabConfirmed.onclick = async () => {
+  showTab("confirmed");
+  try {
+    setStatus("Cargando confirmadas...");
+    const c = await loadConfirmed();
+    setStatus(`✅ Lista de confirmadas actualizada. Total: ${c}`);
+  } catch (e) {
+    setStatus(`❌ ${e.message}`);
+  }
+};
 
   showTab("block");
 
@@ -1021,6 +1091,106 @@ function startCountdownTicker(){
     }
   };
 
+  // =====================
+// CONFIRMADAS
+// =====================
+let confirmedRaw = [];
+
+function confirmedMatchesSearch(item, q) {
+  if (!q) return true;
+  const t = String(q).toLowerCase().trim();
+  const blob = [
+    item.id,
+    item.house_code,
+    item.check_in,
+    item.check_out,
+    item.guest_name,
+    item.phone,
+    item.email,
+  ].filter(Boolean).join(" ").toLowerCase();
+  return blob.includes(t);
+}
+
+function confirmedMatchesHouse(item, h) {
+  if (!h) return true;
+  return String(item.house_code || "") === h;
+}
+
+function renderConfirmed(items) {
+  confirmedList.innerHTML = "";
+
+  const q = (confirmedSearchInput?.value || "").trim();
+  const h = (confirmedFilterHouse?.value || "").trim();
+
+  const filtered = (items || []).filter(it => confirmedMatchesSearch(it, q) && confirmedMatchesHouse(it, h));
+
+  if (confirmedCount) confirmedCount.textContent = String(filtered.length);
+
+  if (!filtered.length) {
+    confirmedList.innerHTML = `<div class="p-4 bg-white/70 border border-brand-beige rounded-2xl">No hay confirmadas con esos filtros.</div>`;
+    return;
+  }
+
+  filtered.forEach(r => {
+    const div = document.createElement("div");
+    div.className = "p-4 border border-brand-beige rounded-2xl bg-white/80";
+
+    const guest = (r.guest_name || "-") + (r.phone ? ` — ${r.phone}` : "");
+    const email = r.email ? ` · ${r.email}` : "";
+
+    div.innerHTML = `
+      <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+        <div class="min-w-0">
+          <div class="flex items-center gap-2">
+            <div class="font-semibold">${r.id}</div>
+            <span class="text-xs font-semibold px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-900">
+              CONFIRMED
+            </span>
+            <span class="text-xs font-semibold px-3 py-1 rounded-full bg-brand-beige/50 border border-brand-beige/80">
+              ${r.house_code}
+            </span>
+          </div>
+          <div class="text-sm text-brand-brown/90 mt-1">${r.check_in} → ${r.check_out}</div>
+          <div class="text-xs text-brand-accent mt-1">${guest}${email}</div>
+        </div>
+
+        <div class="flex flex-wrap gap-2">
+          <button
+            class="btnCancelConfirmed px-4 py-2 rounded-full bg-white/70 border border-brand-beige text-xs font-semibold hover:bg-white transition"
+            data-id="${r.id}">
+            Cancelar confirmada
+          </button>
+        </div>
+      </div>
+    `;
+
+    confirmedList.appendChild(div);
+  });
+
+  confirmedList.querySelectorAll(".btnCancelConfirmed").forEach(btn => {
+    btn.onclick = () => {
+      const id = btn.dataset.id;
+      const row = confirmedRaw.find(x => String(x.id) === String(id));
+      openCancelConfirmedModal(row);
+    };
+  });
+}
+
+async function loadConfirmed() {
+  const out = await apiFetch(EP_LIST_CONFIRMED, { method: "GET", body: null });
+  const items = out.items || out.rows || [];
+  const count = out.count ?? items.length;
+
+  confirmedRaw = items;
+  renderConfirmed(items);
+
+  return count;
+}
+
+// Filters re-render
+confirmedSearchInput?.addEventListener("input", () => renderConfirmed(confirmedRaw));
+confirmedFilterHouse?.addEventListener("change", () => renderConfirmed(confirmedRaw));
+
   // ACTION MODAL LOGIC
   let currentAction = null; // { type: "confirm"|"cancel", row }
 
@@ -1081,6 +1251,27 @@ function startCountdownTicker(){
     setTimeout(() => cancelReasonInput.focus(), 50);
   }
 
+  function openCancelConfirmedModal(row) {
+  currentAction = { type: "cancel_confirmed", row };
+  clearActionError();
+
+  actionTitle.textContent = "Cancelar reserva confirmada";
+  actionSubtitle.textContent = "Esto cancela una reserva CONFIRMADA (seña pagada) y dispara tu automatización.";
+
+  confirmFields.classList.add("hidden");
+  cancelFields.classList.remove("hidden");
+
+  cancelReasonInput.value = "Cancelado por dueño (confirmada)";
+  paymentRefInput.value = "";
+
+  btnActionPrimary.textContent = "Cancelar";
+  btnActionSecondary.textContent = "Volver";
+
+  fillActionSummary(row);
+  openActionModal();
+  setTimeout(() => cancelReasonInput.focus(), 50);
+}
+
   btnCloseActionModal.onclick = closeActionModal;
   actionModal.addEventListener("click", (e) => { if (e.target === actionModal) closeActionModal(); });
 
@@ -1116,11 +1307,27 @@ function startCountdownTicker(){
         showToast(`Cancelada ✅ ${id}`, "ok");
       }
 
+      if (currentAction.type === "cancel_confirmed") {
+        const reason = (cancelReasonInput.value || "").trim();
+        if (!reason) return showActionError("Ingresá un motivo de cancelación.");
+
+        setStatus("Cancelando confirmada...");
+        await apiFetch(EP_CANCEL_CONFIRMED, { method:"POST", body: { id, reason } });
+
+        setStatus(`✅ Cancelada (confirmada): ${id}`);
+        showToast(`Cancelada ✅ ${id}`, "ok");
+      }
+
       closeActionModal();
 
       // refresh
       await loadPending();
       await loadAvailabilityAndUpdatePickers();
+
+      // si estoy viendo confirmadas, refresco también
+      if (!viewConfirmed.classList.contains("hidden")) {
+        await loadConfirmed();
+    }
     } catch (e) {
       showActionError(e.message || "Error");
       showToast(e.message || "Error", "err");
@@ -1293,6 +1500,9 @@ function startCountdownTicker(){
         // Load pending silently when entering app
         loadPending().then(c => {
           if (pendingCount) pendingCount.textContent = String(c);
+        }).catch(()=>{});
+        loadConfirmed().then(c => {
+          if (confirmedCount) confirmedCount.textContent = String(c);
         }).catch(()=>{});
       }
     } else {
