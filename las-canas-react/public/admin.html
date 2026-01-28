@@ -295,6 +295,7 @@
 
         <div id="pendingList" class="space-y-3 text-sm"></div>
       </div>
+
       <!-- CONFIRMADAS -->
       <div id="viewConfirmed" class="bg-white/75 rounded-2xl shadow-sm border border-brand-beige p-6 hidden">
         <div class="flex items-start justify-between gap-3 mb-4">
@@ -519,6 +520,15 @@
   const toastInner = el("toastInner");
   let toastTimer = null;
 
+  // ✅ FIX CRÍTICO: declarar el interval ANTES de showTab() (evita TDZ y rompe-login)
+  let countdownInterval = null;
+
+  function stopCountdownTicker(){
+    if (!countdownInterval) return;
+    clearInterval(countdownInterval);
+    countdownInterval = null;
+  }
+
   // Keys
   const AUTH_KEY = "lc_admin_basic";             // Basic (admin user:pass) base64
   const OWNER_KEY = "lc_owner_secret";           // x-lc-secret in localStorage
@@ -535,6 +545,7 @@
   // NUEVO (confirmadas)
   const EP_LIST_CONFIRMED = "/.netlify/functions/list-confirmed";
   const EP_CANCEL_CONFIRMED = "/.netlify/functions/cancel-confirmed";
+
   function setStatus(msg) { statusBox.textContent = msg; }
 
   function showToast(msg, type="info") {
@@ -647,10 +658,12 @@
     const auth = getAuth();
     if (!auth) throw new Error("No autorizado. Iniciá sesión.");
 
+    const hasBody = body !== null && method !== "GET";
+
     const res = await fetch(url, {
       method,
-      headers: buildHeaders({ withJson: body !== null }),
-      body: body !== null ? JSON.stringify(body) : null,
+      headers: buildHeaders({ withJson: hasBody }),
+      body: hasBody ? JSON.stringify(body) : undefined,
     });
 
     const data = await res.json().catch(() => ({}));
@@ -683,29 +696,29 @@
 
   // Tabs
   function showTab(which) {
-  const isBlock = which === "block";
-  const isTransfers = which === "transfers";
-  const isConfirmed = which === "confirmed";
+    const isBlock = which === "block";
+    const isTransfers = which === "transfers";
+    const isConfirmed = which === "confirmed";
 
-  viewBlock.classList.toggle("hidden", !isBlock);
-  viewTransfers.classList.toggle("hidden", !isTransfers);
-  viewConfirmed.classList.toggle("hidden", !isConfirmed);
+    viewBlock.classList.toggle("hidden", !isBlock);
+    viewTransfers.classList.toggle("hidden", !isTransfers);
+    viewConfirmed.classList.toggle("hidden", !isConfirmed);
 
-  // Refresh button solo para TRANSFERS (pendientes)
-  btnRefresh.classList.toggle("hidden", !isTransfers);
+    // Refresh button solo para TRANSFERS (pendientes)
+    btnRefresh.classList.toggle("hidden", !isTransfers);
 
-  // estilos tabs
-  tabBlock.classList.toggle("bg-brand-beige/40", isBlock);
-  tabBlock.classList.toggle("bg-white/70", !isBlock);
+    // estilos tabs
+    tabBlock.classList.toggle("bg-brand-beige/40", isBlock);
+    tabBlock.classList.toggle("bg-white/70", !isBlock);
 
-  tabTransfers.classList.toggle("bg-brand-beige/40", isTransfers);
-  tabTransfers.classList.toggle("bg-white/70", !isTransfers);
+    tabTransfers.classList.toggle("bg-brand-beige/40", isTransfers);
+    tabTransfers.classList.toggle("bg-white/70", !isTransfers);
 
-  tabConfirmed.classList.toggle("bg-brand-beige/40", isConfirmed);
-  tabConfirmed.classList.toggle("bg-white/70", !isConfirmed);
+    tabConfirmed.classList.toggle("bg-brand-beige/40", isConfirmed);
+    tabConfirmed.classList.toggle("bg-white/70", !isConfirmed);
 
-  if (!isTransfers) stopCountdownTicker();
-}
+    if (!isTransfers) stopCountdownTicker();
+  }
 
   tabBlock.onclick = () => showTab("block");
 
@@ -721,16 +734,17 @@
   };
 
   tabConfirmed.onclick = async () => {
-  showTab("confirmed");
-  try {
-    setStatus("Cargando confirmadas...");
-    const c = await loadConfirmed();
-    setStatus(`✅ Lista de confirmadas actualizada. Total: ${c}`);
-  } catch (e) {
-    setStatus(`❌ ${e.message}`);
-  }
-};
+    showTab("confirmed");
+    try {
+      setStatus("Cargando confirmadas...");
+      const c = await loadConfirmed();
+      setStatus(`✅ Lista de confirmadas actualizada. Total: ${c}`);
+    } catch (e) {
+      setStatus(`❌ ${e.message}`);
+    }
+  };
 
+  // ✅ ahora showTab() ya no rompe nada (countdownInterval existe)
   showTab("block");
 
   /* =====================
@@ -891,54 +905,94 @@
   }
 
   function parseExpiresMs(expiresAt) {
-  if (!expiresAt) return NaN;
-  const ms = Date.parse(expiresAt);
-  if (Number.isFinite(ms)) return ms;
+    if (!expiresAt) return NaN;
+    const ms = Date.parse(expiresAt);
+    if (Number.isFinite(ms)) return ms;
 
-  // fallback por si viene "YYYY-MM-DD HH:mm:ss" sin Z (muy común en sheets)
-  // Intento simple: reemplazar espacio por "T"
-  const ms2 = Date.parse(String(expiresAt).replace(" ", "T"));
-  return ms2;
-}
+    // fallback por si viene "YYYY-MM-DD HH:mm:ss" sin Z (muy común en sheets)
+    const ms2 = Date.parse(String(expiresAt).replace(" ", "T"));
+    return ms2;
+  }
 
-function pad2(n){ return String(n).padStart(2,"0"); }
+  function pad2(n){ return String(n).padStart(2,"0"); }
 
-function formatCountdown(msLeft){
-  const total = Math.max(0, Math.floor(msLeft / 1000));
-  const h = Math.floor(total / 3600);
-  const m = Math.floor((total % 3600) / 60);
-  const s = total % 60;
-  return `${pad2(h)}:${pad2(m)}:${pad2(s)}`;
-}
+  function formatCountdown(msLeft){
+    const total = Math.max(0, Math.floor(msLeft / 1000));
+    const h = Math.floor(total / 3600);
+    const m = Math.floor((total % 3600) / 60);
+    const s = total % 60;
+    return `${pad2(h)}:${pad2(m)}:${pad2(s)}`;
+  }
 
-function isExpiringSoon(msLeft){
-  return Number.isFinite(msLeft) && msLeft > 0 && msLeft <= 60 * 60 * 1000; // 1h
-}
+  function isExpiringSoon(msLeft){
+    return Number.isFinite(msLeft) && msLeft > 0 && msLeft <= 60 * 60 * 1000; // 1h
+  }
 
-function humanizeExpire(expiresAt) {
-  if (!expiresAt) return "-";
+  function humanizeExpire(expiresAt) {
+    if (!expiresAt) return "-";
 
-  const ms = parseExpiresMs(expiresAt);
-  if (!Number.isFinite(ms)) return String(expiresAt);
+    const ms = parseExpiresMs(expiresAt);
+    if (!Number.isFinite(ms)) return String(expiresAt);
 
-  const d = new Date(ms);
+    const d = new Date(ms);
 
-  const date = new Intl.DateTimeFormat("es-AR", {
-    timeZone: "America/Argentina/Buenos_Aires",
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  }).format(d);
+    const date = new Intl.DateTimeFormat("es-AR", {
+      timeZone: "America/Argentina/Buenos_Aires",
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    }).format(d);
 
-  const time = new Intl.DateTimeFormat("es-AR", {
-    timeZone: "America/Argentina/Buenos_Aires",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  }).format(d);
+    const time = new Intl.DateTimeFormat("es-AR", {
+      timeZone: "America/Argentina/Buenos_Aires",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    }).format(d);
 
-  return `${date} ${time} (AR)`;
-}
+    return `${date} ${time} (AR)`;
+  }
+
+  function updateCountdowns(){
+    const nodes = document.querySelectorAll(".countdown[data-expires]");
+    const now = Date.now();
+
+    nodes.forEach(node => {
+      const raw = node.getAttribute("data-expires") || "";
+      const expMs = parseExpiresMs(raw);
+
+      if (!Number.isFinite(expMs)){
+        node.classList.add("hidden");
+        return;
+      }
+
+      const left = expMs - now;
+
+      // si ya venció
+      if (left <= 0){
+        node.classList.remove("hidden");
+        node.textContent = "EXPIRADA";
+        node.className = "countdown px-2 py-1 rounded-full border text-[10px] font-semibold bg-red-50 text-red-800 border-red-200";
+        return;
+      }
+
+      // mostrar countdown
+      node.classList.remove("hidden");
+      node.textContent = formatCountdown(left);
+
+      if (isExpiringSoon(left)){
+        node.className = "countdown px-2 py-1 rounded-full border text-[10px] font-semibold bg-yellow-50 text-yellow-900 border-yellow-200";
+      } else {
+        node.className = "countdown px-2 py-1 rounded-full border text-[10px] font-semibold bg-white/70 text-brand-brown border-brand-beige";
+      }
+    });
+  }
+
+  function startCountdownTicker(){
+    stopCountdownTicker();
+    updateCountdowns();
+    countdownInterval = setInterval(updateCountdowns, 1000);
+  }
 
   function renderPending(items) {
     pendingList.innerHTML = "";
@@ -952,6 +1006,7 @@ function humanizeExpire(expiresAt) {
 
     if (!filtered.length) {
       pendingList.innerHTML = `<div class="p-4 bg-white/70 border border-brand-beige rounded-2xl">No hay pendientes con esos filtros.</div>`;
+      stopCountdownTicker();
       return;
     }
 
@@ -984,7 +1039,7 @@ function humanizeExpire(expiresAt) {
 
           <div class="flex flex-wrap gap-2">
             <button
-              class="btnConfirm px-4 py-2 rounded-full bg-emerald-700 text-white text-xs font-semibold hover:opacity-90 transition"
+              class="btnConfirm px-4 py-2 rounded-full bg-emerald-700              text-white text-xs font-semibold hover:opacity-90 transition"
               data-id="${r.id}">
               Confirmar
             </button>
@@ -1015,56 +1070,10 @@ function humanizeExpire(expiresAt) {
         openCancelModal(row);
       };
     });
-    startCountdownTicker();
+
+    // ✅ Solo arrancar ticker si estás mirando Transferencias
+    if (!viewTransfers.classList.contains("hidden")) startCountdownTicker();
   }
-
-  let countdownInterval = null;
-
-function stopCountdownTicker(){
-  if (countdownInterval) clearInterval(countdownInterval);
-  countdownInterval = null;
-}
-
-function updateCountdowns(){
-  const nodes = document.querySelectorAll(".countdown[data-expires]");
-  const now = Date.now();
-
-  nodes.forEach(node => {
-    const raw = node.getAttribute("data-expires") || "";
-    const expMs = parseExpiresMs(raw);
-
-    if (!Number.isFinite(expMs)){
-      node.classList.add("hidden");
-      return;
-    }
-
-    const left = expMs - now;
-
-    // si ya venció
-    if (left <= 0){
-      node.classList.remove("hidden");
-      node.textContent = "EXPIRADA";
-      node.className = "countdown px-2 py-1 rounded-full border text-[10px] font-semibold bg-red-50 text-red-800 border-red-200";
-      return;
-    }
-
-    // mostrar countdown
-    node.classList.remove("hidden");
-    node.textContent = formatCountdown(left);
-
-    if (isExpiringSoon(left)){
-      node.className = "countdown px-2 py-1 rounded-full border text-[10px] font-semibold bg-yellow-50 text-yellow-900 border-yellow-200";
-    } else {
-      node.className = "countdown px-2 py-1 rounded-full border text-[10px] font-semibold bg-white/70 text-brand-brown border-brand-beige";
-    }
-  });
-}
-
-function startCountdownTicker(){
-  stopCountdownTicker();
-  updateCountdowns();
-  countdownInterval = setInterval(updateCountdowns, 1000);
-}
 
   async function loadPending() {
     const out = await apiFetch(EP_LIST_PENDING, { method: "GET", body: null });
@@ -1097,123 +1106,125 @@ function startCountdownTicker(){
   };
 
   // =====================
-// CONFIRMADAS
-// =====================
-let confirmedRaw = [];
+  // CONFIRMADAS
+  // =====================
+  let confirmedRaw = [];
 
-function confirmedMatchesSearch(item, q) {
-  if (!q) return true;
-  const t = String(q).toLowerCase().trim();
-  const blob = [
-    item.id,
-    item.house_code,
-    item.check_in,
-    item.check_out,
-    item.guest_name,
-    item.phone,
-    item.email,
-  ].filter(Boolean).join(" ").toLowerCase();
-  return blob.includes(t);
-}
-
-function confirmedMatchesHouse(item, h) {
-  if (!h) return true;
-  return String(item.house_code || "") === h;
-}
-
-function renderConfirmed(items) {
-  confirmedList.innerHTML = "";
-
-  const q = (confirmedSearchInput?.value || "").trim();
-  const h = (confirmedFilterHouse?.value || "").trim();
-
-  const filtered = (items || []).filter(it => confirmedMatchesSearch(it, q) && confirmedMatchesHouse(it, h));
-
-  if (confirmedCount) confirmedCount.textContent = String(filtered.length);
-
-  if (!filtered.length) {
-    confirmedList.innerHTML = `<div class="p-4 bg-white/70 border border-brand-beige rounded-2xl">No hay confirmadas con esos filtros.</div>`;
-    return;
+  function confirmedMatchesSearch(item, q) {
+    if (!q) return true;
+    const t = String(q).toLowerCase().trim();
+    const blob = [
+      item.id,
+      item.house_code,
+      item.check_in,
+      item.check_out,
+      item.guest_name,
+      item.phone,
+      item.email,
+    ].filter(Boolean).join(" ").toLowerCase();
+    return blob.includes(t);
   }
 
-  filtered.forEach(r => {
-    const div = document.createElement("div");
-    div.className = "p-4 border border-brand-beige rounded-2xl bg-white/80";
+  function confirmedMatchesHouse(item, h) {
+    if (!h) return true;
+    return String(item.house_code || "") === h;
+  }
 
-    const guest = (r.guest_name || "-") + (r.phone ? ` — ${r.phone}` : "");
-    const email = r.email ? ` · ${r.email}` : "";
+  function renderConfirmed(items) {
+    confirmedList.innerHTML = "";
 
-    div.innerHTML = `
-      <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
-        <div class="min-w-0">
-          <div class="flex items-center gap-2">
-            <div class="font-semibold">${r.id}</div>
-            <span class="text-xs font-semibold px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-900">
-              CONFIRMED
-            </span>
-            <span class="text-xs font-semibold px-3 py-1 rounded-full bg-brand-beige/50 border border-brand-beige/80">
-              ${r.house_code}
-            </span>
+    const q = (confirmedSearchInput?.value || "").trim();
+    const h = (confirmedFilterHouse?.value || "").trim();
+
+    const filtered = (items || []).filter(it => confirmedMatchesSearch(it, q) && confirmedMatchesHouse(it, h));
+
+    if (confirmedCount) confirmedCount.textContent = String(filtered.length);
+
+    if (!filtered.length) {
+      confirmedList.innerHTML = `<div class="p-4 bg-white/70 border border-brand-beige rounded-2xl">No hay confirmadas con esos filtros.</div>`;
+      return;
+    }
+
+    filtered.forEach(r => {
+      const div = document.createElement("div");
+      div.className = "p-4 border border-brand-beige rounded-2xl bg-white/80";
+
+      const guest = (r.guest_name || "-") + (r.phone ? ` — ${r.phone}` : "");
+      const email = r.email ? ` · ${r.email}` : "";
+
+      div.innerHTML = `
+        <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+          <div class="min-w-0">
+            <div class="flex items-center gap-2">
+              <div class="font-semibold">${r.id}</div>
+              <span class="text-xs font-semibold px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-900">
+                CONFIRMED
+              </span>
+              <span class="text-xs font-semibold px-3 py-1 rounded-full bg-brand-beige/50 border border-brand-beige/80">
+                ${r.house_code}
+              </span>
+            </div>
+            <div class="text-sm text-brand-brown/90 mt-1">${r.check_in} → ${r.check_out}</div>
+            <div class="text-xs text-brand-accent mt-1">${guest}${email}</div>
           </div>
-          <div class="text-sm text-brand-brown/90 mt-1">${r.check_in} → ${r.check_out}</div>
-          <div class="text-xs text-brand-accent mt-1">${guest}${email}</div>
+
+          <div class="flex flex-wrap gap-2">
+            <button
+              class="btnCancelConfirmed px-4 py-2 rounded-full bg-white/70 border border-brand-beige text-xs font-semibold hover:bg-white transition"
+              data-id="${r.id}">
+              Cancelar confirmada
+            </button>
+          </div>
         </div>
+      `;
 
-        <div class="flex flex-wrap gap-2">
-          <button
-            class="btnCancelConfirmed px-4 py-2 rounded-full bg-white/70 border border-brand-beige text-xs font-semibold hover:bg-white transition"
-            data-id="${r.id}">
-            Cancelar confirmada
-          </button>
-        </div>
-      </div>
-    `;
+      confirmedList.appendChild(div);
+    });
 
-    confirmedList.appendChild(div);
-  });
+    confirmedList.querySelectorAll(".btnCancelConfirmed").forEach(btn => {
+      btn.onclick = () => {
+        const id = btn.dataset.id;
+        const row = confirmedRaw.find(x => String(x.id) === String(id));
+        openCancelConfirmedModal(row);
+      };
+    });
+  }
 
-  confirmedList.querySelectorAll(".btnCancelConfirmed").forEach(btn => {
-    btn.onclick = () => {
-      const id = btn.dataset.id;
-      const row = confirmedRaw.find(x => String(x.id) === String(id));
-      openCancelConfirmedModal(row);
-    };
-  });
-}
+  async function loadConfirmed() {
+    const out = await apiFetch(EP_LIST_CONFIRMED, { method: "GET", body: null });
+    const items = out.items || out.rows || [];
+    const count = out.count ?? items.length;
 
-async function loadConfirmed() {
-  const out = await apiFetch(EP_LIST_CONFIRMED, { method: "GET", body: null });
-  const items = out.items || out.rows || [];
-  const count = out.count ?? items.length;
+    confirmedRaw = items;
+    renderConfirmed(items);
 
-  confirmedRaw = items;
-  renderConfirmed(items);
+    return count;
+  }
 
-  return count;
-}
+  // Filters re-render
+  confirmedSearchInput?.addEventListener("input", () => renderConfirmed(confirmedRaw));
+  confirmedFilterHouse?.addEventListener("change", () => renderConfirmed(confirmedRaw));
 
-// Filters re-render
-confirmedSearchInput?.addEventListener("input", () => renderConfirmed(confirmedRaw));
-confirmedFilterHouse?.addEventListener("change", () => renderConfirmed(confirmedRaw));
-
+  // =====================
   // ACTION MODAL LOGIC
-  let currentAction = null; // { type: "confirm"|"cancel", row }
+  // =====================
+  let currentAction = null; // { type: "confirm"|"cancel"|"cancel_confirmed", row }
 
   function fillActionSummary(row) {
-  a_id.textContent = row?.id || "-";
-  a_house.textContent = row?.house_code || "-";
-  a_dates.textContent = (row?.check_in && row?.check_out) ? `${row.check_in} → ${row.check_out}` : "-";
-  a_guest.textContent = (row?.guest_name || "-") + (row?.phone ? ` — ${row.phone}` : "");
+    a_id.textContent = row?.id || "-";
+    a_house.textContent = row?.house_code || "-";
+    a_dates.textContent = (row?.check_in && row?.check_out) ? `${row.check_in} → ${row.check_out}` : "-";
+    a_guest.textContent = (row?.guest_name || "-") + (row?.phone ? ` — ${row.phone}` : "");
 
-  // Label dinámico según acción
-  if (currentAction?.type === "cancel_confirmed") {
-    a_expires_label.textContent = "Estado:";
-    a_expires.textContent = "CONFIRMED";
-  } else {
-    a_expires_label.textContent = "Vence:";
-    a_expires.textContent = humanizeExpire(row?.expires_at);
+    // Label dinámico según acción
+    if (currentAction?.type === "cancel_confirmed") {
+      a_expires_label.textContent = "Estado:";
+      a_expires.textContent = "CONFIRMED";
+    } else {
+      a_expires_label.textContent = "Vence:";
+      a_expires.textContent = humanizeExpire(row?.expires_at);
+    }
   }
-}
 
   function setActionBusy(busy) {
     btnActionPrimary.disabled = busy;
@@ -1265,29 +1276,28 @@ confirmedFilterHouse?.addEventListener("change", () => renderConfirmed(confirmed
   }
 
   function openCancelConfirmedModal(row) {
-  currentAction = { type: "cancel_confirmed", row };
-  clearActionError();
+    currentAction = { type: "cancel_confirmed", row };
+    clearActionError();
 
-  actionTitle.textContent = "Cancelar reserva confirmada";
-  actionSubtitle.textContent = "Esto cancela una reserva CONFIRMADA (seña pagada) y dispara tu automatización.";
+    actionTitle.textContent = "Cancelar reserva confirmada";
+    actionSubtitle.textContent = "Esto cancela una reserva CONFIRMADA (seña pagada) y dispara tu automatización.";
 
-  confirmFields.classList.add("hidden");
-  cancelFields.classList.remove("hidden");
+    confirmFields.classList.add("hidden");
+    cancelFields.classList.remove("hidden");
 
-  cancelReasonInput.value = "Cancelado por dueño (confirmada)";
-  paymentRefInput.value = "";
+    cancelReasonInput.value = "Cancelado por dueño (confirmada)";
+    paymentRefInput.value = "";
 
-  btnActionPrimary.textContent = "Cancelar";
-  btnActionSecondary.textContent = "Volver";
+    btnActionPrimary.textContent = "Cancelar";
+    btnActionSecondary.textContent = "Volver";
 
-  fillActionSummary(row);
-  openActionModal();
-  setTimeout(() => cancelReasonInput.focus(), 50);
-}
+    fillActionSummary(row);
+    openActionModal();
+    setTimeout(() => cancelReasonInput.focus(), 50);
+  }
 
   btnCloseActionModal.onclick = closeActionModal;
   actionModal.addEventListener("click", (e) => { if (e.target === actionModal) closeActionModal(); });
-
   btnActionSecondary.onclick = () => closeActionModal();
 
   btnActionPrimary.onclick = async () => {
@@ -1351,7 +1361,9 @@ confirmedFilterHouse?.addEventListener("change", () => renderConfirmed(confirmed
     }
   };
 
+  // =====================
   // SECRET MODAL handlers
+  // =====================
   btnCloseSecretModal.onclick = closeSecretModal;
   secretModal.addEventListener("click", (e) => { if (e.target === secretModal) closeSecretModal(); });
 
@@ -1410,6 +1422,7 @@ confirmedFilterHouse?.addEventListener("change", () => renderConfirmed(confirmed
     rememberMe.checked = on;
     if (on && u) loginUser.value = u;
   }
+
   function saveRememberedUser() {
     if (rememberMe.checked) {
       localStorage.setItem(REMEMBER_ON_KEY, "1");
@@ -1419,12 +1432,15 @@ confirmedFilterHouse?.addEventListener("change", () => renderConfirmed(confirmed
       localStorage.removeItem(REMEMBER_USER_KEY);
     }
   }
+
   rememberMe.addEventListener("change", saveRememberedUser);
   loginUser.addEventListener("input", () => {
     if (rememberMe.checked) saveRememberedUser();
   });
 
+  // =====================
   // LOGIN FLOW
+  // =====================
   async function tryLogin(user, pass) {
     const basic = b64utf8(`${user}:${pass}`);
 
@@ -1482,6 +1498,9 @@ confirmedFilterHouse?.addEventListener("change", () => renderConfirmed(confirmed
     if (e.key === "Enter") btnDoLogin.click();
   });
 
+  // =====================
+  // UI STATE
+  // =====================
   function refreshUI() {
     const auth = getAuth();
 
@@ -1499,7 +1518,7 @@ confirmedFilterHouse?.addEventListener("change", () => renderConfirmed(confirmed
 
       setStatus("Panel habilitado ✅");
 
-      // init pickers & pending when logged
+      // init pickers & data when logged
       loadAvailabilityAndUpdatePickers();
       refreshSecretBadge();
 
@@ -1511,13 +1530,9 @@ confirmedFilterHouse?.addEventListener("change", () => renderConfirmed(confirmed
         showToast("Falta la clave de dueños", "err");
         openSecretModal();
       } else {
-        // Load pending silently when entering app
-        loadPending().then(c => {
-          if (pendingCount) pendingCount.textContent = String(c);
-        }).catch(()=>{});
-        loadConfirmed().then(c => {
-          if (confirmedCount) confirmedCount.textContent = String(c);
-        }).catch(()=>{});
+        // Load pending/confirmed silently when entering app
+        loadPending().catch(()=>{});
+        loadConfirmed().catch(()=>{});
       }
     } else {
       // show login
@@ -1529,6 +1544,7 @@ confirmedFilterHouse?.addEventListener("change", () => renderConfirmed(confirmed
 
       setStatus("Iniciá sesión para continuar.");
       refreshSecretBadge();
+      stopCountdownTicker();
     }
   }
 
@@ -1537,6 +1553,16 @@ confirmedFilterHouse?.addEventListener("change", () => renderConfirmed(confirmed
     refreshUI();
     showToast("Sesión cerrada", "ok");
   };
+
+  // ✅ cerrar modales con ESC
+  window.addEventListener("keydown", (e) => {
+    if (e.key !== "Escape") return;
+    if (!secretModal.classList.contains("hidden")) closeSecretModal();
+    if (!actionModal.classList.contains("hidden")) closeActionModal();
+  });
+
+  // ✅ liberar interval si cambias de pestaña/navegas
+  window.addEventListener("beforeunload", stopCountdownTicker);
 
   // init
   loadRememberedUser();
