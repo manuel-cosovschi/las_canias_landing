@@ -519,6 +519,9 @@
   const toast = el("toast");
   const toastInner = el("toastInner");
   let toastTimer = null;
+  let initialDataLoaded = false;
+  let confirmedTimer = null;
+  let confirmedInFlight = false;
 
   // ✅ FIX CRÍTICO: declarar el interval ANTES de showTab() (evita TDZ y rompe-login)
   let countdownInterval = null;
@@ -528,6 +531,35 @@
     clearInterval(countdownInterval);
     countdownInterval = null;
   }
+
+  function stopConfirmedAutoRefresh(){
+  if (!confirmedTimer) return;
+  clearInterval(confirmedTimer);
+  confirmedTimer = null;
+}
+
+async function loadConfirmedSafe(){
+  if (confirmedInFlight) return;
+  confirmedInFlight = true;
+  try {
+    return await loadConfirmed();
+  } finally {
+    confirmedInFlight = false;
+  }
+}
+
+function startConfirmedAutoRefresh(){
+  stopConfirmedAutoRefresh();
+  // 1 vez al entrar
+  loadConfirmedSafe().catch(()=>{});
+  // si querés auto-refresh, mejor cada 60s
+  confirmedTimer = setInterval(() => {
+    // solo refrescar si estás mirando la pestaña Confirmadas
+    if (!viewConfirmed.classList.contains("hidden")) {
+      loadConfirmedSafe().catch(()=>{});
+    }
+  }, 60000);
+}
 
   // Keys
   const AUTH_KEY = "lc_admin_basic";             // Basic (admin user:pass) base64
@@ -718,6 +750,9 @@
     tabConfirmed.classList.toggle("bg-white/70", !isConfirmed);
 
     if (!isTransfers) stopCountdownTicker();
+
+    // Confirmadas: cortar refresh si no estás en esa tab
+    if (!isConfirmed) stopConfirmedAutoRefresh();
   }
 
   tabBlock.onclick = () => showTab("block");
@@ -737,8 +772,10 @@
     showTab("confirmed");
     try {
       setStatus("Cargando confirmadas...");
-      const c = await loadConfirmed();
+      const c = await loadConfirmedSafe();
       setStatus(`✅ Lista de confirmadas actualizada. Total: ${c}`);
+      // opcional: auto refresh
+      startConfirmedAutoRefresh();
     } catch (e) {
       setStatus(`❌ ${e.message}`);
     }
@@ -1530,10 +1567,20 @@
         showToast("Falta la clave de dueños", "err");
         openSecretModal();
       } else {
-        // Load pending/confirmed silently when entering app
-        loadPending().catch(()=>{});
-        loadConfirmed().catch(()=>{});
+      // ✅ Cargar datos SOLO 1 vez al entrar y solo la tab activa
+      if (!initialDataLoaded) {
+        initialDataLoaded = true;
+
+        // por defecto arrancás en "block", así que NO cargues nada acá.
+        // Si querés que al loguear te lleve a Transferencias automáticamente:
+        // showTab("transfers"); await loadPending();
+        // pero ahora lo dejamos quieto para que no dispare ejecuciones.
+
+        // Si preferís cargar pendientes una sola vez (sin spamear):
+        // showTab("transfers");
+        // loadPending().catch(()=>{});
       }
+    }
     } else {
       // show login
       btnAuth.classList.add("hidden");
@@ -1549,6 +1596,10 @@
   }
 
   btnAuth.onclick = () => {
+    stopCountdownTicker();
+    stopConfirmedAutoRefresh();
+    initialDataLoaded = false;
+
     clearAuth();
     refreshUI();
     showToast("Sesión cerrada", "ok");
