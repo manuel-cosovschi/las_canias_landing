@@ -520,7 +520,6 @@
   const toastInner = el("toastInner");
   let toastTimer = null;
   let initialDataLoaded = false;
-  let confirmedTimer = null;
   let confirmedInFlight = false;
 
   // ✅ FIX CRÍTICO: declarar el interval ANTES de showTab() (evita TDZ y rompe-login)
@@ -532,34 +531,21 @@
     countdownInterval = null;
   }
 
-  function stopConfirmedAutoRefresh(){
-  if (!confirmedTimer) return;
-  clearInterval(confirmedTimer);
-  confirmedTimer = null;
-}
+  async function loadConfirmedSafe({ force = true } = {}) {
+    // si ya hay request en vuelo, no dispares otra
+    if (confirmedInFlight) return confirmedRaw.length;
 
-async function loadConfirmedSafe(){
-  if (confirmedInFlight) return;
-  confirmedInFlight = true;
-  try {
-    return await loadConfirmed();
-  } finally {
-    confirmedInFlight = false;
-  }
-}
+    // si no estás en la pestaña, no tiene sentido pegar al endpoint
+    if (viewConfirmed.classList.contains("hidden")) return confirmedRaw.length;
 
-function startConfirmedAutoRefresh(){
-  stopConfirmedAutoRefresh();
-  // 1 vez al entrar
-  loadConfirmedSafe().catch(()=>{});
-  // si querés auto-refresh, mejor cada 60s
-  confirmedTimer = setInterval(() => {
-    // solo refrescar si estás mirando la pestaña Confirmadas
-    if (!viewConfirmed.classList.contains("hidden")) {
-      loadConfirmedSafe().catch(()=>{});
+    confirmedInFlight = true;
+    try {
+      const count = await loadConfirmed(); // pega 1 vez
+      return count;
+    } finally {
+      confirmedInFlight = false;
     }
-  }, 60000);
-}
+  }
 
   // Keys
   const AUTH_KEY = "lc_admin_basic";             // Basic (admin user:pass) base64
@@ -751,8 +737,7 @@ function startConfirmedAutoRefresh(){
 
     if (!isTransfers) stopCountdownTicker();
 
-    // Confirmadas: cortar refresh si no estás en esa tab
-    if (!isConfirmed) stopConfirmedAutoRefresh();
+   // no auto refresh en confirmadas
   }
 
   tabBlock.onclick = () => showTab("block");
@@ -773,9 +758,7 @@ function startConfirmedAutoRefresh(){
     try {
       setStatus("Cargando confirmadas...");
       const c = await loadConfirmedSafe();
-      setStatus(`✅ Lista de confirmadas actualizada. Total: ${c}`);
-      // opcional: auto refresh
-      startConfirmedAutoRefresh();
+      setStatus(`✅ Lista de confirmadas actualizada. Total: ${c}`);  
     } catch (e) {
       setStatus(`❌ ${e.message}`);
     }
@@ -1597,7 +1580,6 @@ function startConfirmedAutoRefresh(){
 
   btnAuth.onclick = () => {
     stopCountdownTicker();
-    stopConfirmedAutoRefresh();
     initialDataLoaded = false;
 
     clearAuth();
