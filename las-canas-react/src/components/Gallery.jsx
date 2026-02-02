@@ -161,7 +161,7 @@ export default function Gallery() {
       {/* ✅ Lightbox */}
       {open && current && (
         <div
-          className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
+          className="fixed inset-0 z-[9999] bg-brand-cream/95 backdrop-blur-md flex items-center justify-center p-3 sm:p-6"
           onMouseDown={(e) => {
             // click afuera cierra
             if (e.target === e.currentTarget) close();
@@ -170,18 +170,18 @@ export default function Gallery() {
           aria-modal="true"
           aria-label="Galería - ampliada"
         >
-          <div className="w-full max-w-5xl">
-            <div className="relative bg-black/40 rounded-3xl border border-white/10 overflow-hidden shadow-2xl">
+          <div className="w-full max-w-[95vw] sm:max-w-[92vw] xl:max-w-[1400px]">
+            <div className="relative bg-white/85 rounded-3xl border border-brand-beige/70 overflow-hidden shadow-2xl">
               {/* top bar */}
               <div className="flex items-center justify-between px-5 py-4">
-                <div className="text-white/80 text-xs font-black uppercase tracking-[0.22em]">
+                <div className="text-brand-brown/60 text-xs font-black uppercase tracking-[0.22em]">
                   {idx + 1} / {images.length}
                 </div>
 
                 <button
                   type="button"
                   onClick={close}
-                  className="text-white/80 hover:text-white transition-colors text-2xl leading-none px-3 py-1 rounded-lg"
+                  className="text-brand-brown/70 hover:text-brand-brown transition-colors text-2xl leading-none px-3 py-1 rounded-lg"
                   aria-label="Cerrar"
                 >
                   ✕
@@ -189,11 +189,14 @@ export default function Gallery() {
               </div>
 
               {/* media */}
-              <div className="relative w-full aspect-video bg-black">
+              <div
+                className="relative w-full bg-brand-cream"
+                style={{ height: "min(82vh, 760px)" }}
+              >
                 {isVideo(current.src) ? (
                   <video
                     src={current.src}
-                    className="w-full h-full object-contain select-none"
+                    className="w-full h-full object-contain select-none max-h-[82vh]"
                     controls
                     playsInline
                     preload="metadata"
@@ -202,7 +205,7 @@ export default function Gallery() {
                   <img
                     src={current.src}
                     alt={current.alt}
-                    className="w-full h-full object-contain select-none"
+                    className="w-full h-full object-contain select-none max-h-[82vh]"
                     draggable="false"
                   />
                 )}
@@ -211,7 +214,7 @@ export default function Gallery() {
                 <button
                   type="button"
                   onClick={prev}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/15 hover:bg-white/25 text-white rounded-full w-12 h-12 flex items-center justify-center transition-colors"
+                  className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-brand-brown rounded-full w-12 h-12 flex items-center justify-center transition-colors shadow-lg border border-brand-beige/70"
                   aria-label="Anterior"
                 >
                   ‹
@@ -220,16 +223,16 @@ export default function Gallery() {
                 <button
                   type="button"
                   onClick={next}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/15 hover:bg-white/25 text-white rounded-full w-12 h-12 flex items-center justify-center transition-colors"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-brand-brown rounded-full w-12 h-12 flex items-center justify-center transition-colors shadow-lg border border-brand-beige/70"
                   aria-label="Siguiente"
                 >
                   ›
                 </button>
 
                 {/* caption */}
-                <div className="absolute bottom-0 left-0 right-0 p-5 bg-gradient-to-t from-black/70 to-transparent">
-                  <div className="text-white font-medium">{current.alt}</div>
-                  <div className="text-white/60 text-xs mt-1">
+                <div className="absolute bottom-0 left-0 right-0 p-5 bg-gradient-to-t from-white/90 to-transparent">
+                  <div className="text-brand-brown font-medium">{current.alt}</div>
+                  <div className="text-brand-brown/60 text-xs mt-1">
                     Tip: flechas ← → para navegar · ESC para cerrar
                   </div>
                 </div>
@@ -243,8 +246,10 @@ export default function Gallery() {
                   key={i}
                   type="button"
                   onClick={() => setIdx(i)}
-                  className={`shrink-0 w-20 h-14 rounded-xl overflow-hidden border transition-all ${
-                    i === idx ? "border-white/80" : "border-white/20 hover:border-white/40"
+                  className={`shrink-0 w-24 h-16 rounded-xl overflow-hidden border transition-all bg-white ${
+                    i === idx
+                      ? "border-brand-brown/40 shadow-sm"
+                      : "border-brand-beige/60 hover:border-brand-brown/20"
                   }`}
                   aria-label={`Ir a: ${im.alt}`}
                 >
@@ -258,7 +263,7 @@ export default function Gallery() {
                         preload="metadata"
                       />
                       <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="bg-black/55 text-white text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-full">
+                        <div className="bg-brand-brown/60 text-white text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-full">
                           Video
                         </div>
                       </div>

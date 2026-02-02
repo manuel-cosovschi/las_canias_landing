@@ -575,7 +575,7 @@ export default function HousesSection() {
       {/* ✅ Lightbox por casa */}
       {lightboxOpen && activeHouse && images.length > 0 && (
         <div
-          className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
+          className="fixed inset-0 z-[9999] bg-brand-cream/95 backdrop-blur-md flex items-center justify-center p-3 sm:p-6"
           onMouseDown={(e) => {
             if (e.target === e.currentTarget) close();
           }}
@@ -583,15 +583,15 @@ export default function HousesSection() {
           aria-modal="true"
           aria-label={`Galería ${activeHouse.title}`}
         >
-          <div className="w-full max-w-5xl">
-            <div className="relative bg-black/40 rounded-3xl border border-white/10 overflow-hidden shadow-2xl">
+          <div className="w-full max-w-[95vw] sm:max-w-[92vw] xl:max-w-[1400px]">
+            <div className="relative bg-white/85 rounded-3xl border border-brand-beige/70 overflow-hidden shadow-2xl">
               {/* top bar */}
               <div className="flex items-center justify-between px-5 py-4">
                 <div className="flex items-center gap-4">
-                  <div className="text-white font-semibold serif italic">
+                  <div className="text-brand-brown font-semibold serif italic">
                     {activeHouse.title}
                   </div>
-                  <div className="text-white/70 text-xs font-black uppercase tracking-[0.22em]">
+                  <div className="text-brand-brown/60 text-xs font-black uppercase tracking-[0.22em]">
                     {idx + 1} / {images.length}
                   </div>
                 </div>
@@ -599,7 +599,7 @@ export default function HousesSection() {
                 <button
                   type="button"
                   onClick={close}
-                  className="text-white/80 hover:text-white transition-colors text-2xl leading-none px-3 py-1 rounded-lg"
+                  className="text-brand-brown/70 hover:text-brand-brown transition-colors text-2xl leading-none px-3 py-1 rounded-lg"
                   aria-label="Cerrar"
                 >
                   ✕
@@ -607,11 +607,14 @@ export default function HousesSection() {
               </div>
 
               {/* media */}
-              <div className="relative w-full aspect-video bg-black">
+              <div
+                className="relative w-full bg-brand-cream"
+                style={{ height: "min(82vh, 760px)" }}
+              >
                 {isVideo(current) ? (
                   <video
                     src={current}
-                    className="w-full h-full object-contain select-none"
+                    className="w-full h-full object-contain select-none max-h-[82vh]"
                     controls
                     playsInline
                     preload="metadata"
@@ -620,7 +623,7 @@ export default function HousesSection() {
                   <img
                     src={current}
                     alt={`${activeHouse.title} foto ${idx + 1}`}
-                    className="w-full h-full object-contain select-none"
+                    className="w-full h-full object-contain select-none max-h-[82vh]"
                     draggable="false"
                   />
                 )}
@@ -628,7 +631,7 @@ export default function HousesSection() {
                 <button
                   type="button"
                   onClick={prev}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/15 hover:bg-white/25 text-white rounded-full w-12 h-12 flex items-center justify-center transition-colors"
+                  className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-brand-brown rounded-full w-12 h-12 flex items-center justify-center transition-colors shadow-lg border border-brand-beige/70"
                   aria-label="Anterior"
                 >
                   ‹
@@ -637,14 +640,14 @@ export default function HousesSection() {
                 <button
                   type="button"
                   onClick={next}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/15 hover:bg-white/25 text-white rounded-full w-12 h-12 flex items-center justify-center transition-colors"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-brand-brown rounded-full w-12 h-12 flex items-center justify-center transition-colors shadow-lg border border-brand-beige/70"
                   aria-label="Siguiente"
                 >
                   ›
                 </button>
 
-                <div className="absolute bottom-0 left-0 right-0 p-5 bg-gradient-to-t from-black/70 to-transparent">
-                  <div className="text-white/60 text-xs">
+                <div className="absolute bottom-0 left-0 right-0 p-5 bg-gradient-to-t from-white/90 to-transparent">
+                  <div className="text-brand-brown/60 text-xs">
                     Tip: flechas ← → para navegar · ESC para cerrar
                   </div>
                 </div>
@@ -658,8 +661,10 @@ export default function HousesSection() {
                   key={i}
                   type="button"
                   onClick={() => setIdx(i)}
-                  className={`shrink-0 w-20 h-14 rounded-xl overflow-hidden border transition-all ${
-                    i === idx ? "border-white/80" : "border-white/20 hover:border-white/40"
+                  className={`shrink-0 w-24 h-16 rounded-xl overflow-hidden border transition-all bg-white ${
+                    i === idx
+                      ? "border-brand-brown/40 shadow-sm"
+                      : "border-brand-beige/60 hover:border-brand-brown/20"
                   }`}
                   aria-label={`Ir a item ${i + 1}`}
                 >
@@ -673,7 +678,7 @@ export default function HousesSection() {
                         preload="metadata"
                       />
                       <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="bg-black/55 text-white text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-full">
+                        <div className="bg-brand-brown/60 text-white text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-full">
                           Video
                         </div>
                       </div>
