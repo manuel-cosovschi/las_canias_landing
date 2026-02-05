@@ -42,6 +42,12 @@
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
   <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
 
+    <!-- FullCalendar (Calendario Admin) -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.15/index.global.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.15/index.global.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@6.1.15/index.global.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/interaction@6.1.15/index.global.min.js"></script>
+
   <style>
     html { scroll-behavior: smooth; scroll-padding-top: 5rem; }
     body { font-family: "Inter", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background: #F5F1E9; }
@@ -181,6 +187,10 @@
           <button id="tabConfirmed"
             class="px-4 py-2 rounded-full bg-white/70 border border-brand-beige font-semibold text-sm hover:bg-white transition">
             Confirmadas
+          </button>
+          <button id="tabCalendar"
+            class="px-4 py-2 rounded-full bg-white/70 border border-brand-beige font-semibold text-sm hover:bg-white transition">
+            Calendario
           </button>
         </div>
 
@@ -335,6 +345,31 @@
 
         <div id="confirmedList" class="space-y-3 text-sm"></div>
       </div>
+      <!-- CALENDARIO -->
+      <div id="viewCalendar" class="bg-white/75 rounded-2xl shadow-sm border border-brand-beige p-6 hidden">
+        <div class="flex items-start justify-between gap-3 mb-4">
+          <div>
+            <h2 class="serif text-xl sm:text-2xl font-bold">Calendario</h2>
+            <p class="text-xs text-brand-accent mt-1">
+              CONFIRMED / HOLD_TRANSFER / BLOCKED. Click en un evento para ver el detalle.
+            </p>
+          </div>
+
+          <div class="flex items-center gap-2 text-xs">
+            <span class="inline-flex items-center gap-2 px-3 py-2 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-900 font-semibold">
+              <span class="w-2 h-2 rounded-full" style="background:#059669"></span> Confirmed
+            </span>
+            <span class="inline-flex items-center gap-2 px-3 py-2 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 font-semibold">
+              <span class="w-2 h-2 rounded-full" style="background:#F59E0B"></span> Hold
+            </span>
+            <span class="inline-flex items-center gap-2 px-3 py-2 rounded-2xl bg-slate-50 border border-slate-200 text-slate-900 font-semibold">
+              <span class="w-2 h-2 rounded-full" style="background:#64748B"></span> Blocked
+            </span>
+          </div>
+        </div>
+
+        <div id="calendar" class="rounded-2xl border border-brand-beige bg-white p-2"></div>
+      </div>
     </section>
   </main>
 
@@ -437,6 +472,38 @@
     </div>
   </div>
 
+    <!-- CALENDAR DETAIL MODAL -->
+  <div id="calendarModal" class="fixed inset-0 hidden items-center justify-center bg-black/50 p-4 z-[1250]">
+    <div class="w-full max-w-xl rounded-2xl bg-white shadow-xl p-6 border border-brand-beige">
+      <div class="flex items-start justify-between gap-3 mb-2">
+        <div>
+          <h3 id="calTitle" class="text-lg font-bold serif">Detalle</h3>
+          <p id="calSubtitle" class="text-sm text-brand-accent">-</p>
+        </div>
+        <button id="btnCloseCalendarModal" class="text-brand-brown/60 hover:text-brand-brown">✕</button>
+      </div>
+
+      <div class="mt-4 bg-brand-cream border border-brand-beige rounded-2xl p-4 text-sm">
+        <div class="grid sm:grid-cols-2 gap-2">
+          <div><strong>Estado:</strong> <span id="cal_status">-</span></div>
+          <div><strong>Casa:</strong> <span id="cal_house">-</span></div>
+          <div class="sm:col-span-2"><strong>Fechas:</strong> <span id="cal_dates">-</span></div>
+          <div class="sm:col-span-2"><strong>ID:</strong> <span id="cal_id">-</span></div>
+          <div class="sm:col-span-2"><strong>Huésped:</strong> <span id="cal_guest">-</span></div>
+          <div class="sm:col-span-2"><strong>Contacto:</strong> <span id="cal_contact">-</span></div>
+          <div class="sm:col-span-2"><strong>Pago:</strong> <span id="cal_payment">-</span></div>
+          <div class="sm:col-span-2"><strong>Notas:</strong> <span id="cal_notes">-</span></div>
+        </div>
+      </div>
+
+      <div class="mt-6 flex justify-end">
+        <button id="btnCloseCalendarModal2"
+          class="py-3 px-4 rounded-2xl bg-white/70 border border-brand-beige font-semibold hover:bg-white transition">
+          Cerrar
+        </button>
+      </div>
+    </div>
+  </div>
   <!-- Toast -->
   <div id="toast" class="fixed bottom-5 left-1/2 -translate-x-1/2 hidden z-[1300]">
     <div id="toastInner" class="px-4 py-3 rounded-2xl shadow-xl border text-sm bg-white">
@@ -462,6 +529,8 @@
   const viewTransfers = el("viewTransfers");
   const tabConfirmed = el("tabConfirmed");
   const viewConfirmed = el("viewConfirmed");
+  const tabCalendar = el("tabCalendar");
+  const viewCalendar = el("viewCalendar");
 
   const confirmedList = el("confirmedList");
   const confirmedCount = el("confirmedCount");
@@ -563,6 +632,7 @@
   // NUEVO (confirmadas)
   const EP_LIST_CONFIRMED = "/.netlify/functions/list-confirmed";
   const EP_CANCEL_CONFIRMED = "/.netlify/functions/cancel-confirmed";
+  const EP_LIST_CALENDAR = "/.netlify/functions/list-calendar";
 
   function setStatus(msg) { statusBox.textContent = msg; }
 
@@ -717,10 +787,12 @@
     const isBlock = which === "block";
     const isTransfers = which === "transfers";
     const isConfirmed = which === "confirmed";
+    const isCalendar = which === "calendar";
 
     viewBlock.classList.toggle("hidden", !isBlock);
     viewTransfers.classList.toggle("hidden", !isTransfers);
     viewConfirmed.classList.toggle("hidden", !isConfirmed);
+    viewCalendar.classList.toggle("hidden", !isCalendar);
 
     // Refresh button solo para TRANSFERS (pendientes)
     btnRefresh.classList.toggle("hidden", !isTransfers);
@@ -734,6 +806,9 @@
 
     tabConfirmed.classList.toggle("bg-brand-beige/40", isConfirmed);
     tabConfirmed.classList.toggle("bg-white/70", !isConfirmed);
+
+    tabCalendar.classList.toggle("bg-brand-beige/40", isCalendar);
+    tabCalendar.classList.toggle("bg-white/70", !isCalendar);
 
     if (!isTransfers) stopCountdownTicker();
 
@@ -759,6 +834,18 @@
       setStatus("Cargando confirmadas...");
       const c = await loadConfirmedSafe();
       setStatus(`✅ Lista de confirmadas actualizada. Total: ${c}`);  
+    } catch (e) {
+      setStatus(`❌ ${e.message}`);
+    }
+  };
+
+  tabCalendar.onclick = async () => {
+    showTab("calendar");
+    try {
+      setStatus("Cargando calendario...");
+      await ensureCalendar();
+      await refreshCalendar();
+      setStatus("✅ Calendario actualizado.");
     } catch (e) {
       setStatus(`❌ ${e.message}`);
     }
@@ -893,6 +980,7 @@
       fpIn && fpIn.clear();
       fpOut && fpOut.clear();
       await loadAvailabilityAndUpdatePickers();
+      await refreshCalendarIfReady();
     } catch (e) {
       setStatus(`❌ ${e.message}`);
       showToast(e.message || "Error", "err");
@@ -1372,6 +1460,7 @@
         // confirm o cancel (pendientes/hold)
         await loadPending();
       }
+      await refreshCalendarIfReady();
     } catch (e) {
       showActionError(e.message || "Error");
       showToast(e.message || "Error", "err");
@@ -1596,6 +1685,131 @@
 
   // ✅ liberar interval si cambias de pestaña/navegas
   window.addEventListener("beforeunload", stopCountdownTicker);
+
+    // =====================
+  // CALENDARIO (FullCalendar)
+  // =====================
+  let cal = null;
+  let calInited = false;
+
+  // Modal refs
+  const calendarModal = el("calendarModal");
+  const btnCloseCalendarModal = el("btnCloseCalendarModal");
+  const btnCloseCalendarModal2 = el("btnCloseCalendarModal2");
+
+  const calTitle = el("calTitle");
+  const calSubtitle = el("calSubtitle");
+  const cal_status = el("cal_status");
+  const cal_house = el("cal_house");
+  const cal_dates = el("cal_dates");
+  const cal_id = el("cal_id");
+  const cal_guest = el("cal_guest");
+  const cal_contact = el("cal_contact");
+  const cal_payment = el("cal_payment");
+  const cal_notes = el("cal_notes");
+
+  function openCalendarModal() {
+    calendarModal.classList.remove("hidden");
+    calendarModal.classList.add("flex");
+  }
+  function closeCalendarModal() {
+    calendarModal.classList.add("hidden");
+    calendarModal.classList.remove("flex");
+  }
+
+  btnCloseCalendarModal.onclick = closeCalendarModal;
+  btnCloseCalendarModal2.onclick = closeCalendarModal;
+  calendarModal.addEventListener("click", (e) => { if (e.target === calendarModal) closeCalendarModal(); });
+
+  function fmtDates(startISO, endISO) {
+    // FullCalendar end es exclusive: mostramos (start → end)
+    return `${startISO} → ${endISO}`;
+  }
+
+  function fillCalendarModal(ev) {
+    const p = ev?.extendedProps || {};
+    const row = p.row || {};
+    const status = (p.status || row.status || "-");
+    const house = (p.house_code || row.house_code || "-");
+    const start = String(ev.startStr || "").slice(0, 10);
+    const end = String(ev.endStr || "").slice(0, 10);
+
+    calTitle.textContent = "Detalle de ocupación";
+    calSubtitle.textContent = "Click en evento del calendario";
+
+    cal_status.textContent = status;
+    cal_house.textContent = house;
+    cal_dates.textContent = fmtDates(start, end);
+    cal_id.textContent = row.id || ev.id || "-";
+
+    if (String(status).toUpperCase() === "BLOCKED") {
+      cal_guest.textContent = "-";
+      cal_contact.textContent = "-";
+      cal_payment.textContent = "-";
+      cal_notes.textContent = row.notes || "BLOCKED (sin datos de huésped)";
+      return;
+    }
+
+    // CONFIRMED / HOLD_TRANSFER: mostramos toda la info posible
+    cal_guest.textContent = row.guest_name ? `${row.guest_name} (DNI: ${row.dni || "-"})` : "-";
+    cal_contact.textContent = [
+      row.phone ? `Tel: ${row.phone}` : null,
+      row.email ? `Email: ${row.email}` : null,
+    ].filter(Boolean).join(" · ") || "-";
+
+    cal_payment.textContent = [
+      row.payment_method ? `Método: ${row.payment_method}` : null,
+      row.payment_ref ? `Ref: ${row.payment_ref}` : null,
+    ].filter(Boolean).join(" · ") || "-";
+
+    cal_notes.textContent = row.notes || "-";
+  }
+
+  async function ensureCalendar() {
+    if (calInited) return;
+
+    const mount = el("calendar");
+    if (!mount) throw new Error("No se encontró el contenedor del calendario.");
+
+    cal = new FullCalendar.Calendar(mount, {
+      plugins: [FullCalendarDayGrid, FullCalendarInteraction],
+      initialView: "dayGridMonth",
+      height: "auto",
+      locale: "es",
+      firstDay: 1,
+      fixedWeekCount: false,
+      headerToolbar: {
+        left: "prev,next today",
+        center: "title",
+        right: "",
+      },
+      eventDisplay: "block",
+      eventClick: (info) => {
+        info.jsEvent.preventDefault();
+        fillCalendarModal(info.event);
+        openCalendarModal();
+      },
+    });
+
+    cal.render();
+    calInited = true;
+  }
+
+  async function refreshCalendar() {
+    if (!calInited || !cal) return;
+
+    const out = await apiFetch(EP_LIST_CALENDAR, { method: "GET", body: null });
+    const events = out.events || [];
+
+    cal.removeAllEvents();
+    cal.addEventSource(events);
+  }
+
+  async function refreshCalendarIfReady() {
+    // Llamalo después de confirm/cancel/block
+    if (!calInited || !cal) return;
+    await refreshCalendar();
+  }
 
   // init
   loadRememberedUser();
