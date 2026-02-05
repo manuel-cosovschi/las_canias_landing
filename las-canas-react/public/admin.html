@@ -44,6 +44,7 @@
 
     <!-- FullCalendar (Calendario Admin) -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.15/index.global.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@6.1.15/index.global.min.css">
   <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.15/index.global.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@6.1.15/index.global.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/interaction@6.1.15/index.global.min.js"></script>
@@ -1772,7 +1773,7 @@
     if (!mount) throw new Error("No se encontró el contenedor del calendario.");
 
     cal = new FullCalendar.Calendar(mount, {
-      plugins: [FullCalendarDayGrid, FullCalendarInteraction],
+      plugins: [FullCalendar.dayGridPlugin, FullCalendar.interactionPlugin],
       initialView: "dayGridMonth",
       height: "auto",
       locale: "es",
