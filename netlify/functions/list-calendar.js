@@ -34,16 +34,20 @@ function verifyAdminAuth(headers) {
   const parsed = decodeBasic(a);
   if (!parsed) return false;
 
-  // Opción 1: comparar el base64 directo (recomendado si ya lo usás así)
-  const ENV_BASIC = process.env.LC_ADMIN_BASIC; // base64 de "user:pass"
+  // 1) comparar token base64 directo (si lo usás)
+  const ENV_BASIC =
+    process.env.LC_ADMIN_BASIC ||
+    process.env.ADMIN_BASIC ||
+    process.env.ADMIN_AUTH_BASIC;
+
   if (ENV_BASIC) return parsed.token === ENV_BASIC;
 
-  // Opción 2: comparar user/pass
-  const ENV_USER = process.env.LC_ADMIN_USER;
-  const ENV_PASS = process.env.LC_ADMIN_PASS;
+  // 2) comparar user/pass (tu caso actual en Netlify)
+  const ENV_USER = process.env.LC_ADMIN_USER || process.env.ADMIN_USER;
+  const ENV_PASS = process.env.LC_ADMIN_PASS || process.env.ADMIN_PASS;
+
   if (ENV_USER && ENV_PASS) return parsed.user === ENV_USER && parsed.pass === ENV_PASS;
 
-  // Si no hay envs, por seguridad NEGAMOS
   return false;
 }
 
@@ -79,18 +83,13 @@ function asISODate(v) {
 }
 
 function normalizeRow(obj) {
-  // Headers esperados (según tu Excel/SHEET):
-  // id, created_at, status, source, house_code, check_in, check_out,
-  // guest_name, dni, email, phone, guests, payment_method, payment_ref, notes,
-  // approved_at, cancelled_at, status_reason, status_updated_at, guest_notified_at, guest_notified_status,
-  // owner_1h_notified, reminder_1h_sent_at, expired_at, updated_at
   const row = { ...obj };
 
-  row.id = row.id || row.ID || row.Id;
-  row.status = row.status || row.STATUS;
-  row.house_code = row.house_code || row.house || row.casa;
-  row.check_in = row.check_in || row.checkin;
-  row.check_out = row.check_out || row.checkout;
+  row.id = (row.id || row.ID || row.Id || "").toString().trim();
+  row.status = (row.status || row.STATUS || "").toString().trim();
+  row.house_code = (row.house_code || row.house || row.casa || "").toString().trim();
+  row.check_in = (row.check_in || row.checkin || "").toString().trim();
+  row.check_out = (row.check_out || row.checkout || "").toString().trim();
 
   return row;
 }
@@ -165,9 +164,10 @@ exports.handler = async (event) => {
 
     // Solo los estados que querés ver sí o sí en calendario
     const allowed = new Set(["CONFIRMED", "HOLD_TRANSFER", "BLOCKED"]);
+
     const filtered = rows.filter(r => {
-        const st = String(r.status || "").trim().toUpperCase();
-        return allowed.has(st);
+    const st = String(r.status || "").trim().toUpperCase();
+    return allowed.has(st);
     });
 
     const events = filtered

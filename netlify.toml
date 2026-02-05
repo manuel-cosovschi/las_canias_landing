@@ -1,5 +1,5 @@
 [build]
-  command = "npm ci && cd las-canas-react && npm ci && npm run build"
+  command = "cd las-canas-react && npm ci && npm run build"
   publish = "las-canas-react/dist"
 
 [functions]
