@@ -42,12 +42,9 @@
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
   <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
 
-    <!-- FullCalendar (Calendario Admin) -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.15/index.global.min.css">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@6.1.15/index.global.min.css">
-  <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.15/index.global.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/daygrid@6.1.15/index.global.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/interaction@6.1.15/index.global.min.js"></script>
+    <!-- FullCalendar (Calendario Admin) - Global bundle único -->
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.css">
+      <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
 
   <style>
     html { scroll-behavior: smooth; scroll-padding-top: 5rem; }
@@ -1773,7 +1770,6 @@
     if (!mount) throw new Error("No se encontró el contenedor del calendario.");
 
     cal = new FullCalendar.Calendar(mount, {
-      plugins: [FullCalendar.dayGridPlugin, FullCalendar.interactionPlugin],
       initialView: "dayGridMonth",
       height: "auto",
       locale: "es",
