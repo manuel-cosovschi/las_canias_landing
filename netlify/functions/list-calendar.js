@@ -165,15 +165,19 @@ exports.handler = async (event) => {
 
     // Solo los estados que querés ver sí o sí en calendario
     const allowed = new Set(["CONFIRMED", "HOLD_TRANSFER", "BLOCKED"]);
-    const filtered = rows.filter(r => allowed.has(String(r.status || "").toUpperCase()));
+    const filtered = rows.filter(r => {
+        const st = String(r.status || "").trim().toUpperCase();
+        return allowed.has(st);
+    });
 
     const events = filtered
       .map(r => {
-        const start = asISODate(r.check_in);
-        const end = asISODate(r.check_out);
-        if (!start || !end || !r.house_code) return null;
+        const start = asISODate(String(r.check_in || "").trim());
+        const end   = asISODate(String(r.check_out || "").trim());
+        const house = String(r.house_code || "").trim();
+        if (!start || !end || !house) return null;
 
-        const status = String(r.status || "").toUpperCase();
+        const status = String(r.status || "").trim().toUpperCase();
         const color = eventColorByStatus(status);
 
         // title corto; el detalle completo va en extendedProps
@@ -193,7 +197,7 @@ exports.handler = async (event) => {
           textColor: "#0B0F14",
           extendedProps: {
             status,
-            house_code: r.house_code,
+            house_code: house,
             row: r, // TODA la fila para mostrar en modal
           },
         };
