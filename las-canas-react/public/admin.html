@@ -262,6 +262,15 @@
           Bloquear fechas
         </button>
 
+        <button id="btnUnblock"
+          class="mt-3 w-full py-3 rounded-2xl bg-white/70 border border-brand-beige font-semibold hover:bg-white transition disabled:opacity-50 disabled:cursor-not-allowed">
+          Desbloquear fechas
+        </button>
+
+        <p class="mt-3 text-xs text-brand-accent">
+          Tip: “Desbloquear” elimina bloqueos manuales (BLOCKED) que solapen ese rango para esa casa.
+        </p>
+
         <p class="mt-3 text-xs text-brand-accent">
           Tip: Check-out debe ser posterior al check-in.
         </p>
@@ -601,7 +610,20 @@
     clearInterval(countdownInterval);
     countdownInterval = null;
   }
+  // =====================
+  // COLORS POR CASA (para calendario)
+  // =====================
+  const HOUSE_COLORS = {
+    LC1: "#1D4ED8", // azul fuerte
+    LC2: "#7C3AED", // violeta
+    LC3: "#DC2626", // rojo
+    LC4: "#16A34A", // verde
+    LC5: "#EA580C", // naranja
+  };
 
+  function houseColor(code){
+    return HOUSE_COLORS[String(code || "").toUpperCase()] || "#0B0F14";
+  }
   async function loadConfirmedSafe({ force = true } = {}) {
     // si ya hay request en vuelo, no dispares otra
     if (confirmedInFlight) return confirmedRaw.length;
@@ -635,6 +657,7 @@
   const EP_LIST_CONFIRMED = "/.netlify/functions/list-confirmed";
   const EP_CANCEL_CONFIRMED = "/.netlify/functions/cancel-confirmed";
   const EP_LIST_CALENDAR = "/.netlify/functions/list-calendar";
+  const EP_OWNER_UNBLOCKS = "/.netlify/functions/owner-unblocks";
 
   function setStatus(msg) { statusBox.textContent = msg; }
 
@@ -952,8 +975,10 @@
     await loadAvailabilityAndUpdatePickers();
   });
 
+  
   // BLOQUEAR
   const btnBlock = el("btnBlock");
+  const btnUnblock = el("btnUnblock");
   btnBlock.onclick = async () => {
     try {
       const inD = parseDMY(el("checkin").value);
@@ -990,6 +1015,46 @@
       btnBlock.disabled = false;
     }
   };
+
+  btnUnblock.onclick = async () => {
+    try {
+      const inD = parseDMY(el("checkin").value);
+      const outD = parseDMY(el("checkout").value);
+
+      if (!inD || !outD) return setStatus("Elegí check-in y check-out.");
+      if (outD <= inD) return setStatus("Check-out debe ser posterior al check-in.");
+
+      btnUnblock.disabled = true;
+      setStatus("Desbloqueando...");
+
+      const out = await apiFetch(EP_OWNER_UNBLOCKS, {
+        method: "POST",
+        body: {
+          house_code: el("house").value,
+          checkin: toISO(inD),
+          checkout: toISO(outD),
+          note: el("note").value || "",
+        }
+      });
+
+      setStatus(`✅ Desbloqueo OK. Filas eliminadas: ${out.deleted_count ?? "-"}`);
+      showToast(`Desbloqueado ✅ (${out.deleted_count ?? 0})`, "ok");
+
+      el("note").value = "";
+      fpIn && fpIn.clear();
+      fpOut && fpOut.clear();
+
+      await loadAvailabilityAndUpdatePickers();
+      await refreshCalendarIfReady();
+    } catch (e) {
+      setStatus(`❌ ${e.message}`);
+      showToast(e.message || "Error", "err");
+    } finally {
+      btnUnblock.disabled = false;
+    }
+  };
+
+
 
   // TRANSFERENCIAS
   let pendingRaw = [];
@@ -1785,6 +1850,39 @@
         right: "",
       },
       eventDisplay: "block",
+
+      eventContent: (arg) => {
+        const ev = arg.event;
+        const p = ev.extendedProps || {};
+        const house = p.house_code || "";
+        const stripe = houseColor(house);
+
+        const wrap = document.createElement("div");
+        wrap.style.display = "flex";
+        wrap.style.alignItems = "center";
+        wrap.style.gap = "6px";
+        wrap.style.padding = "2px 4px";
+        wrap.style.borderRadius = "6px";
+
+        const dot = document.createElement("span");
+        dot.style.width = "10px";
+        dot.style.height = "10px";
+        dot.style.borderRadius = "999px";
+        dot.style.background = stripe;
+        dot.style.border = "2px solid rgba(255,255,255,0.65)";
+
+        const txt = document.createElement("span");
+        txt.textContent = ev.title || "";
+        txt.style.fontSize = "12px";
+        txt.style.fontWeight = "700";
+        txt.style.lineHeight = "1.1";
+
+        wrap.appendChild(dot);
+        wrap.appendChild(txt);
+
+        return { domNodes: [wrap] };
+      },
+
       eventClick: (info) => {
         info.jsEvent.preventDefault();
         fillCalendarModal(info.event);
