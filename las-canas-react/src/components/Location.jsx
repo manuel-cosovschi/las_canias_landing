@@ -1,6 +1,6 @@
 export default function Location() {
   // 📍 Link externo (lo que te abre perfecto en Google Maps)
-  const googleMapsLink = "https://maps.app.goo.gl/Y4pXNaTYMhq2seEV9?g_st=ic";
+  const googleMapsLink = "https://maps.app.goo.gl/NE1Ni4AthYiVn9tk8?g_st=ic";
 
   // ✅ Embed por coordenadas exactas (pin correcto)
   const mapEmbed =
