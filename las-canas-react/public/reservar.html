@@ -807,111 +807,113 @@
   }
 
   function refreshPickers(){
-    const canUseDates = !!house.value && !!guests.value && availabilityLoaded;
+  const canUseDates = !!house.value && !!guests.value && availabilityLoaded;
 
-    checkin.disabled = !canUseDates;
-    checkout.disabled = !canUseDates;
+  checkin.disabled = !canUseDates;
+  checkout.disabled = !canUseDates;
 
-    checkin.classList.toggle("bg-brand-beige/25", !canUseDates);
-    checkout.classList.toggle("bg-brand-beige/25", !canUseDates);
+  checkin.classList.toggle("bg-brand-beige/25", !canUseDates);
+  checkout.classList.toggle("bg-brand-beige/25", !canUseDates);
 
-    if (fpCheckin) fpCheckin.destroy();
-    if (fpCheckout) fpCheckout.destroy();
+  if (fpCheckin) fpCheckin.destroy();
+  if (fpCheckout) fpCheckout.destroy();
 
-    fpCheckin = flatpickr(checkin, {
-      locale: "es",
-      dateFormat: "Y-m-d",
-      altInput: true,
-      altFormat: "d/m/Y",
-      disableMobile: true,
-      allowInput: false,
-      clickOpens: canUseDates,
-      minDate: "today",
-      disable: [ (date) => isDateBlockedForCheckin(date) ],
-      onChange: function(selectedDates){
-        if (fpCheckout) fpCheckout.clear();
-        updateMinBanner();
+  fpCheckin = flatpickr(checkin, {
+    locale: "es",
+    dateFormat: "Y-m-d",
+    altInput: true,
+    altFormat: "d/m/Y",
+    disableMobile: true,
+    allowInput: false,
+    clickOpens: canUseDates,
+    minDate: "today",
+    disable: [ (date) => isDateBlockedForCheckin(date) ],
+    onChange: function(selectedDates){
+      if (fpCheckout) fpCheckout.clear();
+      updateMinBanner();
+      updateContinueState();
+      updatePriceUI();
+
+      if (!selectedDates?.length){
+        checkout.value = "";
         updateContinueState();
         updatePriceUI();
-
-        if (!selectedDates?.length){
-          checkout.value = "";
-          updateContinueState();
-          updatePriceUI();
-          return;
-        }
-
-        const ci = selectedDates[0];
-        const ci0 = new Date(ci.getFullYear(), ci.getMonth(), ci.getDate());
-        const ciYmd = fmtYMD(ci0);
-
-        const rule = getMinRule(ciYmd, "");
-
-        if (fpCheckout) fpCheckout.destroy();
-
-        if (rule.type === "fixed"){
-          fpCheckout = flatpickr(checkout, {
-            locale: "es",
-            dateFormat: "Y-m-d",
-            altInput: true,
-            altFormat: "d/m/Y",
-            disableMobile: true,
-            allowInput: false,
-            clickOpens: canUseDates,
-            minDate: rule.fixed.checkout,
-            maxDate: rule.fixed.checkout,
-            disable: [ (date) => isCheckoutDisabled(date) ],
-            onChange: function(){
-              updateMinBanner();
-              updateContinueState();
-              updatePriceUI();
-            }
-          });
-
-          setStatus(`3) Estas fechas son fijas: check-out debe ser ${rule.fixed.checkout}.`);
-        } else {
-          const minCo = addDays(ci0, rule.min);
-
-          fpCheckout = flatpickr(checkout, {
-            locale: "es",
-            dateFormat: "Y-m-d",
-            disableMobile: true,
-            allowInput: false,
-            clickOpens: canUseDates,
-            minDate: fmtYMD(minCo),
-            disable: [ (date) => isCheckoutDisabled(date) ],
-            onChange: function(){
-              updateMinBanner();
-              updateContinueState();
-              updatePriceUI();
-            }
-          });
-
-          setStatus(`3) Elegí el check-out (mínimo ${rule.min} noches).`);
-        }
-
-        updateMinBanner();
-        updateContinueState();
-        updatePriceUI();
+        return;
       }
-    });
 
-    fpCheckout = flatpickr(checkout, {
-      locale: "es",
-      dateFormat: "Y-m-d",
-      altInput: true,
-      altFormat: "d/m/Y",
-      disableMobile: true,
-      allowInput: false,
-      clickOpens: canUseDates,
-      disable: [ (date) => isCheckoutDisabled(date) ],
-      onChange: function(){
-        updateMinBanner();
-        updateContinueState();
-        updatePriceUI();
+      const ci = selectedDates[0];
+      const ci0 = new Date(ci.getFullYear(), ci.getMonth(), ci.getDate());
+      const ciYmd = fmtYMD(ci0);
+
+      const rule = getMinRule(ciYmd, "");
+
+      if (fpCheckout) fpCheckout.destroy();
+
+      if (rule.type === "fixed"){
+        fpCheckout = flatpickr(checkout, {
+          locale: "es",
+          dateFormat: "Y-m-d",
+          altInput: true,
+          altFormat: "d/m/Y",
+          disableMobile: true,
+          allowInput: false,
+          clickOpens: canUseDates,
+          minDate: rule.fixed.checkout,
+          maxDate: rule.fixed.checkout,
+          disable: [ (date) => isCheckoutDisabled(date) ],
+          onChange: function(){
+            updateMinBanner();
+            updateContinueState();
+            updatePriceUI();
+          }
+        });
+
+        setStatus(`3) Estas fechas son fijas: check-out debe ser ${rule.fixed.checkout}.`);
+      } else {
+        const minCo = addDays(ci0, rule.min);
+
+        fpCheckout = flatpickr(checkout, {
+          locale: "es",
+          dateFormat: "Y-m-d",
+          altInput: true,
+          altFormat: "d/m/Y",
+          disableMobile: true,
+          allowInput: false,
+          clickOpens: canUseDates,
+          minDate: fmtYMD(minCo),
+          disable: [ (date) => isCheckoutDisabled(date) ],
+          onChange: function(){
+            updateMinBanner();
+            updateContinueState();
+            updatePriceUI();
+          }
+        });
+
+        setStatus(`3) Elegí el check-out (mínimo ${rule.min} noches).`);
       }
-    });
-  }
+
+      updateMinBanner();
+      updateContinueState();
+      updatePriceUI();
+    }
+  });
+
+  fpCheckout = flatpickr(checkout, {
+    locale: "es",
+    dateFormat: "Y-m-d",
+    altInput: true,
+    altFormat: "d/m/Y",
+    disableMobile: true,
+    allowInput: false,
+    clickOpens: canUseDates,
+    disable: [ (date) => isCheckoutDisabled(date) ],
+    onChange: function(){
+      updateMinBanner();
+      updateContinueState();
+      updatePriceUI();
+    }
+  });
+}
 
   function resetAfterHouseChange(){
     guests.value = "";
