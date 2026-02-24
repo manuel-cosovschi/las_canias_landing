@@ -409,6 +409,7 @@
   const AVAILABILITY_API = "/api/availability";
   const CREATE_RESERVATION_API = "/api/create-reservation";
   const SUBMIT_PROOF_API = "/api/submit-proof";
+  const PUBLIC_PRICES_API = "/.netlify/functions/public-prices";
 
   // Disponibilidad por casa:
   // - Todas desde 01/03
@@ -550,11 +551,40 @@
   // =========================================================
   // PRECIOS por noche por casa por mes (Mar/Abr/May)
   // =========================================================
-  const PRICES_BY_MONTH = {
-        "2026-03": { LC1:110000, LC2:110000, LC3:120000, LC4:110000, LC5:100000 },
-    "2026-04": { LC1:110000, LC2:110000, LC3:120000, LC4:110000, LC5:100000 },
-    "2026-05": { LC1:110000, LC2:110000, LC3:120000, LC4:110000, LC5:100000 },
-  };
+  let LIVE_PRICES = null; // { LC1: 110000, LC2: ... }
+
+async function loadPublicPrices(){
+  try {
+    const res = await fetch(PUBLIC_PRICES_API, { method: "GET" });
+    const data = await res.json().catch(()=> ({}));
+    if (!res.ok || data.ok === false) throw new Error(data.message || "No se pudieron cargar tarifas");
+
+    // data.prices puede venir como strings -> normalizamos a Number
+    const p = data.prices || {};
+    LIVE_PRICES = {
+      LC1: Number(p.LC1),
+      LC2: Number(p.LC2),
+      LC3: Number(p.LC3),
+      LC4: Number(p.LC4),
+      LC5: Number(p.LC5),
+    };
+
+    // si faltan valores, lo consideramos inválido
+    for (const k of ["LC1","LC2","LC3","LC4","LC5"]){
+      if (!Number.isFinite(LIVE_PRICES[k])) {
+        throw new Error(`Tarifa inválida para ${k}`);
+      }
+    }
+
+    // refrescar UI por si ya había fechas cargadas
+    updatePriceUI();
+    return true;
+  } catch (e) {
+    console.error("loadPublicPrices:", e);
+    LIVE_PRICES = null;
+    return false;
+  }
+}
 
   function fmtARS(n){
     return "$ " + Number(n || 0).toLocaleString("es-AR");
@@ -565,9 +595,9 @@
     return `${y}-${m}`;
   }
   function getNightPrice(date, houseCode){
-    const key = ymKey(date);
-    return PRICES_BY_MONTH[key]?.[houseCode] ?? null;
-  }
+  // tarifa “por noche” única (la que setea el admin)
+  return LIVE_PRICES?.[houseCode] ?? null;
+}
 
   function calcStayTotal(ciYmd, coYmd, houseCode){
     if (!ciYmd || !coYmd || !houseCode) return null;
@@ -1485,10 +1515,18 @@
   });
 
   // init
-  refreshPickers();
-  updateMinBanner();
-  updateContinueState();
-  updatePriceUI();
+    refreshPickers();
+    updateMinBanner();
+    updateContinueState();
+
+    // cargar precios del backend y luego pintar UI
+    loadPublicPrices().then((ok)=>{
+      if (!ok) {
+        // opcional: avisar arriba
+        setStatus("⚠️ No se pudieron cargar las tarifas. Intentá recargar la página.");
+      }
+      updatePriceUI();
+    });
 </script>
 
 </body>
