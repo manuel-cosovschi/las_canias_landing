@@ -1248,6 +1248,7 @@ async function loadPublicPrices(){
     await loadAvailability(h);
     updateMinBanner();
     updateContinueState();
+    await loadPublicPrices();
     updatePriceUI();
   });
 
