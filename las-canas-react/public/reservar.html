@@ -422,9 +422,9 @@
     LC5: "2026-03-07",
   };
 
-  // Reglas de mínimos 2026:
-  // - Hasta el 04 de abril: 7 noches mínimo.
-  const MIN7_UNTIL = "2026-04-04";
+// Reglas de mínimos
+// Desde ahora el mínimo general es 2 noches
+const MIN7_UNTIL = null;
 
   // Fechas fijas / findes que “se reserva así” (exacto)
   const FIXED_WINDOWS = [
@@ -723,8 +723,8 @@ async function loadPublicPrices(){
       return { type:"fixed", min: nights, fixed, label: `Fechas fijas: ${fixed.checkin} → ${fixed.checkout} (${nights} noches)` };
     }
 
-    if (ymdLE(ciYmd, MIN7_UNTIL)){
-      return { type:"min7", min: MIN_NIGHTS_STRICT, label: `${MIN_NIGHTS_STRICT} noches mínimo (hasta ${MIN7_UNTIL})` };
+    if (MIN7_UNTIL && ymdLE(ciYmd, MIN7_UNTIL)){
+      return { type:"min7", min: MIN_NIGHTS_STRICT, label: `${MIN_NIGHTS_STRICT} noches mínimo` };
     }
 
     return { type:"min2", min: DEFAULT_MIN_NIGHTS, label: `${DEFAULT_MIN_NIGHTS} noches mínimo` };
