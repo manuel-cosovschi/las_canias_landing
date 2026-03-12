@@ -531,7 +531,10 @@ const MIN7_UNTIL = null;
     out.setDate(out.getDate() + days);
     return out;
   }
-  function ymdLE(a, b){ return parseYMD(a).getTime() <= parseYMD(b).getTime(); }
+  function ymdLE(a, b){
+    if (!a || !b) return false;
+      return parseYMD(a).getTime() <= parseYMD(b).getTime();
+  }
 
   function overlapsStay(ci, co, start, endExclusive){
     return ci < endExclusive && co > start;
