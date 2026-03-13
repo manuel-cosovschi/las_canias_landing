@@ -440,7 +440,9 @@ const MIN7_UNTIL = null;
   ];
 
   const DEFAULT_MIN_NIGHTS = 2;
-  const MIN_NIGHTS_STRICT = 7;
+  const EASTER_MIN_NIGHTS = 4;
+  const EASTER_START = "2026-04-01";
+  const EASTER_END = "2026-04-05"; // inclusive
 
   const HOUSE_RULES = {
     LC1:{max:4,hint:"Máximo 4 personas, ideal 2 adultos y 2 niños, ideal familiar."},
@@ -699,7 +701,10 @@ async function loadPublicPrices(){
     }
     return null;
   }
-
+  function ymdToDMY(ymd){
+    const [y,m,d] = String(ymd).split("-");
+    return `${d}/${m}/${y}`;
+  }
   function getMinRule(ciYmd, coYmd){
     if (!ciYmd) return { type:"none", min: null, label:"-" };
 
@@ -726,11 +731,31 @@ async function loadPublicPrices(){
       return { type:"fixed", min: nights, fixed, label: `Fechas fijas: ${fixed.checkin} → ${fixed.checkout} (${nights} noches)` };
     }
 
-    if (MIN7_UNTIL && ymdLE(ciYmd, MIN7_UNTIL)){
-      return { type:"min7", min: MIN_NIGHTS_STRICT, label: `${MIN_NIGHTS_STRICT} noches mínimo` };
-    }
+    const easterStart = parseYMD(EASTER_START);
+      const easterEndExclusive = addDays(parseYMD(EASTER_END), 1);
 
-    return { type:"min2", min: DEFAULT_MIN_NIGHTS, label: `${DEFAULT_MIN_NIGHTS} noches mínimo` };
+      const ci = parseYMD(ciYmd);
+      const co = coYmd ? parseYMD(coYmd) : null;
+
+      // si ya eligió check-in y check-out, aplicamos la regla si la estadía toca Semana Santa
+      if (co && overlapsStay(ci, co, easterStart, easterEndExclusive)) {
+        return {
+          type: "easter",
+          min: EASTER_MIN_NIGHTS,
+          label: `${EASTER_MIN_NIGHTS} noches mínimo por Semana Santa (${ymdToDMY(EASTER_START)} → ${ymdToDMY(EASTER_END)})`
+        };
+      }
+
+      // si todavía solo eligió check-in, también aplicamos la regla si el check-in cae dentro de Semana Santa
+      if (ci >= easterStart && ci < easterEndExclusive) {
+        return {
+          type: "easter",
+          min: EASTER_MIN_NIGHTS,
+          label: `${EASTER_MIN_NIGHTS} noches mínimo por Semana Santa (${ymdToDMY(EASTER_START)} → ${ymdToDMY(EASTER_END)})`
+        };
+      }
+
+      return { type:"min2", min: DEFAULT_MIN_NIGHTS, label: `${DEFAULT_MIN_NIGHTS} noches mínimo` };
   }
 
   function updateMinBanner(){
