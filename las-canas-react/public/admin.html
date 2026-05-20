@@ -198,6 +198,10 @@
             class="px-4 py-2 rounded-full bg-white/70 border border-brand-beige font-semibold text-sm hover:bg-white transition">
             Precios
           </button>
+          <button id="tabReservas"
+            class="px-4 py-2 rounded-full bg-white/70 border border-brand-beige font-semibold text-sm hover:bg-white transition">
+            Reservas
+          </button>
         </div>
 
         <!-- Actions -->
@@ -429,6 +433,32 @@
           Estos precios impactan el cálculo estimado en reservar.html.
         </p>
       </div>
+
+      <!-- RESERVAS (meses habilitados) -->
+      <div id="viewReservas" class="bg-white/75 rounded-2xl shadow-sm border border-brand-beige p-6 hidden">
+        <div class="flex items-start justify-between gap-4 mb-4">
+          <div>
+            <h2 class="serif text-xl sm:text-2xl font-bold">Meses habilitados</h2>
+            <p class="text-xs text-brand-accent mt-1">Activá o desactivá cada mes para reservas online. Los meses desactivados no se podrán reservar desde la web.</p>
+          </div>
+          <span class="text-xs font-semibold px-3 py-1 rounded-full bg-brand-beige/50 border border-brand-beige/80">
+            Ventana
+          </span>
+        </div>
+
+        <div id="monthsGrid" class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          <!-- generado por JS -->
+        </div>
+
+        <button id="btnSaveBookingWindow"
+          class="mt-5 w-full py-3 rounded-2xl bg-brand-brown text-brand-cream font-semibold hover:opacity-90 transition">
+          Guardar meses
+        </button>
+
+        <p class="mt-3 text-xs text-brand-accent">
+          Estos cambios impactan qué fechas se pueden seleccionar en reservar.html.
+        </p>
+      </div>
     </section>
   </main>
 
@@ -592,6 +622,8 @@
   const viewCalendar = el("viewCalendar");
   const tabPrices = el("tabPrices");
   const viewPrices = el("viewPrices");
+  const tabReservas = el("tabReservas");
+  const viewReservas = el("viewReservas");
   const btnSavePrices = el("btnSavePrices");
 
   const confirmedList = el("confirmedList");
@@ -711,6 +743,8 @@
   const EP_OWNER_UNBLOCKS = "/.netlify/functions/owner-unblocks";
   const EP_GET_PRICES = "/.netlify/functions/get-prices";
   const EP_SET_PRICES = "/.netlify/functions/set-prices";
+  const EP_GET_BOOKING_WINDOW = "/.netlify/functions/get-booking-window";
+  const EP_SET_BOOKING_WINDOW = "/.netlify/functions/set-booking-window";
 
   function setStatus(msg) { statusBox.textContent = msg; }
 
@@ -867,12 +901,14 @@
     const isConfirmed = which === "confirmed";
     const isCalendar = which === "calendar";
     const isPrices = which === "prices";
+    const isReservas = which === "reservas";
 
     viewBlock.classList.toggle("hidden", !isBlock);
     viewTransfers.classList.toggle("hidden", !isTransfers);
     viewConfirmed.classList.toggle("hidden", !isConfirmed);
     viewCalendar.classList.toggle("hidden", !isCalendar);
     viewPrices.classList.toggle("hidden", !isPrices);
+    viewReservas.classList.toggle("hidden", !isReservas);
 
     // Refresh button solo para TRANSFERS (pendientes)
     btnRefresh.classList.toggle("hidden", !isTransfers);
@@ -892,6 +928,9 @@
 
     tabPrices.classList.toggle("bg-brand-beige/40", isPrices);
     tabPrices.classList.toggle("bg-white/70", !isPrices);
+
+    tabReservas.classList.toggle("bg-brand-beige/40", isReservas);
+    tabReservas.classList.toggle("bg-white/70", !isReservas);
 
     if (!isTransfers) stopCountdownTicker();
 
@@ -969,6 +1008,84 @@
       setStatus("✅ Precios guardados.");
       showToast("Precios guardados ✅", "ok");
     } catch(e){
+      setStatus(`❌ ${e.message}`);
+      showToast(e.message || "Error", "err");
+    }
+  };
+
+  /* =====================
+     RESERVAS (meses habilitados)
+  ===================== */
+  const MONTH_NAMES_ADMIN = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+
+  function monthKeyOf(y, m){ return `${y}-${String(m + 1).padStart(2, "0")}`; }
+  function monthLabelAdmin(key){
+    const [y, m] = String(key).split("-");
+    return `${MONTH_NAMES_ADMIN[Number(m) - 1]} ${y}`;
+  }
+
+  // 24 meses a partir del mes actual
+  function buildMonthOptions(){
+    const out = [];
+    const now = new Date();
+    let y = now.getFullYear();
+    let m = now.getMonth();
+    for (let i = 0; i < 24; i++){
+      out.push(monthKeyOf(y, m));
+      m++;
+      if (m > 11){ m = 0; y++; }
+    }
+    return out;
+  }
+
+  function renderMonthsGrid(enabledSet){
+    const grid = el("monthsGrid");
+    if (!grid) return;
+    grid.innerHTML = "";
+    for (const key of buildMonthOptions()){
+      const wrap = document.createElement("label");
+      wrap.className = "flex items-center gap-2 p-3 rounded-2xl border border-brand-beige bg-white/80 cursor-pointer text-sm capitalize";
+      const cb = document.createElement("input");
+      cb.type = "checkbox";
+      cb.value = key;
+      cb.className = "month-toggle";
+      cb.checked = enabledSet.has(key);
+      const span = document.createElement("span");
+      span.textContent = monthLabelAdmin(key);
+      wrap.appendChild(cb);
+      wrap.appendChild(span);
+      grid.appendChild(wrap);
+    }
+  }
+
+  async function loadBookingWindowIntoForm(){
+    const out = await apiFetch(EP_GET_BOOKING_WINDOW, { method: "GET", body: null });
+    const enabled = new Set(Array.isArray(out?.enabledMonths) ? out.enabledMonths : []);
+    renderMonthsGrid(enabled);
+  }
+
+  tabReservas.onclick = async () => {
+    showTab("reservas");
+    try {
+      setStatus("Cargando meses...");
+      await loadBookingWindowIntoForm();
+      setStatus("✅ Meses cargados.");
+    } catch (e) {
+      setStatus(`❌ ${e.message}`);
+    }
+  };
+
+  el("btnSaveBookingWindow").onclick = async () => {
+    try {
+      setStatus("Guardando meses...");
+      const enabledMonths = Array.from(document.querySelectorAll(".month-toggle"))
+        .filter((cb) => cb.checked)
+        .map((cb) => cb.value);
+      const out = await apiFetch(EP_SET_BOOKING_WINDOW, { method: "POST", body: { enabledMonths } });
+      renderMonthsGrid(new Set(out?.enabledMonths || enabledMonths));
+      setStatus("✅ Meses guardados.");
+      showToast("Meses guardados ✅", "ok");
+    } catch (e) {
       setStatus(`❌ ${e.message}`);
       showToast(e.message || "Error", "err");
     }

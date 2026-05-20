@@ -172,10 +172,9 @@
 
       <!-- AVISO -->
       <div id="bookingWindowBanner" class="mt-4 p-4 rounded-2xl bg-white/70 border border-brand-beige">
-        <div class="font-semibold mb-1">📅 Reservas habilitadas hasta agosto (inclusive)</div>
-        <div class="text-sm text-brand-brown/90">
-          Por el momento el calendario está habilitado hasta el <strong>31/08/2026</strong>.
-          Septiembre en adelante se habilita más adelante.
+        <div id="bookingWindowTitle" class="font-semibold mb-1">📅 Reservas habilitadas</div>
+        <div id="bookingWindowText" class="text-sm text-brand-brown/90">
+          Cargando meses disponibles…
         </div>
       </div>
 
@@ -410,6 +409,7 @@
   const CREATE_RESERVATION_API = "/api/create-reservation";
   const SUBMIT_PROOF_API = "/api/submit-proof";
   const PUBLIC_PRICES_API = "/.netlify/functions/public-prices";
+  const PUBLIC_BOOKING_WINDOW_API = "/.netlify/functions/public-booking-window";
 
   // Disponibilidad por casa:
   // - Todas desde 01/03
@@ -543,14 +543,59 @@ const MIN7_UNTIL = null;
   }
 
   // =========================================================
-  // BLOQUEO: reservas SOLO hasta AGOSTO inclusive
+  // VENTANA DE RESERVAS: meses habilitados (configurable desde el admin)
   // =========================================================
-  const BOOKING_LAST_DATE = "2026-08-31";
-  const BOOKING_CUTOFF = parseYMD(BOOKING_LAST_DATE);
+  // Fallback si no se puede leer la configuración del backend.
+  const DEFAULT_ENABLED_MONTHS = ["2026-03","2026-04","2026-05","2026-06","2026-07","2026-08"];
+  let ENABLED_MONTHS = new Set(DEFAULT_ENABLED_MONTHS);
 
-  function isAfterBookingWindow(date){
-    const d0 = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-    return d0 > BOOKING_CUTOFF;
+  const MONTH_NAMES = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+
+  function isMonthDisabledForBooking(date){
+    return !ENABLED_MONTHS.has(ymKey(date));
+  }
+
+  // true si alguna noche de la estadía cae en un mes no habilitado
+  function stayHasDisabledNight(ci, co){
+    if (!ci || !co) return false;
+    const nights = Math.round((co - ci) / 86400000);
+    if (nights <= 0) return false;
+    for (let i = 0; i < nights; i++){
+      if (isMonthDisabledForBooking(addDays(ci, i))) return true;
+    }
+    return false;
+  }
+
+  function monthLabel(key){
+    const [y, m] = String(key).split("-");
+    return `${MONTH_NAMES[Number(m) - 1]} ${y}`;
+  }
+
+  function renderBookingWindowBanner(){
+    const textEl = el("bookingWindowText");
+    if (!textEl) return;
+    const months = Array.from(ENABLED_MONTHS).sort();
+    if (months.length === 0){
+      textEl.textContent = "Por el momento no hay meses disponibles para reservar online. Consultá por WhatsApp.";
+      return;
+    }
+    textEl.textContent = `Meses disponibles para reservar: ${months.map(monthLabel).join(", ")}.`;
+  }
+
+  async function loadBookingWindow(){
+    try {
+      const res = await fetch(PUBLIC_BOOKING_WINDOW_API, { method: "GET" });
+      const data = await res.json().catch(()=> ({}));
+      if (!res.ok || data.ok === false || !Array.isArray(data.enabledMonths)) {
+        throw new Error("No se pudo cargar la ventana de reservas");
+      }
+      ENABLED_MONTHS = new Set(data.enabledMonths);
+      return true;
+    } catch (e) {
+      console.error("loadBookingWindow:", e);
+      // mantenemos el fallback por defecto
+      return false;
+    }
   }
 
   // =========================================================
@@ -646,7 +691,7 @@ async function loadPublicPrices(){
 
     const ci = parseYMD(checkin.value);
 
-    if (isAfterBookingWindow(ci) || isAfterBookingWindow(parseYMD(checkout.value))){
+    if (stayHasDisabledNight(ci, parseYMD(checkout.value))){
       banner.classList.add("hidden");
       if (sumTotalPrice) sumTotalPrice.textContent = "-";
       if (sumDeposit) sumDeposit.textContent = "-";
@@ -819,7 +864,7 @@ async function loadPublicPrices(){
 
   function isDateBlockedForCheckin(date){
     if (isPast(date)) return true;
-    if (isAfterBookingWindow(date)) return true;
+    if (isMonthDisabledForBooking(date)) return true;
 
     const d0 = new Date(date.getFullYear(), date.getMonth(), date.getDate());
 
@@ -839,13 +884,14 @@ async function loadPublicPrices(){
   }
 
   function isCheckoutDisabled(date){
-    if (isAfterBookingWindow(date)) return true;
-
     const ciDate = fpCheckin?.selectedDates?.[0];
     if (!ciDate) return true;
 
     const ci = new Date(ciDate.getFullYear(), ciDate.getMonth(), ciDate.getDate());
     const co = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+
+    // alguna noche de la estadía cae en un mes no habilitado
+    if (stayHasDisabledNight(ci, co)) return true;
 
     const ciYmd = fmtYMD(ci);
     const coYmd = fmtYMD(co);
@@ -1055,9 +1101,9 @@ async function loadPublicPrices(){
     const ci = parseYMD(checkin.value);
     const co = parseYMD(checkout.value);
 
-    if (isAfterBookingWindow(ci) || isAfterBookingWindow(co)){
+    if (stayHasDisabledNight(ci, co)){
       continueBtn.disabled = true;
-      setStatus("Por el momento solo se puede reservar hasta el 31/05/2026.");
+      setStatus("Esas fechas incluyen un mes que todavía no está habilitado para reservar online.");
       return;
     }
 
@@ -1544,9 +1590,17 @@ async function loadPublicPrices(){
   });
 
   // init
+    renderBookingWindowBanner();
     refreshPickers();
     updateMinBanner();
     updateContinueState();
+
+    // cargar meses habilitados (ventana de reservas) y refrescar UI
+    loadBookingWindow().then(()=>{
+      renderBookingWindowBanner();
+      refreshPickers();
+      updateContinueState();
+    });
 
     // cargar precios del backend y luego pintar UI
     loadPublicPrices().then((ok)=>{
