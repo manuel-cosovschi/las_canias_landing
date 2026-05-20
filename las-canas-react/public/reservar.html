@@ -166,16 +166,16 @@
           <div><strong>Total:</strong> <span id="totalPriceText">-</span></div>
         </div>
         <div class="mt-2 text-xs text-brand-accent">
-          * Total estimado según tarifas de <strong>Marzo / Abril / Mayo</strong>. Seña: <strong>50%</strong>.
+          * Total estimado según tarifas vigentes. Seña: <strong>50%</strong>.
         </div>
       </div>
 
       <!-- AVISO -->
       <div id="bookingWindowBanner" class="mt-4 p-4 rounded-2xl bg-white/70 border border-brand-beige">
-        <div class="font-semibold mb-1">📅 Reservas habilitadas hasta mayo (inclusive)</div>
+        <div class="font-semibold mb-1">📅 Reservas habilitadas hasta agosto (inclusive)</div>
         <div class="text-sm text-brand-brown/90">
-          Por el momento el calendario está habilitado hasta el <strong>31/05/2026</strong>.
-          Junio en adelante se habilita más adelante.
+          Por el momento el calendario está habilitado hasta el <strong>31/08/2026</strong>.
+          Septiembre en adelante se habilita más adelante.
         </div>
       </div>
 
@@ -543,9 +543,9 @@ const MIN7_UNTIL = null;
   }
 
   // =========================================================
-  // BLOQUEO: reservas SOLO hasta MAYO inclusive
+  // BLOQUEO: reservas SOLO hasta AGOSTO inclusive
   // =========================================================
-  const BOOKING_LAST_DATE = "2026-05-31";
+  const BOOKING_LAST_DATE = "2026-08-31";
   const BOOKING_CUTOFF = parseYMD(BOOKING_LAST_DATE);
 
   function isAfterBookingWindow(date){
