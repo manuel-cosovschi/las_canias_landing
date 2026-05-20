@@ -7,6 +7,7 @@ import Location from "./components/Location.jsx";
 import Contact from "./components/Contact.jsx";
 import Footer from "./components/Footer.jsx";
 import FloatingWhatsApp from "./components/FloatingWhatsApp.jsx";
+import ChatBot from "./components/ChatBot.jsx";
 
 export default function App() {
   return (
@@ -22,6 +23,7 @@ export default function App() {
       </main>
       <Footer />
       <FloatingWhatsApp />
+      <ChatBot />
     </div>
   );
 }
