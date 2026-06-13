@@ -20,7 +20,7 @@ export default function Location() {
             </span>
 
             <h2 className="text-4xl md:text-5xl font-bold mb-8 text-brand-brown serif italic">
-              Dónde estamos
+              Dónde estamos en Mar de Cobo
             </h2>
 
             <div className="space-y-8 mb-12">

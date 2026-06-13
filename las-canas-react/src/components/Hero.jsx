@@ -5,7 +5,14 @@ export default function Hero() {
       className="relative min-h-screen flex items-center justify-center overflow-hidden pt-28 md:pt-36 pb-32"
     >
         {/* ✅ H1 SEO – invisible pero indexable */}
-      <h1 className="sr-only">Las Cañas Mar de Cobo</h1>
+      <h1 className="sr-only">
+        Las Cañas — Alquiler de casas en Mar de Cobo
+      </h1>
+      <p className="sr-only">
+        Complejo Las Cañas en Mar de Cobo: alquiler de casas equipadas a 1 cuadra
+        del mar, en el Partido de Mar Chiquita, Provincia de Buenos Aires. Alquiler
+        temporario de casas frente al mar, ideal para familias y descanso en la costa.
+      </p>
       <div className="absolute inset-0 z-0">
         <img
           src="/entradaVista1.jpg"
