@@ -20,7 +20,7 @@ export default function Location() {
             </span>
 
             <h2 className="text-4xl md:text-5xl font-bold mb-8 text-brand-brown serif italic">
-              Dónde estamos
+              Dónde estamos en Mar de Cobo
             </h2>
 
             <div className="space-y-8 mb-12">
@@ -31,7 +31,8 @@ export default function Location() {
                 <div>
                   <h4 className="font-bold text-brand-brown text-lg">Mar de Cobo</h4>
                   <p className="text-brand-brown/60 text-sm leading-relaxed italic">
-                    Partido de Mar Chiquita, Provincia de Buenos Aires. Un entorno natural,
+                    Santa Rosa entre Los Pinos y Del Trabajo, Mar de Cobo. Partido de
+                    Mar Chiquita, Provincia de Buenos Aires. Un entorno natural,
                     tranquilo y rodeado de bosque.
                   </p>
                 </div>

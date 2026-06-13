@@ -376,7 +376,8 @@ export default function HousesSection() {
               Nuestras Casas
             </h2>
             <p className="text-lg text-brand-brown/70 leading-relaxed font-light max-w-lg">
-              Cinco unidades independientes para descansar a metros del mar.
+              Cinco casas en alquiler en Mar de Cobo, unidades independientes y
+              equipadas para descansar a metros del mar.
             </p>
           </div>
 

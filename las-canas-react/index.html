@@ -3,15 +3,92 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Las Cañas | Mar de Cobo</title>
+    <title>Alquiler de casas en Mar de Cobo | Las Cañas · Complejo a 1 cuadra del mar</title>
     <meta
       name="description"
-      content="Las Cañas Mar de Cobo: casas equipadas a una cuadra del mar. Alquiler turístico ideal para familias y descanso en la costa."
+      content="Complejo Las Cañas en Mar de Cobo: alquiler de 5 casas equipadas a 1 cuadra del mar, en Mar Chiquita, Buenos Aires. Alquiler temporario ideal para familias y descanso en la costa."
     />
+    <meta
+      name="keywords"
+      content="Mar de Cobo, alquiler Mar de Cobo, casas Mar de Cobo, complejo Mar de Cobo, alquiler de casas Mar de Cobo, alquiler temporario Mar de Cobo, Mar Chiquita, Las Cañas Mar de Cobo, casas frente al mar Mar de Cobo"
+    />
+    <meta name="robots" content="index, follow" />
+    <meta name="author" content="Las Cañas Mar de Cobo" />
+    <link rel="canonical" href="https://lascaniasmardecobo.com/" />
+
+    <!-- Geolocalización (SEO local) -->
+    <meta name="geo.region" content="AR-B" />
+    <meta name="geo.placename" content="Mar de Cobo, Mar Chiquita, Buenos Aires" />
+    <meta name="geo.position" content="-37.7705815;-57.4464581" />
+    <meta name="ICBM" content="-37.7705815, -57.4464581" />
+
+    <!-- Open Graph (redes sociales / WhatsApp) -->
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="es_AR" />
+    <meta property="og:site_name" content="Las Cañas Mar de Cobo" />
+    <meta property="og:title" content="Alquiler de casas en Mar de Cobo | Complejo Las Cañas" />
+    <meta
+      property="og:description"
+      content="5 casas equipadas a 1 cuadra del mar en Mar de Cobo, Mar Chiquita. Alquiler temporario para familias y descanso en la costa."
+    />
+    <meta property="og:url" content="https://lascaniasmardecobo.com/" />
+    <meta property="og:image" content="https://lascaniasmardecobo.com/portada.jpeg" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Alquiler de casas en Mar de Cobo | Complejo Las Cañas" />
+    <meta
+      name="twitter:description"
+      content="5 casas equipadas a 1 cuadra del mar en Mar de Cobo, Mar Chiquita, Buenos Aires."
+    />
+    <meta name="twitter:image" content="https://lascaniasmardecobo.com/portada.jpeg" />
 
     <!-- favicon (en Vite: todo lo de /public se sirve desde "/") -->
     <link rel="icon" href="/logo.PNG" type="image/png" />
     <link rel="apple-touch-icon" href="/logo.PNG" />
+
+    <!-- Datos estructurados: alojamiento turístico (SEO local) -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "LodgingBusiness",
+        "name": "Las Cañas Mar de Cobo",
+        "alternateName": "Complejo Las Cañas - Alquiler de casas en Mar de Cobo",
+        "description": "Complejo de 5 casas equipadas en alquiler temporario a 1 cuadra del mar en Mar de Cobo, Mar Chiquita, Provincia de Buenos Aires.",
+        "url": "https://lascaniasmardecobo.com/",
+        "image": "https://lascaniasmardecobo.com/portada.jpeg",
+        "logo": "https://lascaniasmardecobo.com/logo.PNG",
+        "telephone": "+54 223 688 2986",
+        "priceRange": "$$",
+        "petsAllowed": false,
+        "numberOfRooms": 5,
+        "address": {
+          "@type": "PostalAddress",
+          "streetAddress": "Santa Rosa entre Los Pinos y Del Trabajo",
+          "addressLocality": "Mar de Cobo",
+          "addressRegion": "Buenos Aires",
+          "addressCountry": "AR"
+        },
+        "geo": {
+          "@type": "GeoCoordinates",
+          "latitude": -37.7705815,
+          "longitude": -57.4464581
+        },
+        "hasMap": "https://maps.app.goo.gl/NE1Ni4AthYiVn9tk8",
+        "openingHours": "Mo-Su 00:00-23:59",
+        "sameAs": [
+          "https://www.instagram.com/lascaniasmardecobo",
+          "https://linktr.ee/lascaniasmdc"
+        ],
+        "amenityFeature": [
+          { "@type": "LocationFeatureSpecification", "name": "WiFi (Starlink)", "value": true },
+          { "@type": "LocationFeatureSpecification", "name": "Cocina equipada", "value": true },
+          { "@type": "LocationFeatureSpecification", "name": "Parrilla privada", "value": true },
+          { "@type": "LocationFeatureSpecification", "name": "Parque", "value": true },
+          { "@type": "LocationFeatureSpecification", "name": "Smart TV", "value": true }
+        ]
+      }
+    </script>
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -56,7 +133,18 @@
       <textarea name="message"></textarea>
     </form>
 
-    <div id="root"></div>
+    <div id="root">
+      <!-- Contenido de respaldo para buscadores (se reemplaza al cargar React) -->
+      <noscript>
+        <h1>Las Cañas — Alquiler de casas en Mar de Cobo</h1>
+        <p>
+          Complejo Las Cañas: alquiler de 5 casas equipadas a 1 cuadra del mar en
+          Mar de Cobo (Santa Rosa entre Los Pinos y Del Trabajo), Partido de Mar
+          Chiquita, Provincia de Buenos Aires. Alquiler temporario ideal para
+          familias y descanso en la costa. Reservá por WhatsApp al +54 223 688 2986.
+        </p>
+      </noscript>
+    </div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
