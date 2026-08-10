@@ -519,8 +519,12 @@ const MIN7_UNTIL = null;
   function setStatus(msg){ statusBox.textContent = msg; }
 
   function parseYMD(ymd){
-    const [y,m,d] = String(ymd).split("-").map(Number);
+    // Tolera ISO con hora ("2026-09-10T00:00:00Z") quedándose con la parte de fecha
+    const [y,m,d] = String(ymd).slice(0,10).split("-").map(Number);
     return new Date(y, m-1, d);
+  }
+  function isValidDate(d){
+    return d instanceof Date && !Number.isNaN(d.getTime());
   }
   function fmtYMD(date){
     const y = date.getFullYear();
@@ -540,6 +544,31 @@ const MIN7_UNTIL = null;
 
   function overlapsStay(ci, co, start, endExclusive){
     return ci < endExclusive && co > start;
+  }
+
+  // El backend puede mandar los rangos ocupados con distintos nombres de campo:
+  // inicio  -> start / from / check_in / begin
+  // fin     -> end / to / check_out / finish (exclusivo) o end_inclusive (inclusivo)
+  // Devuelve null si el rango no se puede interpretar, para no darlo por libre.
+  function normalizeBlockedRange(r){
+    if (!r || typeof r !== "object") return null;
+
+    const rawStart = r.start || r.from || r.check_in || r.begin;
+    const rawEndIncl = r.end_inclusive;
+    const rawEndExcl = r.end || r.to || r.check_out || r.finish;
+
+    if (!rawStart) return null;
+    if (!rawEndIncl && !rawEndExcl) return null;
+
+    const start = parseYMD(rawStart);
+    const endExclusive = rawEndIncl
+      ? addDays(parseYMD(rawEndIncl), 1)
+      : parseYMD(rawEndExcl);
+
+    if (!isValidDate(start) || !isValidDate(endExclusive)) return null;
+    if (endExclusive <= start) return null;
+
+    return { start, endExclusive, rawStart, rawEnd: rawEndIncl || rawEndExcl };
   }
 
   // =========================================================
@@ -816,19 +845,21 @@ async function loadPublicPrices(){
 
       const data = await res.json().catch(()=> ({}));
 
-      blockedRanges = (data.blocked || []).map(r => {
-        const start = parseYMD(r.start);
+      const rawRanges = (Array.isArray(data.blocked) && data.blocked.length)
+        ? data.blocked
+        : (Array.isArray(data.ranges) ? data.ranges : []);
 
-        if (r.end_inclusive){
-          const endInclusive = parseYMD(r.end_inclusive);
-          const endExclusive = addDays(endInclusive, 1);
-          return { start, endExclusive, rawStart: r.start, rawEnd: r.end_inclusive };
-        }
+      const parsed = rawRanges.map(normalizeBlockedRange);
 
-        const endExclusive = parseYMD(r.end);
-        return { start, endExclusive, rawStart: r.start, rawEnd: r.end };
-      });
+      // Si algún rango vino ilegible, preferimos cortar la carga antes que
+      // mostrar como libre una fecha que en realidad está ocupada.
+      const badIndex = parsed.findIndex(r => r === null);
+      if (badIndex !== -1){
+        console.error("Rango de disponibilidad ilegible:", rawRanges[badIndex]);
+        throw new Error("Disponibilidad con formato inesperado");
+      }
 
+      blockedRanges = parsed;
       availabilityLoaded = true;
       setStatus("2) Elegí cantidad de personas.");
     } catch(e){
@@ -1063,10 +1094,16 @@ async function loadPublicPrices(){
     guests.placeholder = `1 a ${rule.max}`;
     guests.max = rule.max;
 
-    houseHint.textContent = `${rule.hint} Disponible desde ${getFirstAllowedCheckin()}.`;
+    // Solo avisamos "disponible desde" si esa fecha todavía no pasó
+    const firstAllowedYmd = getFirstAllowedCheckin();
+    const hintText = isPast(parseYMD(firstAllowedYmd))
+      ? rule.hint
+      : `${rule.hint} Disponible desde ${ymdToDMY(firstAllowedYmd)}.`;
+
+    houseHint.textContent = hintText;
     houseHint.classList.remove("hidden");
 
-    capacityText.textContent = `${rule.hint} Disponible desde ${getFirstAllowedCheckin()}.`;
+    capacityText.textContent = hintText;
     capacityBanner.classList.remove("hidden");
 
     setStatus(`2) Ahora elegí la cantidad de personas (máx ${rule.max}).`);
@@ -1166,6 +1203,16 @@ async function loadPublicPrices(){
 
   function pad2(n){ return String(n).padStart(2,"0"); }
 
+  // Los timestamps llegan en ISO/UTC; mostrarlos crudos confundía la hora real
+  function fmtDateTime(iso){
+    const ms = Date.parse(iso);
+    if (!Number.isFinite(ms)) return "-";
+    return new Date(ms).toLocaleString("es-AR", {
+      day: "2-digit", month: "2-digit", year: "numeric",
+      hour: "2-digit", minute: "2-digit"
+    });
+  }
+
   function formatCountdown(ms){
     const total = Math.max(0, Math.floor(ms / 1000));
     const h = Math.floor(total / 3600);
@@ -1203,9 +1250,11 @@ async function loadPublicPrices(){
   function startHoldCountdown(expiresAtIso){
     stopHoldTimer();
 
-    // Si el backend no manda expires_at, hacemos fallback a 6h desde ahora
+    // Si el backend no manda expires_at (o viene ilegible), fallback a 6h desde ahora.
+    // Sin este guard el contador mostraba "NaN:NaN:NaN" y nunca vencía.
     const now = Date.now();
-    const expires = expiresAtIso ? Date.parse(expiresAtIso) : (now + 6*60*60*1000);
+    const parsedExpires = expiresAtIso ? Date.parse(expiresAtIso) : NaN;
+    const expires = Number.isFinite(parsedExpires) ? parsedExpires : (now + 6*60*60*1000);
     const totalWindow = Math.max(1, expires - now);
 
     const holdCountdown = el("holdCountdown");
@@ -1244,17 +1293,29 @@ async function loadPublicPrices(){
   // IMPORTANTE: esto requiere un endpoint backend.
   // Si no existe, no rompe nada; solo no actualiza.
   // =========================================================
-  const RESERVATION_STATUS_API = "/api/reservation-status"; 
+  const RESERVATION_STATUS_API = "/api/reservation-status";
+  const STATUS_POLL_MAX_FAILURES = 3;
   let statusPollInterval = null;
+  let statusPollFailures = 0;
+  let statusPollDone = false;
 
   function stopStatusPolling(){
     if (statusPollInterval) clearInterval(statusPollInterval);
     statusPollInterval = null;
+    statusPollDone = true;
   }
 
   async function pollReservationStatus(reservationId){
     stopStatusPolling();
     if (!reservationId) return;
+
+    statusPollFailures = 0;
+    statusPollDone = false;
+
+    function registerFailure(){
+      statusPollFailures++;
+      if (statusPollFailures >= STATUS_POLL_MAX_FAILURES) stopStatusPolling();
+    }
 
     async function check(){
       try{
@@ -1264,7 +1325,18 @@ async function loadPublicPrices(){
           body: JSON.stringify({ id: reservationId })
         });
 
-        if (!res.ok) return;
+        // 404 = el endpoint todavía no existe: insistir cada 15s no aporta nada
+        if (res.status === 404){
+          stopStatusPolling();
+          return;
+        }
+
+        if (!res.ok){
+          registerFailure();
+          return;
+        }
+
+        statusPollFailures = 0;
 
         const data = await res.json().catch(()=> ({}));
 
@@ -1286,12 +1358,15 @@ async function loadPublicPrices(){
           return;
         }
       } catch(e){
-        // silencioso
+        // silencioso: solo contamos el fallo para no reintentar indefinidamente
+        registerFailure();
       }
     }
 
     await check();
-    statusPollInterval = setInterval(check, 15000); // cada 15s
+
+    // Si el primer intento ya dio por terminado el polling, no arrancamos el intervalo
+    if (!statusPollDone) statusPollInterval = setInterval(check, 15000); // cada 15s
   }
 
   // ---- Events ----
@@ -1437,8 +1512,8 @@ async function loadPublicPrices(){
       el("resGuests").textContent = String(payload.guests);
       el("resRef").textContent = row.id;
 
-      // expires_at puede venir ISO (ej: 2026-01-18T22:57:32.434Z)
-      el("resExpires").textContent = row.expires_at ? row.expires_at : "-";
+      // expires_at viene ISO/UTC (ej: 2026-01-18T22:57:32.434Z) -> hora local
+      el("resExpires").textContent = row.expires_at ? fmtDateTime(row.expires_at) : "-";
 
       // SEÑA visible en el resumen y en los 2 lugares UX
       const resDeposit = el("resDeposit");

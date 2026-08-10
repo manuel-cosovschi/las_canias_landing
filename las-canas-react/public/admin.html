@@ -1010,11 +1010,18 @@
   function normalizeDisableRanges(ranges) {
     return (ranges || [])
       .map(r => {
+        if (!r || typeof r !== "object") return null;
+
         const from = r.from || r.start || r.check_in || r.begin;
+        if (!from) return null;
+
+        // end_inclusive ya es el último día ocupado; el resto son exclusivos
+        if (r.end_inclusive) return { from, to: r.end_inclusive };
+
         const toRaw = r.to || r.end || r.check_out || r.finish;
-        if (!from || !toRaw) return null;
-        const to = toMinusOneDayISO(toRaw);
-        return { from, to };
+        if (!toRaw) return null;
+
+        return { from, to: toMinusOneDayISO(toRaw) };
       })
       .filter(Boolean);
   }
