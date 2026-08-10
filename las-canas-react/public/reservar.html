@@ -843,11 +843,21 @@ async function loadPublicPrices(){
 
       if(!res.ok) throw new Error("No se pudo cargar disponibilidad");
 
-      const data = await res.json().catch(()=> ({}));
+      const data = await res.json().catch(()=> null);
 
-      const rawRanges = (Array.isArray(data.blocked) && data.blocked.length)
+      // Una respuesta vacía o sin las listas de ocupación no significa "todo libre":
+      // significa que no sabemos. El backend siempre manda blocked y ranges (aunque
+      // vengan vacías), así que si faltan, cortamos en vez de liberar la casa entera.
+      const hasBlocked = data && Array.isArray(data.blocked);
+      const hasRanges = data && Array.isArray(data.ranges);
+      if (!hasBlocked && !hasRanges){
+        console.error("Respuesta de disponibilidad sin blocked/ranges:", data);
+        throw new Error("Disponibilidad incompleta");
+      }
+
+      const rawRanges = (hasBlocked && data.blocked.length)
         ? data.blocked
-        : (Array.isArray(data.ranges) ? data.ranges : []);
+        : (hasRanges ? data.ranges : []);
 
       const parsed = rawRanges.map(normalizeBlockedRange);
 
