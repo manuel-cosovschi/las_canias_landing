@@ -172,10 +172,10 @@
 
       <!-- AVISO -->
       <div id="bookingWindowBanner" class="mt-4 p-4 rounded-2xl bg-white/70 border border-brand-beige">
-        <div class="font-semibold mb-1">📅 Reservas habilitadas hasta agosto (inclusive)</div>
+        <div class="font-semibold mb-1">📅 Reservas habilitadas hasta <span id="bookingWindowMonth">diciembre</span> (inclusive)</div>
         <div class="text-sm text-brand-brown/90">
-          Por el momento el calendario está habilitado hasta el <strong>31/08/2026</strong>.
-          Septiembre en adelante se habilita más adelante.
+          Por el momento el calendario está habilitado hasta el <strong id="bookingWindowDate">31/12/2026</strong>.
+          <span id="bookingWindowNext">2027 se habilita más adelante.</span>
         </div>
       </div>
 
@@ -543,14 +543,46 @@ const MIN7_UNTIL = null;
   }
 
   // =========================================================
-  // BLOQUEO: reservas SOLO hasta AGOSTO inclusive
+  // BLOQUEO: reservas SOLO hasta DICIEMBRE inclusive
   // =========================================================
-  const BOOKING_LAST_DATE = "2026-08-31";
+  // Última noche reservable. El check-out puede ser la mañana siguiente,
+  // así la noche del 31/12 también queda disponible.
+  const BOOKING_LAST_DATE = "2026-12-31";
   const BOOKING_CUTOFF = parseYMD(BOOKING_LAST_DATE);
+  const BOOKING_CHECKOUT_CUTOFF = addDays(BOOKING_CUTOFF, 1);
 
+  // Para check-in / noches de la estadía
   function isAfterBookingWindow(date){
     const d0 = new Date(date.getFullYear(), date.getMonth(), date.getDate());
     return d0 > BOOKING_CUTOFF;
+  }
+
+  // Para check-out (se permite el día siguiente a la última noche)
+  function isAfterCheckoutWindow(date){
+    const d0 = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    return d0 > BOOKING_CHECKOUT_CUTOFF;
+  }
+
+  // El aviso se arma desde BOOKING_LAST_DATE para que no quede desactualizado
+  const MONTH_NAMES = ["enero","febrero","marzo","abril","mayo","junio",
+    "julio","agosto","septiembre","octubre","noviembre","diciembre"];
+
+  function renderBookingWindowBanner(){
+    const monthEl = el("bookingWindowMonth");
+    const dateEl = el("bookingWindowDate");
+    const nextEl = el("bookingWindowNext");
+    if (!monthEl || !dateEl || !nextEl) return;
+
+    monthEl.textContent = MONTH_NAMES[BOOKING_CUTOFF.getMonth()];
+    dateEl.textContent = ymdToDMY(BOOKING_LAST_DATE);
+
+    const next = addDays(BOOKING_CUTOFF, 1);
+    const nextMonth = MONTH_NAMES[next.getMonth()];
+    const nextLabel = nextMonth.charAt(0).toUpperCase() + nextMonth.slice(1);
+
+    nextEl.textContent = next.getFullYear() > BOOKING_CUTOFF.getFullYear()
+      ? `${nextLabel} de ${next.getFullYear()} en adelante se habilita más adelante.`
+      : `${nextLabel} en adelante se habilita más adelante.`;
   }
 
   // =========================================================
@@ -646,7 +678,7 @@ async function loadPublicPrices(){
 
     const ci = parseYMD(checkin.value);
 
-    if (isAfterBookingWindow(ci) || isAfterBookingWindow(parseYMD(checkout.value))){
+    if (isAfterBookingWindow(ci) || isAfterCheckoutWindow(parseYMD(checkout.value))){
       banner.classList.add("hidden");
       if (sumTotalPrice) sumTotalPrice.textContent = "-";
       if (sumDeposit) sumDeposit.textContent = "-";
@@ -839,7 +871,7 @@ async function loadPublicPrices(){
   }
 
   function isCheckoutDisabled(date){
-    if (isAfterBookingWindow(date)) return true;
+    if (isAfterCheckoutWindow(date)) return true;
 
     const ciDate = fpCheckin?.selectedDates?.[0];
     if (!ciDate) return true;
@@ -1055,9 +1087,9 @@ async function loadPublicPrices(){
     const ci = parseYMD(checkin.value);
     const co = parseYMD(checkout.value);
 
-    if (isAfterBookingWindow(ci) || isAfterBookingWindow(co)){
+    if (isAfterBookingWindow(ci) || isAfterCheckoutWindow(co)){
       continueBtn.disabled = true;
-      setStatus("Por el momento solo se puede reservar hasta el 31/05/2026.");
+      setStatus(`Por el momento solo se puede reservar hasta el ${ymdToDMY(BOOKING_LAST_DATE)}.`);
       return;
     }
 
@@ -1544,6 +1576,7 @@ async function loadPublicPrices(){
   });
 
   // init
+    renderBookingWindowBanner();
     refreshPickers();
     updateMinBanner();
     updateContinueState();
