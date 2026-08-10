@@ -1,13 +1,24 @@
 // netlify/functions/availability.js
 const { json, callN8n } = require("./_utils");
 
+// end_inclusive viene como último día ocupado; lo pasamos a fin exclusivo (+1 día)
+function inclusiveToExclusive(v) {
+  const s = String(v).slice(0, 10);
+  const ms = Date.parse(`${s}T00:00:00Z`);
+  if (!Number.isFinite(ms)) return null;
+  return new Date(ms + 86400000).toISOString().slice(0, 10);
+}
+
 function normalizeRanges(out) {
   // Esperamos algo tipo: { ok:true, blocked:[{start,end}...] }
   const blocked = Array.isArray(out?.blocked) ? out.blocked : [];
   const ranges = blocked
     .map((r) => ({
       from: r.from || r.start || r.check_in || r.begin,
-      to: r.to || r.end || r.check_out || r.finish,
+      // sin este caso, los rangos con end_inclusive se descartaban silenciosamente
+      to: r.end_inclusive
+        ? inclusiveToExclusive(r.end_inclusive)
+        : r.to || r.end || r.check_out || r.finish,
     }))
     .filter((r) => r.from && r.to);
 
