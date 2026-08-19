@@ -572,11 +572,11 @@ const MIN7_UNTIL = null;
   }
 
   // =========================================================
-  // BLOQUEO: reservas SOLO hasta DICIEMBRE inclusive
+  // BLOQUEO: reservas SOLO hasta ENERO 2027 inclusive
   // =========================================================
   // Última noche reservable. El check-out puede ser la mañana siguiente,
-  // así la noche del 31/12 también queda disponible.
-  const BOOKING_LAST_DATE = "2026-12-31";
+  // así la noche del 31/01 también queda disponible.
+  const BOOKING_LAST_DATE = "2027-01-31";
   const BOOKING_CUTOFF = parseYMD(BOOKING_LAST_DATE);
   const BOOKING_CHECKOUT_CUTOFF = addDays(BOOKING_CUTOFF, 1);
 
@@ -602,7 +602,16 @@ const MIN7_UNTIL = null;
     const nextEl = el("bookingWindowNext");
     if (!monthEl || !dateEl || !nextEl) return;
 
-    monthEl.textContent = MONTH_NAMES[BOOKING_CUTOFF.getMonth()];
+    // Si el corte cae en otro año, aclaramos cuál: en agosto de 2026,
+    // "hasta enero" se puede leer como el enero que ya pasó.
+    const cutoffMonth = MONTH_NAMES[BOOKING_CUTOFF.getMonth()];
+    const cutoffYear = BOOKING_CUTOFF.getFullYear();
+    const thisYear = new Date().getFullYear();
+
+    monthEl.textContent = (cutoffYear === thisYear)
+      ? cutoffMonth
+      : `${cutoffMonth} de ${cutoffYear}`;
+
     dateEl.textContent = ymdToDMY(BOOKING_LAST_DATE);
 
     const next = addDays(BOOKING_CUTOFF, 1);
@@ -630,8 +639,12 @@ const MIN7_UNTIL = null;
     { from: "2026-10-01", to: "2026-11-30", label: "Octubre y noviembre",
       prices: { LC1: 110000, LC2: 110000, LC3: 130000, LC4:  90000, LC5:  90000 } },
 
-    { from: "2026-12-01", to: "2026-12-15", label: "Diciembre hasta el 15",
+    { from: "2026-12-01", to: "2026-12-19", label: "Diciembre hasta el 19",
       prices: { LC1: 140000, LC2: 140000, LC3: 170000, LC4: 120000, LC5: 120000 } },
+
+    // Temporada alta: la noche del 20/12 ya entra acá
+    { from: "2026-12-20", to: "2027-01-31", label: "Fin de año y enero",
+      prices: { LC1: 197000, LC2: 195000, LC3: 220000, LC4: 190000, LC5: 165000 } },
   ];
 
 async function loadPublicPrices(){
