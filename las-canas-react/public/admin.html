@@ -390,7 +390,7 @@
         <div class="flex items-start justify-between gap-4 mb-4">
           <div>
             <h2 class="serif text-xl sm:text-2xl font-bold">Precios por noche</h2>
-            <p class="text-xs text-brand-accent mt-1">Modificá el precio por noche de cada casa.</p>
+            <p class="text-xs text-brand-accent mt-1">Modificá el precio por noche de cada casa. Es la tarifa base.</p>
           </div>
           <span class="text-xs font-semibold px-3 py-1 rounded-full bg-brand-beige/50 border border-brand-beige/80">
             Tarifas
@@ -428,6 +428,13 @@
         <p class="mt-3 text-xs text-brand-accent">
           Estos precios impactan el cálculo estimado en reservar.html.
         </p>
+
+        <div class="mt-3 p-3 rounded-2xl bg-brand-cream border border-brand-beige text-xs text-brand-brown/90">
+          <strong>Ojo:</strong> <strong>agosto y septiembre de 2026</strong> tienen precios propios
+          fijados en el código (LC1 y LC2 $90.000, LC3 $120.000, LC4 y LC5 $75.000). Para esos meses
+          la tarifa base <strong>no se aplica</strong>: cambiarla acá no los modifica.
+          El resto de los meses sí usa la tarifa base.
+        </div>
       </div>
     </section>
   </main>

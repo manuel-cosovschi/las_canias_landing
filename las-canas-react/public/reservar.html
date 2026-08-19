@@ -615,9 +615,18 @@ const MIN7_UNTIL = null;
   }
 
   // =========================================================
-  // PRECIOS por noche por casa por mes (Mar/Abr/May)
+  // PRECIOS por noche
+  // Base: la tarifa que cargan los dueños en el panel de admin.
+  // MONTHLY_PRICES pisa esa base sólo para los meses listados acá.
+  // Formato: "AAAA-MM": { LC1: 90000, ... }
+  // Un mes que no figure (o una casa que falte dentro de un mes) usa la base.
   // =========================================================
   let LIVE_PRICES = null; // { LC1: 110000, LC2: ... }
+
+  const MONTHLY_PRICES = {
+    "2026-08": { LC1: 90000, LC2: 90000, LC3: 120000, LC4: 75000, LC5: 75000 },
+    "2026-09": { LC1: 90000, LC2: 90000, LC3: 120000, LC4: 75000, LC5: 75000 },
+  };
 
 async function loadPublicPrices(){
   try {
@@ -661,9 +670,13 @@ async function loadPublicPrices(){
     return `${y}-${m}`;
   }
   function getNightPrice(date, houseCode){
-  // tarifa “por noche” única (la que setea el admin)
-  return LIVE_PRICES?.[houseCode] ?? null;
-}
+    // precio fijado para ese mes, si lo hay
+    const monthly = MONTHLY_PRICES[ymKey(date)]?.[houseCode];
+    if (Number.isFinite(monthly)) return monthly;
+
+    // si no, la tarifa base que setea el admin
+    return LIVE_PRICES?.[houseCode] ?? null;
+  }
 
   function calcStayTotal(ciYmd, coYmd, houseCode){
     if (!ciYmd || !coYmd || !houseCode) return null;
@@ -675,14 +688,19 @@ async function loadPublicPrices(){
     if (nights <= 0) return null;
 
     let total = 0;
+    let minNight = Infinity;
+    let maxNight = -Infinity;
+
     for (let i = 0; i < nights; i++){
       const d = addDays(ci, i);
       const price = getNightPrice(d, houseCode);
       if (price == null) return null;
       total += price;
+      if (price < minNight) minNight = price;
+      if (price > maxNight) maxNight = price;
     }
 
-    return { nights, total, deposit: Math.round(total * 0.5) };
+    return { nights, total, deposit: Math.round(total * 0.5), minNight, maxNight };
   }
 
   // Mantener cálculo en memoria para reutilizarlo en el paso de confirmación
@@ -727,7 +745,13 @@ async function loadPublicPrices(){
     lastCalc = calc;
 
     banner.classList.remove("hidden");
-    nightPriceText.textContent = fmtARS(firstNightPrice);
+
+    // Si la estadía cruza meses con distinta tarifa, mostramos el rango:
+    // poner sólo la primera noche daría a entender que todas cuestan igual.
+    nightPriceText.textContent = (calc.minNight === calc.maxNight)
+      ? fmtARS(calc.minNight)
+      : `${fmtARS(calc.minNight)} a ${fmtARS(calc.maxNight)}`;
+
     nightsCountText.textContent = String(calc.nights);
     totalPriceText.textContent = fmtARS(calc.total);
 
