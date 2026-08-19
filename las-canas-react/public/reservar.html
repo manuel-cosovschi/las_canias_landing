@@ -617,16 +617,22 @@ const MIN7_UNTIL = null;
   // =========================================================
   // PRECIOS por noche
   // Base: la tarifa que cargan los dueños en el panel de admin.
-  // MONTHLY_PRICES pisa esa base sólo para los meses listados acá.
-  // Formato: "AAAA-MM": { LC1: 90000, ... }
-  // Un mes que no figure (o una casa que falte dentro de un mes) usa la base.
+  // PRICE_PERIODS pisa esa base para los períodos listados acá.
+  // "to" es INCLUSIVO: es la última noche que se cobra a ese precio.
+  // Una fecha fuera de todo período (o una casa que falte) usa la base.
   // =========================================================
   let LIVE_PRICES = null; // { LC1: 110000, LC2: ... }
 
-  const MONTHLY_PRICES = {
-    "2026-08": { LC1: 90000, LC2: 90000, LC3: 120000, LC4: 75000, LC5: 75000 },
-    "2026-09": { LC1: 90000, LC2: 90000, LC3: 120000, LC4: 75000, LC5: 75000 },
-  };
+  const PRICE_PERIODS = [
+    { from: "2026-08-01", to: "2026-09-30", label: "Agosto y septiembre",
+      prices: { LC1:  90000, LC2:  90000, LC3: 120000, LC4:  75000, LC5:  75000 } },
+
+    { from: "2026-10-01", to: "2026-11-30", label: "Octubre y noviembre",
+      prices: { LC1: 110000, LC2: 110000, LC3: 130000, LC4:  90000, LC5:  90000 } },
+
+    { from: "2026-12-01", to: "2026-12-15", label: "Diciembre hasta el 15",
+      prices: { LC1: 140000, LC2: 140000, LC3: 170000, LC4: 120000, LC5: 120000 } },
+  ];
 
 async function loadPublicPrices(){
   try {
@@ -670,9 +676,15 @@ async function loadPublicPrices(){
     return `${y}-${m}`;
   }
   function getNightPrice(date, houseCode){
-    // precio fijado para ese mes, si lo hay
-    const monthly = MONTHLY_PRICES[ymKey(date)]?.[houseCode];
-    if (Number.isFinite(monthly)) return monthly;
+    const d0 = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+
+    // precio fijado para el período en el que cae esa noche, si lo hay
+    for (const p of PRICE_PERIODS){
+      if (d0 >= parseYMD(p.from) && d0 <= parseYMD(p.to)){
+        const price = p.prices?.[houseCode];
+        if (Number.isFinite(price)) return price;
+      }
+    }
 
     // si no, la tarifa base que setea el admin
     return LIVE_PRICES?.[houseCode] ?? null;
