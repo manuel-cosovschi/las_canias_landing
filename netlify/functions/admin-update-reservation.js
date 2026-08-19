@@ -1,18 +1,21 @@
 // /netlify/functions/admin-update-reservation.js
-const { json, callN8n } = require("./_utils");
+const { assertAuth, json, callN8n } = require("./_utils");
 
 exports.handler = async (event) => {
+  // Acción de dueño: se autentica con LC_OWNER_SECRET, igual que el resto del
+  // admin. Antes comparaba contra N8N_SECRET, así que el panel (que manda la
+  // clave que devuelve auth-login) recibía 401 si las dos claves diferían.
+  if (!assertAuth(event)) return json(401, { ok: false, message: "No autorizado" });
   if (event.httpMethod !== "POST") return json(405, { message: "Method not allowed" });
 
   try {
     const baseUrl = process.env.N8N_BASE_URL;
-    const secret = process.env.N8N_SECRET;
-    if (!baseUrl || !secret) return json(500, { message: "Faltan env vars en Netlify" });
+    const secret = process.env.LC_OWNER_SECRET;
+    const path = process.env.N8N_ADMIN_UPDATE_RESERVATION_PATH
+      || "/webhook/admin-update-reservation";
 
-    // ✅ proteger admin con x-lc-secret
-    const ownerSecret = event.headers["x-lc-secret"] || event.headers["X-Lc-Secret"] || "";
-    if (ownerSecret !== secret) {
-      return json(401, { ok: false, message: "Unauthorized" });
+    if (!baseUrl || !secret) {
+      return json(500, { message: "Faltan env vars: N8N_BASE_URL / LC_OWNER_SECRET" });
     }
 
     const bodyIn = JSON.parse(event.body || "{}");
@@ -25,12 +28,11 @@ exports.handler = async (event) => {
       return json(400, { ok: false, message: `Status inválido. Usá: ${allowed.join(", ")}` });
     }
 
-    // ⚠️ este path lo seteás al webhook nuevo
-    const out = await callN8n("/webhook/admin-update-reservation", {
+    const out = await callN8n(path, {
       method: "POST",
       body: { id, status },
       baseUrl,
-      secret, // se manda como x-lc-secret en callN8n si lo tenés armado así
+      secret, // callN8n lo manda como x-lc-secret
     });
 
     return json(200, out);
