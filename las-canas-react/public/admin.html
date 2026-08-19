@@ -390,7 +390,7 @@
         <div class="flex items-start justify-between gap-4 mb-4">
           <div>
             <h2 class="serif text-xl sm:text-2xl font-bold">Precios por noche</h2>
-            <p class="text-xs text-brand-accent mt-1">Modificá el precio por noche de cada casa.</p>
+            <p class="text-xs text-brand-accent mt-1">Modificá el precio por noche de cada casa. Es la tarifa base.</p>
           </div>
           <span class="text-xs font-semibold px-3 py-1 rounded-full bg-brand-beige/50 border border-brand-beige/80">
             Tarifas
@@ -428,6 +428,40 @@
         <p class="mt-3 text-xs text-brand-accent">
           Estos precios impactan el cálculo estimado en reservar.html.
         </p>
+
+        <div class="mt-3 p-3 rounded-2xl bg-brand-cream border border-brand-beige text-xs text-brand-brown/90">
+          <div class="font-semibold mb-2">Ojo: hay períodos con precio propio fijado en el código</div>
+          <p class="mb-2">
+            Para las fechas de abajo la tarifa base <strong>no se aplica</strong>: cambiarla acá no las modifica.
+          </p>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="border-b border-brand-beige">
+                  <th class="py-1 pr-3 font-semibold">Período</th>
+                  <th class="py-1 pr-3 font-semibold">LC1 y LC2</th>
+                  <th class="py-1 pr-3 font-semibold">LC3</th>
+                  <th class="py-1 font-semibold">LC4 y LC5</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="border-b border-brand-beige/50">
+                  <td class="py-1 pr-3">01/08 al 30/09</td><td class="py-1 pr-3">$90.000</td><td class="py-1 pr-3">$120.000</td><td class="py-1">$75.000</td>
+                </tr>
+                <tr class="border-b border-brand-beige/50">
+                  <td class="py-1 pr-3">01/10 al 30/11</td><td class="py-1 pr-3">$110.000</td><td class="py-1 pr-3">$130.000</td><td class="py-1">$90.000</td>
+                </tr>
+                <tr>
+                  <td class="py-1 pr-3">01/12 al 15/12</td><td class="py-1 pr-3">$140.000</td><td class="py-1 pr-3">$170.000</td><td class="py-1">$120.000</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="mt-2">
+            <strong>Del 16/12 al 31/12 todavía usa la tarifa base.</strong> Si esas fechas deberían
+            valer más, hay que definirlas.
+          </p>
+        </div>
       </div>
     </section>
   </main>
