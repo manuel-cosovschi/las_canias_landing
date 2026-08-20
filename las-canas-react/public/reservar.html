@@ -410,7 +410,7 @@
   const AVAILABILITY_API = "/api/availability";
   const CREATE_RESERVATION_API = "/api/create-reservation";
   const SUBMIT_PROOF_API = "/api/submit-proof";
-  const PUBLIC_PRICES_API = "/.netlify/functions/public-prices";
+  const PRICE_PERIODS_API = "/api/price-periods";
 
   // Disponibilidad por casa:
   // - Todas desde 01/03
@@ -630,57 +630,61 @@ const MIN7_UNTIL = null;
 
   // =========================================================
   // PRECIOS por noche
-  // Base: la tarifa que cargan los dueños en el panel de admin.
-  // PRICE_PERIODS pisa esa base para los períodos listados acá.
+  // Los períodos los cargan los dueños desde el panel de admin y se leen del
+  // backend: son la única fuente de precios de esta página.
   // "to" es INCLUSIVO: es la última noche que se cobra a ese precio.
-  // Una fecha fuera de todo período (o una casa que falte) usa la base.
+  // Una noche sin período no tiene precio y no se puede reservar; darle un
+  // precio de respaldo cobraría de menos sin que nadie se entere.
   // =========================================================
-  let LIVE_PRICES = null; // { LC1: 110000, LC2: ... }
+  const CASAS = ["LC1","LC2","LC3","LC4","LC5"];
 
-  const PRICE_PERIODS = [
-    { from: "2026-08-01", to: "2026-09-30", label: "Agosto y septiembre",
-      prices: { LC1:  90000, LC2:  90000, LC3: 120000, LC4:  75000, LC5:  75000 } },
+  let PRICE_PERIODS = null; // null = todavía no se cargaron
 
-    { from: "2026-10-01", to: "2026-11-30", label: "Octubre y noviembre",
-      prices: { LC1: 110000, LC2: 110000, LC3: 130000, LC4:  90000, LC5:  90000 } },
+  function normalizePricePeriod(p){
+    if (!p || typeof p !== "object") return null;
 
-    { from: "2026-12-01", to: "2026-12-19", label: "Diciembre hasta el 19",
-      prices: { LC1: 140000, LC2: 140000, LC3: 170000, LC4: 120000, LC5: 120000 } },
+    const from = String(p.from || "").slice(0,10);
+    const to = String(p.to || "").slice(0,10);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(from) || !/^\d{4}-\d{2}-\d{2}$/.test(to)) return null;
+    if (from > to) return null;
 
-    // Temporada alta: la noche del 20/12 ya entra acá
-    { from: "2026-12-20", to: "2027-01-31", label: "Fin de año y enero",
-      prices: { LC1: 197000, LC2: 195000, LC3: 220000, LC4: 190000, LC5: 165000 } },
-  ];
-
-async function loadPublicPrices(){
-  try {
-    const res = await fetch(PUBLIC_PRICES_API, { method: "GET" });
-    const data = await res.json().catch(()=> ({}));
-    if (!res.ok || data.ok === false) throw new Error(data.message || "No se pudieron cargar tarifas");
-
-    // data.prices puede venir como strings -> normalizamos a Number
-    const p = data.prices || {};
-    LIVE_PRICES = {
-      LC1: Number(p.LC1),
-      LC2: Number(p.LC2),
-      LC3: Number(p.LC3),
-      LC4: Number(p.LC4),
-      LC5: Number(p.LC5),
-    };
-
-    // si faltan valores, lo consideramos inválido
-    for (const k of ["LC1","LC2","LC3","LC4","LC5"]){
-      if (!Number.isFinite(LIVE_PRICES[k])) {
-        throw new Error(`Tarifa inválida para ${k}`);
-      }
+    const prices = {};
+    for (const c of CASAS){
+      const n = Number((p.prices || {})[c]);
+      if (!Number.isFinite(n) || n <= 0) return null;
+      prices[c] = n;
     }
+
+    return { from, to, label: String(p.label || ""), prices };
+  }
+
+async function loadPricePeriods(){
+  try {
+    const res = await fetch(PRICE_PERIODS_API, { method: "GET" });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+    const data = await res.json().catch(()=> null);
+    if (!data || data.ok === false || !Array.isArray(data.periods)){
+      throw new Error(data?.message || "Respuesta de tarifas inesperada");
+    }
+    if (!data.periods.length) throw new Error("No hay períodos de precio cargados");
+
+    const parsed = data.periods.map(normalizePricePeriod);
+    const bad = parsed.findIndex(p => p === null);
+    if (bad !== -1){
+      console.error("Período de precios ilegible:", data.periods[bad]);
+      throw new Error("Período de precios ilegible");
+    }
+
+    PRICE_PERIODS = parsed;
 
     // refrescar UI por si ya había fechas cargadas
     updatePriceUI();
+    updateContinueState();
     return true;
   } catch (e) {
-    console.error("loadPublicPrices:", e);
-    LIVE_PRICES = null;
+    console.error("loadPricePeriods:", e);
+    PRICE_PERIODS = null;
     return false;
   }
 }
@@ -694,9 +698,10 @@ async function loadPublicPrices(){
     return `${y}-${m}`;
   }
   function getNightPrice(date, houseCode){
+    if (!Array.isArray(PRICE_PERIODS)) return null;
+
     const d0 = new Date(date.getFullYear(), date.getMonth(), date.getDate());
 
-    // precio fijado para el período en el que cae esa noche, si lo hay
     for (const p of PRICE_PERIODS){
       if (d0 >= parseYMD(p.from) && d0 <= parseYMD(p.to)){
         const price = p.prices?.[houseCode];
@@ -704,8 +709,8 @@ async function loadPublicPrices(){
       }
     }
 
-    // si no, la tarifa base que setea el admin
-    return LIVE_PRICES?.[houseCode] ?? null;
+    // Sin período no hay precio: la reserva queda bloqueada a propósito
+    return null;
   }
 
   function calcStayTotal(ciYmd, coYmd, houseCode){
@@ -1185,6 +1190,13 @@ async function loadPublicPrices(){
       return;
     }
 
+    // Sin tarifas cargadas no dejamos avanzar: no sabemos cuánto cobrar
+    if (!Array.isArray(PRICE_PERIODS)){
+      continueBtn.disabled = true;
+      setStatus("⚠️ No se pudieron cargar las tarifas. Intentá recargar la página.");
+      return;
+    }
+
     const ci = parseYMD(checkin.value);
     const co = parseYMD(checkout.value);
 
@@ -1220,6 +1232,13 @@ async function loadPublicPrices(){
         setStatus(`No disponible 😕 (ocupado del ${r.rawStart} al ${r.rawEnd}). Probá otras fechas.`);
         return;
       }
+    }
+
+    // Alguna noche de la estadía cayó fuera de todos los períodos de precio
+    if (!calcStayTotal(checkin.value, checkout.value, house.value)){
+      continueBtn.disabled = true;
+      setStatus("Todavía no hay tarifa cargada para esas fechas. Consultanos por WhatsApp.");
+      return;
     }
 
     continueBtn.disabled = false;
@@ -1459,7 +1478,7 @@ async function loadPublicPrices(){
     await loadAvailability(h);
     updateMinBanner();
     updateContinueState();
-    await loadPublicPrices();
+    await loadPricePeriods();
     updatePriceUI();
   });
 
@@ -1733,12 +1752,12 @@ async function loadPublicPrices(){
     updateContinueState();
 
     // cargar precios del backend y luego pintar UI
-    loadPublicPrices().then((ok)=>{
+    loadPricePeriods().then((ok)=>{
       if (!ok) {
-        // opcional: avisar arriba
         setStatus("⚠️ No se pudieron cargar las tarifas. Intentá recargar la página.");
       }
       updatePriceUI();
+      updateContinueState();
     });
 </script>
 
