@@ -172,10 +172,11 @@
 
       <!-- AVISO -->
       <div id="bookingWindowBanner" class="mt-4 p-4 rounded-2xl bg-white/70 border border-brand-beige">
-        <div class="font-semibold mb-1">📅 Reservas habilitadas hasta <span id="bookingWindowMonth">diciembre</span> (inclusive)</div>
-        <div class="text-sm text-brand-brown/90">
-          Por el momento el calendario está habilitado hasta el <strong id="bookingWindowDate">31/12/2026</strong>.
-          <span id="bookingWindowNext">2027 se habilita más adelante.</span>
+        <!-- Sin fechas fijas acá: el JS las escribe desde BOOKING_LAST_DATE.
+             Así este texto de respaldo no puede quedar desactualizado. -->
+        <div class="font-semibold mb-1" id="bookingWindowTitle">📅 Reservas habilitadas por período</div>
+        <div class="text-sm text-brand-brown/90" id="bookingWindowBody">
+          El calendario te muestra hasta qué fecha se puede reservar.
         </div>
       </div>
 
@@ -597,10 +598,9 @@ const MIN7_UNTIL = null;
     "julio","agosto","septiembre","octubre","noviembre","diciembre"];
 
   function renderBookingWindowBanner(){
-    const monthEl = el("bookingWindowMonth");
-    const dateEl = el("bookingWindowDate");
-    const nextEl = el("bookingWindowNext");
-    if (!monthEl || !dateEl || !nextEl) return;
+    const titleEl = el("bookingWindowTitle");
+    const bodyEl = el("bookingWindowBody");
+    if (!titleEl || !bodyEl) return;
 
     // Si el corte cae en otro año, aclaramos cuál: en agosto de 2026,
     // "hasta enero" se puede leer como el enero que ya pasó.
@@ -608,19 +608,24 @@ const MIN7_UNTIL = null;
     const cutoffYear = BOOKING_CUTOFF.getFullYear();
     const thisYear = new Date().getFullYear();
 
-    monthEl.textContent = (cutoffYear === thisYear)
+    const monthLabel = (cutoffYear === thisYear)
       ? cutoffMonth
       : `${cutoffMonth} de ${cutoffYear}`;
-
-    dateEl.textContent = ymdToDMY(BOOKING_LAST_DATE);
 
     const next = addDays(BOOKING_CUTOFF, 1);
     const nextMonth = MONTH_NAMES[next.getMonth()];
     const nextLabel = nextMonth.charAt(0).toUpperCase() + nextMonth.slice(1);
 
-    nextEl.textContent = next.getFullYear() > BOOKING_CUTOFF.getFullYear()
+    const nextText = next.getFullYear() > cutoffYear
       ? `${nextLabel} de ${next.getFullYear()} en adelante se habilita más adelante.`
       : `${nextLabel} en adelante se habilita más adelante.`;
+
+    titleEl.textContent = `📅 Reservas habilitadas hasta ${monthLabel} (inclusive)`;
+
+    // Los valores salen de constantes del propio archivo, no de entrada del usuario
+    bodyEl.innerHTML =
+      `Por el momento el calendario está habilitado hasta el ` +
+      `<strong>${ymdToDMY(BOOKING_LAST_DATE)}</strong>. ${nextText}`;
   }
 
   // =========================================================
