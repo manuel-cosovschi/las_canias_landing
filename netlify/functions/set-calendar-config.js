@@ -37,6 +37,8 @@ exports.handler = async (event) => {
 
     return json(200, out);
   } catch (e) {
-    return json(500, { ok: false, message: e.message || "Error" });
+    // Un 4xx de n8n es un rechazo de validación, no una falla del servidor
+    const esRechazo = e.status >= 400 && e.status < 500;
+    return json(esRechazo ? 400 : 500, { ok: false, message: e.message || "Error" });
   }
 };

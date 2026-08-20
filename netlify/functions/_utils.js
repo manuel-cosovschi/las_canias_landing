@@ -40,7 +40,13 @@ const callN8n = async (path, { method = "POST", body = null, baseUrl, secret }) 
 
   if (!res.ok) {
     const msg = data?.message || data?.error || "Error llamando a n8n";
-    throw new Error(msg);
+    const err = new Error(msg);
+    // n8n contesta 4xx cuando rechaza por validación ("se solapan los
+    // períodos"). Sin guardar el código, quien llame no puede distinguir eso
+    // de una caída y termina devolviendo 500 por algo que el dueño escribió mal.
+    err.status = res.status;
+    err.payload = data;
+    throw err;
   }
 
   return data;
