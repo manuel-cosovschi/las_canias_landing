@@ -198,6 +198,10 @@
             class="px-4 py-2 rounded-full bg-white/70 border border-brand-beige font-semibold text-sm hover:bg-white transition">
             Precios
           </button>
+          <button id="tabRules"
+            class="px-4 py-2 rounded-full bg-white/70 border border-brand-beige font-semibold text-sm hover:bg-white transition">
+            Reglas
+          </button>
         </div>
 
         <!-- Actions -->
@@ -447,6 +451,115 @@
           Al guardar se reemplaza la lista completa. Los cambios impactan en la página al instante.
         </p>
       </div>
+
+      <!-- REGLAS DEL CALENDARIO -->
+      <div id="viewRules" class="bg-white/75 rounded-2xl shadow-sm border border-brand-beige p-6 hidden">
+        <div class="flex items-start justify-between gap-4 mb-4">
+          <div>
+            <h2 class="serif text-xl sm:text-2xl font-bold">Reglas del calendario</h2>
+            <p class="text-xs text-brand-accent mt-1">
+              Hasta cuándo se puede reservar, cuántas noches mínimo y qué findes se reservan enteros.
+            </p>
+          </div>
+          <span class="text-xs font-semibold px-3 py-1 rounded-full bg-brand-beige/50 border border-brand-beige/80">
+            Calendario
+          </span>
+        </div>
+
+        <div class="p-3 rounded-2xl bg-brand-cream border border-brand-beige text-xs text-brand-brown/90 mb-5">
+          <strong>Ojo:</strong> para que un mes se pueda reservar necesita las dos cosas —
+          estar dentro de la ventana <em>y</em> tener su período de precio cargado en la pestaña Precios.
+        </div>
+
+        <!-- Ventana -->
+        <h3 class="font-semibold mb-2">Ventana de reservas</h3>
+        <div class="grid sm:grid-cols-3 gap-3 mb-2">
+          <label class="block">
+            <span class="text-xs text-brand-accent">Desde (opcional)</span>
+            <input id="ruleFirstDate" type="date"
+              class="mt-1 w-full px-3 py-2 rounded-2xl bg-white border border-brand-beige" />
+          </label>
+          <label class="block">
+            <span class="text-xs text-brand-accent">Última noche reservable</span>
+            <input id="ruleLastDate" type="date"
+              class="mt-1 w-full px-3 py-2 rounded-2xl bg-white border border-brand-beige" />
+          </label>
+          <label class="block">
+            <span class="text-xs text-brand-accent">Noches mínimo (general)</span>
+            <input id="ruleMinNights" type="number" min="1" max="30" step="1"
+              class="mt-1 w-full px-3 py-2 rounded-2xl bg-white border border-brand-beige" />
+          </label>
+        </div>
+        <p class="text-xs text-brand-accent mb-6">
+          Dejá “Desde” vacío para habilitar desde hoy. La última noche es inclusive: el huésped
+          se puede ir la mañana siguiente.
+        </p>
+
+        <!-- Findes fijos -->
+        <h3 class="font-semibold mb-1">Findes que se reservan enteros</h3>
+        <p class="text-xs text-brand-accent mb-2">
+          Sólo se puede entrar el día de check-in y salir el de check-out, ni antes ni después.
+        </p>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm border-collapse">
+            <thead>
+              <tr class="border-b border-brand-beige text-left">
+                <th class="py-2 pr-2 font-semibold">Check-in</th>
+                <th class="py-2 pr-2 font-semibold">Check-out</th>
+                <th class="py-2 pr-2 font-semibold">Nombre</th>
+                <th class="py-2 font-semibold"></th>
+              </tr>
+            </thead>
+            <tbody id="windowsBody"></tbody>
+          </table>
+        </div>
+        <button id="btnAddWindow"
+          class="mt-3 mb-6 py-2 px-4 rounded-2xl bg-white/80 border border-brand-beige font-semibold hover:bg-brand-beige/30 transition">
+          + Agregar finde fijo
+        </button>
+
+        <!-- Mínimos por fecha -->
+        <h3 class="font-semibold mb-1">Mínimos especiales por fecha</h3>
+        <p class="text-xs text-brand-accent mb-2">
+          Para temporada alta o feriados largos. Alcanza con que la estadía toque el tramo.
+        </p>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm border-collapse">
+            <thead>
+              <tr class="border-b border-brand-beige text-left">
+                <th class="py-2 pr-2 font-semibold">Desde</th>
+                <th class="py-2 pr-2 font-semibold">Hasta</th>
+                <th class="py-2 pr-2 font-semibold">Noches</th>
+                <th class="py-2 pr-2 font-semibold">Nombre</th>
+                <th class="py-2 font-semibold"></th>
+              </tr>
+            </thead>
+            <tbody id="minRulesBody"></tbody>
+          </table>
+        </div>
+        <button id="btnAddMinRule"
+          class="mt-3 py-2 px-4 rounded-2xl bg-white/80 border border-brand-beige font-semibold hover:bg-brand-beige/30 transition">
+          + Agregar mínimo
+        </button>
+
+        <div id="rulesWarning" class="hidden mt-4 p-3 rounded-2xl bg-red-50 border border-red-200 text-sm text-red-800"></div>
+
+        <div class="mt-4">
+          <button id="btnReloadRules"
+            class="py-2 px-4 rounded-2xl bg-white/80 border border-brand-beige font-semibold hover:bg-brand-beige/30 transition">
+            Descartar cambios
+          </button>
+        </div>
+
+        <button id="btnSaveRules"
+          class="mt-5 w-full py-3 rounded-2xl bg-brand-brown text-brand-cream font-semibold hover:opacity-90 transition disabled:opacity-40 disabled:cursor-not-allowed">
+          Guardar reglas
+        </button>
+
+        <p class="mt-3 text-xs text-brand-accent">
+          Al guardar se reemplazan todas las reglas. Los cambios impactan en la página al instante.
+        </p>
+      </div>
     </section>
   </main>
 
@@ -617,6 +730,19 @@
   const btnSavePeriods = el("btnSavePeriods");
   const btnReloadPeriods = el("btnReloadPeriods");
 
+  const tabRules = el("tabRules");
+  const viewRules = el("viewRules");
+  const ruleFirstDate = el("ruleFirstDate");
+  const ruleLastDate = el("ruleLastDate");
+  const ruleMinNights = el("ruleMinNights");
+  const windowsBody = el("windowsBody");
+  const minRulesBody = el("minRulesBody");
+  const rulesWarning = el("rulesWarning");
+  const btnAddWindow = el("btnAddWindow");
+  const btnAddMinRule = el("btnAddMinRule");
+  const btnSaveRules = el("btnSaveRules");
+  const btnReloadRules = el("btnReloadRules");
+
   const confirmedList = el("confirmedList");
   const confirmedCount = el("confirmedCount");
   const confirmedSearchInput = el("confirmedSearchInput");
@@ -734,6 +860,8 @@
   const EP_OWNER_UNBLOCKS = "/.netlify/functions/owner-unblocks";
   const EP_PRICE_PERIODS = "/api/price-periods";
   const EP_SET_PRICE_PERIODS = "/.netlify/functions/set-price-periods";
+  const EP_CALENDAR_CONFIG = "/api/calendar-config";
+  const EP_SET_CALENDAR_CONFIG = "/.netlify/functions/set-calendar-config";
 
   function setStatus(msg) { statusBox.textContent = msg; }
 
@@ -890,12 +1018,14 @@
     const isConfirmed = which === "confirmed";
     const isCalendar = which === "calendar";
     const isPrices = which === "prices";
+    const isRules = which === "rules";
 
     viewBlock.classList.toggle("hidden", !isBlock);
     viewTransfers.classList.toggle("hidden", !isTransfers);
     viewConfirmed.classList.toggle("hidden", !isConfirmed);
     viewCalendar.classList.toggle("hidden", !isCalendar);
     viewPrices.classList.toggle("hidden", !isPrices);
+    viewRules.classList.toggle("hidden", !isRules);
 
     // Refresh button solo para TRANSFERS (pendientes)
     btnRefresh.classList.toggle("hidden", !isTransfers);
@@ -915,6 +1045,9 @@
 
     tabPrices.classList.toggle("bg-brand-beige/40", isPrices);
     tabPrices.classList.toggle("bg-white/70", !isPrices);
+
+    tabRules.classList.toggle("bg-brand-beige/40", isRules);
+    tabRules.classList.toggle("bg-white/70", !isRules);
 
     if (!isTransfers) stopCountdownTicker();
 
@@ -1113,6 +1246,229 @@
       showToast(e.message || "Error", "err");
     } finally {
       validatePeriodsUI();
+    }
+  };
+
+  /* =====================
+     REGLAS DEL CALENDARIO
+     Ventana de reservas, mínimo general, findes fijos y mínimos por fecha.
+     Las filas se arman con createElement y .value: el nombre lo escribe el
+     dueño y por innerHTML se interpretaría como HTML.
+  ===================== */
+  const ES_FECHA = /^\d{4}-\d{2}-\d{2}$/;
+
+  // Arma una fila de tabla a partir de una lista de campos
+  function addRuleRow(tbody, campos, valores, titleDel) {
+    const tr = document.createElement("tr");
+    tr.className = "border-b border-brand-beige/60";
+
+    for (const campo of campos) {
+      const td = document.createElement("td");
+      td.className = "py-2 pr-2";
+      const inp = document.createElement("input");
+      inp.type = campo.type;
+      inp.value = valores?.[campo.field] ?? "";
+      inp.dataset.field = campo.field;
+      if (campo.placeholder) inp.placeholder = campo.placeholder;
+      if (campo.type === "number") { inp.min = "1"; inp.max = "30"; inp.step = "1"; }
+      inp.className = "w-full border border-brand-beige rounded-xl p-2 bg-white/80 " + (campo.cls || "");
+      inp.addEventListener("input", validateRulesUI);
+      td.appendChild(inp);
+      tr.appendChild(td);
+    }
+
+    const tdDel = document.createElement("td");
+    tdDel.className = "py-2";
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.textContent = "✕";
+    btn.title = titleDel;
+    btn.className = "px-3 py-2 rounded-xl border border-brand-beige hover:bg-red-50";
+    btn.onclick = () => { tr.remove(); validateRulesUI(); };
+    tdDel.appendChild(btn);
+    tr.appendChild(tdDel);
+
+    tbody.appendChild(tr);
+    return tr;
+  }
+
+  const CAMPOS_FINDE = [
+    { type: "date", field: "checkin", cls: "min-w-[9rem]" },
+    { type: "date", field: "checkout", cls: "min-w-[9rem]" },
+    { type: "text", field: "label", cls: "min-w-[12rem]", placeholder: "Ej: Finde largo de octubre" },
+  ];
+
+  const CAMPOS_MINIMO = [
+    { type: "date", field: "from", cls: "min-w-[9rem]" },
+    { type: "date", field: "to", cls: "min-w-[9rem]" },
+    { type: "number", field: "nights", cls: "min-w-[5rem]" },
+    { type: "text", field: "label", cls: "min-w-[12rem]", placeholder: "Ej: Semana Santa" },
+  ];
+
+  const addWindowRow = (w) => addRuleRow(windowsBody, CAMPOS_FINDE, w, "Eliminar finde fijo");
+  const addMinRuleRow = (r) => addRuleRow(minRulesBody, CAMPOS_MINIMO, r, "Eliminar mínimo");
+
+  function readRowsFromUI(tbody, campos) {
+    return Array.from(tbody.querySelectorAll("tr")).map(tr => {
+      const fila = {};
+      for (const campo of campos) {
+        const v = tr.querySelector('[data-field="' + campo.field + '"]')?.value ?? "";
+        fila[campo.field] = campo.type === "number" ? Number(v) : String(v).trim();
+      }
+      return fila;
+    });
+  }
+
+  function readRulesFromUI() {
+    return {
+      first_date: ruleFirstDate.value || "",
+      last_date: ruleLastDate.value || "",
+      default_min_nights: Number(ruleMinNights.value),
+      fixed_windows: readRowsFromUI(windowsBody, CAMPOS_FINDE),
+      min_nights_rules: readRowsFromUI(minRulesBody, CAMPOS_MINIMO),
+    };
+  }
+
+  // Mismas reglas que valida n8n antes de escribir, para avisar acá primero
+  function validateRules(cfg) {
+    if (!ES_FECHA.test(cfg.last_date)) {
+      return "Falta la última fecha reservable.";
+    }
+    if (cfg.first_date && !ES_FECHA.test(cfg.first_date)) {
+      return "La fecha de inicio no es válida.";
+    }
+    if (cfg.first_date && cfg.first_date > cfg.last_date) {
+      return "La fecha de inicio es posterior a la última noche reservable.";
+    }
+    if (!Number.isInteger(cfg.default_min_nights) || cfg.default_min_nights < 1 || cfg.default_min_nights > 30) {
+      return "El mínimo de noches general tiene que estar entre 1 y 30.";
+    }
+
+    for (let i = 0; i < cfg.fixed_windows.length; i++) {
+      const w = cfg.fixed_windows[i];
+      const n = i + 1;
+      if (!ES_FECHA.test(w.checkin) || !ES_FECHA.test(w.checkout)) {
+        return "Finde fijo " + n + ": faltan las fechas.";
+      }
+      if (w.checkin >= w.checkout) {
+        return "Finde fijo " + n + ": el check-out tiene que ser posterior al check-in.";
+      }
+    }
+
+    const findes = cfg.fixed_windows.slice().sort((a, b) => (a.checkin < b.checkin ? -1 : a.checkin > b.checkin ? 1 : 0));
+    for (let i = 1; i < findes.length; i++) {
+      if (findes[i].checkin < findes[i - 1].checkout) {
+        const a = findes[i - 1].label || findes[i - 1].checkin;
+        const b = findes[i].label || findes[i].checkin;
+        return 'Se superponen los findes "' + a + '" y "' + b + '".';
+      }
+    }
+
+    for (let i = 0; i < cfg.min_nights_rules.length; i++) {
+      const r = cfg.min_nights_rules[i];
+      const n = i + 1;
+      if (!ES_FECHA.test(r.from) || !ES_FECHA.test(r.to)) {
+        return "Mínimo " + n + ": faltan las fechas.";
+      }
+      if (r.from > r.to) {
+        return "Mínimo " + n + ": la fecha de inicio es posterior a la de fin.";
+      }
+      if (!Number.isInteger(r.nights) || r.nights < 1 || r.nights > 30) {
+        return "Mínimo " + n + ": las noches tienen que estar entre 1 y 30.";
+      }
+    }
+
+    const minimos = cfg.min_nights_rules.slice().sort((a, b) => (a.from < b.from ? -1 : a.from > b.from ? 1 : 0));
+    for (let i = 1; i < minimos.length; i++) {
+      if (minimos[i].from <= minimos[i - 1].to) {
+        const a = minimos[i - 1].label || minimos[i - 1].from;
+        const b = minimos[i].label || minimos[i].from;
+        return 'Se superponen los mínimos "' + a + '" y "' + b + '".';
+      }
+    }
+
+    return null;
+  }
+
+  function validateRulesUI() {
+    const err = validateRules(readRulesFromUI());
+    if (err) {
+      rulesWarning.textContent = err;
+      rulesWarning.classList.remove("hidden");
+      btnSaveRules.disabled = true;
+    } else {
+      rulesWarning.classList.add("hidden");
+      btnSaveRules.disabled = false;
+    }
+    return !err;
+  }
+
+  async function loadRulesIntoForm() {
+    const res = await fetch(EP_CALENDAR_CONFIG, { method: "GET" });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || data.ok === false) {
+      throw new Error(data.message || "No se pudieron cargar las reglas");
+    }
+
+    const cfg = data.config || {};
+    ruleFirstDate.value = cfg.first_date || "";
+    ruleLastDate.value = cfg.last_date || "";
+    ruleMinNights.value = cfg.default_min_nights ?? "";
+
+    windowsBody.innerHTML = "";
+    (Array.isArray(cfg.fixed_windows) ? cfg.fixed_windows : []).forEach(addWindowRow);
+
+    minRulesBody.innerHTML = "";
+    (Array.isArray(cfg.min_nights_rules) ? cfg.min_nights_rules : []).forEach(addMinRuleRow);
+
+    validateRulesUI();
+    return cfg;
+  }
+
+  tabRules.onclick = async () => {
+    showTab("rules");
+    try {
+      setStatus("Cargando reglas...");
+      const cfg = await loadRulesIntoForm();
+      setStatus("✅ Reservas habilitadas hasta el " + (cfg.last_date || "?") + ".");
+    } catch (e) {
+      setStatus("❌ " + e.message);
+    }
+  };
+
+  btnAddWindow.onclick = () => { addWindowRow(); validateRulesUI(); };
+  btnAddMinRule.onclick = () => { addMinRuleRow(); validateRulesUI(); };
+
+  ruleFirstDate.addEventListener("input", validateRulesUI);
+  ruleLastDate.addEventListener("input", validateRulesUI);
+  ruleMinNights.addEventListener("input", validateRulesUI);
+
+  btnReloadRules.onclick = async () => {
+    try {
+      setStatus("Recargando reglas...");
+      await loadRulesIntoForm();
+      setStatus("✅ Se descartaron los cambios.");
+    } catch (e) {
+      setStatus("❌ " + e.message);
+    }
+  };
+
+  btnSaveRules.onclick = async () => {
+    if (!validateRulesUI()) return;
+
+    btnSaveRules.disabled = true;
+    try {
+      setStatus("Guardando reglas...");
+      const config = readRulesFromUI();
+      await apiFetch(EP_SET_CALENDAR_CONFIG, { method: "POST", body: { config } });
+      setStatus("✅ Reglas guardadas. Se puede reservar hasta el " + config.last_date + ".");
+      showToast("Reglas guardadas ✅", "ok");
+      await loadRulesIntoForm();
+    } catch (e) {
+      setStatus("❌ " + e.message);
+      showToast(e.message || "Error", "err");
+    } finally {
+      validateRulesUI();
     }
   };
 
