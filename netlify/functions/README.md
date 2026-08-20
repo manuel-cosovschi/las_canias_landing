@@ -30,6 +30,8 @@ Mezclarlos da 401 sin ninguna pista de por qué.
 | `N8N_RESERVATION_STATUS_PATH` | `reservation-status` |
 | `N8N_GET_PRICE_PERIODS_PATH` | `price-periods` (opcional, tiene default) |
 | `N8N_SET_PRICE_PERIODS_PATH` | `set-price-periods` (opcional, tiene default) |
+| `N8N_GET_CALENDAR_CONFIG_PATH` | `calendar-config` (opcional, tiene default) |
+| `N8N_SET_CALENDAR_CONFIG_PATH` | `set-calendar-config` (opcional, tiene default) |
 | `N8N_OWNER_GET_PRICES_PATH` | `get-prices`, `public-prices` (tarifa base, ya sin uso) |
 | `N8N_OWNER_SET_PRICES_PATH` | `set-prices` (ya sin uso) |
 | `N8N_OWNER_LIST_PENDING_PATH` | `list-pending` |
@@ -97,3 +99,36 @@ cargarle su período.
 
 La tarifa base vieja (`get-prices` / `set-prices` / `public-prices`) quedó sin
 uso: la página de reservas ya no la lee.
+
+## Reglas del calendario
+
+Igual que los precios, las define el dueño desde el panel (pestaña *Reglas*).
+Viven en la data table `config_calendario` de n8n, se leen con `calendar-config`
+(pública) y se escriben con `set-calendar-config` (requiere clave de dueño).
+
+Son cuatro cosas, en una fila por regla; la columna `tipo` dice cómo leer las
+demás:
+
+| `tipo` | Qué guarda |
+|---|---|
+| `ventana` | `desde` / `hasta`: primera y última **noche** reservable. `desde` vacío = desde hoy |
+| `minimo_default` | `noches`: el mínimo general |
+| `finde_fijo` | `desde` = check-in, `hasta` = check-out; se reserva entero o nada |
+| `minimo` | `desde` / `hasta` inclusivos, `noches`: mínimo de ese tramo |
+
+Reglas que valida n8n antes de guardar:
+
+- fechas `AAAA-MM-DD`; en los findes el check-out tiene que ser posterior al
+  check-in, y en los mínimos `desde <= hasta`
+- mínimos entre 1 y 30 noches
+- hasta 50 findes y 50 mínimos
+- **sin superposiciones** entre findes ni entre mínimos: gana el primero que
+  matchea, así que un cruce aplicaría la regla equivocada sin avisar
+
+Si estas reglas no se pueden leer, **la página no deja reservar nada** y lo
+dice en pantalla — mismo criterio que con los precios. Inventar una ventana o
+un mínimo abriría fechas que los dueños no habilitaron.
+
+Ojo: habilitar un mes nuevo son **dos** pasos — correr la ventana en *Reglas* y
+cargarle su período en *Precios*. Con uno solo el mes sigue sin poder
+reservarse.

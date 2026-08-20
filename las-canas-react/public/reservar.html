@@ -172,8 +172,8 @@
 
       <!-- AVISO -->
       <div id="bookingWindowBanner" class="mt-4 p-4 rounded-2xl bg-white/70 border border-brand-beige">
-        <!-- Sin fechas fijas acá: el JS las escribe desde BOOKING_LAST_DATE.
-             Así este texto de respaldo no puede quedar desactualizado. -->
+        <!-- Sin fechas fijas acá: el JS las escribe con las reglas que vienen
+             del backend. Así este texto de respaldo no queda desactualizado. -->
         <div class="font-semibold mb-1" id="bookingWindowTitle">📅 Reservas habilitadas por período</div>
         <div class="text-sm text-brand-brown/90" id="bookingWindowBody">
           El calendario te muestra hasta qué fecha se puede reservar.
@@ -411,39 +411,7 @@
   const CREATE_RESERVATION_API = "/api/create-reservation";
   const SUBMIT_PROOF_API = "/api/submit-proof";
   const PRICE_PERIODS_API = "/api/price-periods";
-
-  // Disponibilidad por casa:
-  // - Todas desde 01/03
-  // - LC5 desde 07/03
-  const FIRST_ALLOWED_BY_HOUSE = {
-    LC1: "2026-03-01",
-    LC2: "2026-03-01",
-    LC3: "2026-03-01",
-    LC4: "2026-03-01",
-    LC5: "2026-03-07",
-  };
-
-// Reglas de mínimos
-// Desde ahora el mínimo general es 2 noches
-const MIN7_UNTIL = null;
-
-  // Fechas fijas / findes que “se reserva así” (exacto)
-  const FIXED_WINDOWS = [
-    { checkin:"2026-04-30", checkout:"2026-05-03", label:"Finde fijo (30/04 a 03/05)" },
-    { checkin:"2026-05-22", checkout:"2026-05-25", label:"Finde fijo (22/05 a 25/05)" },
-    { checkin:"2026-06-12", checkout:"2026-06-15", label:"Finde fijo (12/06 a 15/06)" },
-    { checkin:"2026-06-19", checkout:"2026-06-22", label:"Finde fijo (19/06 a 22/06)" },
-    { checkin:"2026-07-08", checkout:"2026-07-12", label:"Finde fijo (08/07 a 12/07)" },
-    { checkin:"2026-08-14", checkout:"2026-08-17", label:"Finde fijo (14/08 a 17/08)" },
-    { checkin:"2026-10-09", checkout:"2026-10-12", label:"Finde fijo (09/10 a 12/10)" },
-    { checkin:"2026-11-20", checkout:"2026-11-23", label:"Finde fijo (20/11 a 23/11)" },
-    { checkin:"2026-12-04", checkout:"2026-12-08", label:"Finde fijo (04/12 a 08/12)" },
-  ];
-
-  const DEFAULT_MIN_NIGHTS = 2;
-  const EASTER_MIN_NIGHTS = 4;
-  const EASTER_START = "2026-04-01";
-  const EASTER_END = "2026-04-05"; // inclusive
+  const CALENDAR_CONFIG_API = "/api/calendar-config";
 
   const HOUSE_RULES = {
     LC1:{max:4,hint:"Máximo 4 personas, ideal 2 adultos y 2 niños, ideal familiar."},
@@ -517,7 +485,25 @@ const MIN7_UNTIL = null;
     proofMsg.textContent = "";
   }
 
-  function setStatus(msg){ statusBox.textContent = msg; }
+  // Precios y reglas del calendario vienen del backend. Si alguno no llegó, no
+  // hay reserva posible y los pasos del formulario ("2) Elegí cuántas
+  // personas...") sólo tapan el aviso: por eso el error gana hasta que se
+  // recargue la página con los datos.
+  let backendLoadAttempted = false;
+
+  function loadFailureMessage(){
+    if (!backendLoadAttempted) return null;
+
+    const sinTarifas = !Array.isArray(PRICE_PERIODS);
+    const sinCalendario = !CALENDAR;
+
+    if (sinTarifas && sinCalendario) return "⚠️ No se pudo cargar la información de reservas. Intentá recargar la página.";
+    if (sinTarifas) return "⚠️ No se pudieron cargar las tarifas. Intentá recargar la página.";
+    if (sinCalendario) return "⚠️ No se pudieron cargar las fechas habilitadas. Intentá recargar la página.";
+    return null;
+  }
+
+  function setStatus(msg){ statusBox.textContent = loadFailureMessage() || msg; }
 
   function parseYMD(ymd){
     // Tolera ISO con hora ("2026-09-10T00:00:00Z") quedándose con la parte de fecha
@@ -573,27 +559,128 @@ const MIN7_UNTIL = null;
   }
 
   // =========================================================
-  // BLOQUEO: reservas SOLO hasta ENERO 2027 inclusive
+  // REGLAS DEL CALENDARIO
+  // Hasta cuándo se puede reservar, el mínimo de noches, los findes que se
+  // reservan enteros y los mínimos especiales por fecha. Todo lo cargan los
+  // dueños desde el panel de admin y se lee del backend.
+  // Sin reglas no se reserva nada: adivinar una ventana o un mínimo abriría
+  // fechas que los dueños no habilitaron.
   // =========================================================
-  // Última noche reservable. El check-out puede ser la mañana siguiente,
-  // así la noche del 31/01 también queda disponible.
-  const BOOKING_LAST_DATE = "2027-01-31";
-  const BOOKING_CUTOFF = parseYMD(BOOKING_LAST_DATE);
-  const BOOKING_CHECKOUT_CUTOFF = addDays(BOOKING_CUTOFF, 1);
+  let CALENDAR = null; // null = todavía no se cargaron
+
+  function normalizeFixedWindow(w){
+    if (!w || typeof w !== "object") return null;
+
+    const checkin = String(w.checkin || "").slice(0,10);
+    const checkout = String(w.checkout || "").slice(0,10);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(checkin) || !/^\d{4}-\d{2}-\d{2}$/.test(checkout)) return null;
+    if (checkin >= checkout) return null;
+
+    return {
+      checkin, checkout,
+      label: String(w.label || ""),
+      start: parseYMD(checkin),
+      end: parseYMD(checkout),
+    };
+  }
+
+  function normalizeMinRule(r){
+    if (!r || typeof r !== "object") return null;
+
+    const from = String(r.from || "").slice(0,10);
+    const to = String(r.to || "").slice(0,10);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(from) || !/^\d{4}-\d{2}-\d{2}$/.test(to)) return null;
+    if (from > to) return null;
+
+    const nights = Number(r.nights);
+    if (!Number.isInteger(nights) || nights < 1 || nights > 30) return null;
+
+    return {
+      from, to, nights,
+      label: String(r.label || ""),
+      start: parseYMD(from),
+      endExclusive: addDays(parseYMD(to), 1),
+    };
+  }
+
+  function normalizeCalendarConfig(cfg){
+    if (!cfg || typeof cfg !== "object") return null;
+
+    const lastDate = String(cfg.last_date || "").slice(0,10);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(lastDate)) return null;
+
+    const firstDate = String(cfg.first_date || "").slice(0,10);
+    if (firstDate && !/^\d{4}-\d{2}-\d{2}$/.test(firstDate)) return null;
+
+    const minNights = Number(cfg.default_min_nights);
+    if (!Number.isInteger(minNights) || minNights < 1 || minNights > 30) return null;
+
+    // Una regla ilegible no se ignora: ese finde quedaría suelto o ese tramo
+    // perdería su mínimo, y nadie se enteraría hasta ver la reserva hecha.
+    const fixedWindows = (Array.isArray(cfg.fixed_windows) ? cfg.fixed_windows : []).map(normalizeFixedWindow);
+    if (fixedWindows.some(w => w === null)) return null;
+
+    const minRules = (Array.isArray(cfg.min_nights_rules) ? cfg.min_nights_rules : []).map(normalizeMinRule);
+    if (minRules.some(r => r === null)) return null;
+
+    const cutoff = parseYMD(lastDate);
+
+    return {
+      firstDate,
+      lastDate,
+      cutoff,
+      // El check-out puede ser la mañana siguiente, así la última noche
+      // habilitada también se puede reservar.
+      checkoutCutoff: addDays(cutoff, 1),
+      minNights,
+      fixedWindows,
+      minRules,
+    };
+  }
+
+  async function loadCalendarConfig(){
+    try {
+      const res = await fetch(CALENDAR_CONFIG_API, { method: "GET" });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+      const data = await res.json().catch(()=> null);
+      if (!data || data.ok === false){
+        throw new Error(data?.message || "Respuesta del calendario inesperada");
+      }
+
+      const parsed = normalizeCalendarConfig(data.config);
+      if (!parsed) throw new Error("Reglas del calendario ilegibles");
+
+      CALENDAR = parsed;
+
+      // refrescar UI: el calendario y los avisos dependen de estas reglas
+      renderBookingWindowBanner();
+      refreshPickers();
+      updateMinBanner();
+      updateContinueState();
+      return true;
+    } catch (e) {
+      console.error("loadCalendarConfig:", e);
+      CALENDAR = null;
+      return false;
+    }
+  }
 
   // Para check-in / noches de la estadía
   function isAfterBookingWindow(date){
+    if (!CALENDAR) return true;
     const d0 = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-    return d0 > BOOKING_CUTOFF;
+    return d0 > CALENDAR.cutoff;
   }
 
   // Para check-out (se permite el día siguiente a la última noche)
   function isAfterCheckoutWindow(date){
+    if (!CALENDAR) return true;
     const d0 = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-    return d0 > BOOKING_CHECKOUT_CUTOFF;
+    return d0 > CALENDAR.checkoutCutoff;
   }
 
-  // El aviso se arma desde BOOKING_LAST_DATE para que no quede desactualizado
+  // El aviso se arma desde la fecha de corte para que no quede desactualizado
   const MONTH_NAMES = ["enero","febrero","marzo","abril","mayo","junio",
     "julio","agosto","septiembre","octubre","noviembre","diciembre"];
 
@@ -602,17 +689,23 @@ const MIN7_UNTIL = null;
     const bodyEl = el("bookingWindowBody");
     if (!titleEl || !bodyEl) return;
 
+    if (!CALENDAR){
+      titleEl.textContent = "📅 Calendario no disponible";
+      bodyEl.textContent = "No pudimos cargar las fechas habilitadas. Probá recargar la página o escribinos por WhatsApp.";
+      return;
+    }
+
     // Si el corte cae en otro año, aclaramos cuál: en agosto de 2026,
     // "hasta enero" se puede leer como el enero que ya pasó.
-    const cutoffMonth = MONTH_NAMES[BOOKING_CUTOFF.getMonth()];
-    const cutoffYear = BOOKING_CUTOFF.getFullYear();
+    const cutoffMonth = MONTH_NAMES[CALENDAR.cutoff.getMonth()];
+    const cutoffYear = CALENDAR.cutoff.getFullYear();
     const thisYear = new Date().getFullYear();
 
     const monthLabel = (cutoffYear === thisYear)
       ? cutoffMonth
       : `${cutoffMonth} de ${cutoffYear}`;
 
-    const next = addDays(BOOKING_CUTOFF, 1);
+    const next = addDays(CALENDAR.cutoff, 1);
     const nextMonth = MONTH_NAMES[next.getMonth()];
     const nextLabel = nextMonth.charAt(0).toUpperCase() + nextMonth.slice(1);
 
@@ -622,10 +715,10 @@ const MIN7_UNTIL = null;
 
     titleEl.textContent = `📅 Reservas habilitadas hasta ${monthLabel} (inclusive)`;
 
-    // Los valores salen de constantes del propio archivo, no de entrada del usuario
+    // La fecha ya pasó por normalizeCalendarConfig, así que es AAAA-MM-DD
     bodyEl.innerHTML =
       `Por el momento el calendario está habilitado hasta el ` +
-      `<strong>${ymdToDMY(BOOKING_LAST_DATE)}</strong>. ${nextText}`;
+      `<strong>${ymdToDMY(CALENDAR.lastDate)}</strong>. ${nextText}`;
   }
 
   // =========================================================
@@ -794,30 +887,30 @@ async function loadPricePeriods(){
     if (sumDeposit) sumDeposit.textContent = fmtARS(calc.deposit);
   }
 
+  // Vacía si todavía no cargaron las reglas: quien decide si se puede reservar
+  // es isAfterBookingWindow, que sin CALENDAR bloquea todo.
+  function fixedWindows(){
+    return CALENDAR ? CALENDAR.fixedWindows : [];
+  }
+
   function getFirstAllowedCheckin(){
-    return FIRST_ALLOWED_BY_HOUSE[house.value] || "2026-03-01";
+    return CALENDAR?.firstDate || fmtYMD(new Date());
   }
 
   function getFixedWindowForCheckin(ciYmd){
-    return FIXED_WINDOWS.find(w => w.checkin === ciYmd) || null;
+    return fixedWindows().find(w => w.checkin === ciYmd) || null;
   }
 
   function getFixedWindowOverlapping(ciYmd, coYmd){
     if (!ciYmd || !coYmd) return null;
     const ci = parseYMD(ciYmd);
     const co = parseYMD(coYmd);
-    return FIXED_WINDOWS.find(w => {
-      const wStart = parseYMD(w.checkin);
-      const wEnd = parseYMD(w.checkout);
-      return overlapsStay(ci, co, wStart, wEnd);
-    }) || null;
+    return fixedWindows().find(w => overlapsStay(ci, co, w.start, w.end)) || null;
   }
 
   function isDateInsideAnyFixedWindow(date){
-    for (const w of FIXED_WINDOWS){
-      const s = parseYMD(w.checkin);
-      const e = parseYMD(w.checkout);
-      if (date >= s && date < e) return w;
+    for (const w of fixedWindows()){
+      if (date >= w.start && date < w.end) return w;
     }
     return null;
   }
@@ -825,8 +918,28 @@ async function loadPricePeriods(){
     const [y,m,d] = String(ymd).split("-");
     return `${d}/${m}/${y}`;
   }
+  // Mínimo especial que aplica a estas fechas, si hay alguno cargado.
+  // Alcanza con tocar el tramo: quien entra el último día de un fin de semana
+  // largo se lleva el mismo mínimo que quien entra el primero.
+  function getMinNightsRuleFor(ciYmd, coYmd){
+    if (!CALENDAR) return null;
+
+    const ci = parseYMD(ciYmd);
+    const co = coYmd ? parseYMD(coYmd) : null;
+
+    for (const r of CALENDAR.minRules){
+      if (co){
+        if (overlapsStay(ci, co, r.start, r.endExclusive)) return r;
+      } else if (ci >= r.start && ci < r.endExclusive){
+        return r;
+      }
+    }
+    return null;
+  }
+
   function getMinRule(ciYmd, coYmd){
     if (!ciYmd) return { type:"none", min: null, label:"-" };
+    if (!CALENDAR) return { type:"none", min: null, label:"-" };
 
     if (coYmd){
       const overlap = getFixedWindowOverlapping(ciYmd, coYmd);
@@ -851,31 +964,17 @@ async function loadPricePeriods(){
       return { type:"fixed", min: nights, fixed, label: `Fechas fijas: ${fixed.checkin} → ${fixed.checkout} (${nights} noches)` };
     }
 
-    const easterStart = parseYMD(EASTER_START);
-      const easterEndExclusive = addDays(parseYMD(EASTER_END), 1);
+    const especial = getMinNightsRuleFor(ciYmd, coYmd);
+    if (especial){
+      const motivo = especial.label ? ` por ${especial.label}` : "";
+      return {
+        type: "special_min",
+        min: especial.nights,
+        label: `${especial.nights} noches mínimo${motivo} (${ymdToDMY(especial.from)} → ${ymdToDMY(especial.to)})`
+      };
+    }
 
-      const ci = parseYMD(ciYmd);
-      const co = coYmd ? parseYMD(coYmd) : null;
-
-      // si ya eligió check-in y check-out, aplicamos la regla si la estadía toca Semana Santa
-      if (co && overlapsStay(ci, co, easterStart, easterEndExclusive)) {
-        return {
-          type: "easter",
-          min: EASTER_MIN_NIGHTS,
-          label: `${EASTER_MIN_NIGHTS} noches mínimo por Semana Santa (${ymdToDMY(EASTER_START)} → ${ymdToDMY(EASTER_END)})`
-        };
-      }
-
-      // si todavía solo eligió check-in, también aplicamos la regla si el check-in cae dentro de Semana Santa
-      if (ci >= easterStart && ci < easterEndExclusive) {
-        return {
-          type: "easter",
-          min: EASTER_MIN_NIGHTS,
-          label: `${EASTER_MIN_NIGHTS} noches mínimo por Semana Santa (${ymdToDMY(EASTER_START)} → ${ymdToDMY(EASTER_END)})`
-        };
-      }
-
-      return { type:"min2", min: DEFAULT_MIN_NIGHTS, label: `${DEFAULT_MIN_NIGHTS} noches mínimo` };
+    return { type:"min_default", min: CALENDAR.minNights, label: `${CALENDAR.minNights} noches mínimo` };
   }
 
   function updateMinBanner(){
@@ -1163,9 +1262,10 @@ async function loadPricePeriods(){
     guests.placeholder = `1 a ${rule.max}`;
     guests.max = rule.max;
 
-    // Solo avisamos "disponible desde" si esa fecha todavía no pasó
-    const firstAllowedYmd = getFirstAllowedCheckin();
-    const hintText = isPast(parseYMD(firstAllowedYmd))
+    // Solo avisamos "disponible desde" si los dueños fijaron una fecha de
+    // apertura que todavía no llegó: "disponible desde hoy" no dice nada.
+    const firstAllowedYmd = CALENDAR?.firstDate || "";
+    const hintText = (!firstAllowedYmd || isPast(parseYMD(firstAllowedYmd)))
       ? rule.hint
       : `${rule.hint} Disponible desde ${ymdToDMY(firstAllowedYmd)}.`;
 
@@ -1197,12 +1297,19 @@ async function loadPricePeriods(){
       return;
     }
 
+    // Sin reglas del calendario tampoco: no sabemos qué fechas están habilitadas
+    if (!CALENDAR){
+      continueBtn.disabled = true;
+      setStatus("⚠️ No se pudieron cargar las fechas habilitadas. Intentá recargar la página.");
+      return;
+    }
+
     const ci = parseYMD(checkin.value);
     const co = parseYMD(checkout.value);
 
     if (isAfterBookingWindow(ci) || isAfterCheckoutWindow(co)){
       continueBtn.disabled = true;
-      setStatus(`Por el momento solo se puede reservar hasta el ${ymdToDMY(BOOKING_LAST_DATE)}.`);
+      setStatus(`Por el momento solo se puede reservar hasta el ${ymdToDMY(CALENDAR.lastDate)}.`);
       return;
     }
 
@@ -1751,13 +1858,16 @@ async function loadPricePeriods(){
     updateMinBanner();
     updateContinueState();
 
-    // cargar precios del backend y luego pintar UI
-    loadPricePeriods().then((ok)=>{
-      if (!ok) {
-        setStatus("⚠️ No se pudieron cargar las tarifas. Intentá recargar la página.");
-      }
+    // Precios y reglas del calendario salen del backend: hasta que lleguen los
+    // dos, la página no deja reservar. Van en paralelo porque no dependen
+    // entre sí, y cada uno repinta lo suyo al terminar.
+    Promise.all([loadPricePeriods(), loadCalendarConfig()]).then(()=>{
+      backendLoadAttempted = true;
       updatePriceUI();
       updateContinueState();
+
+      const falla = loadFailureMessage();
+      if (falla) setStatus(falla);
     });
 </script>
 
