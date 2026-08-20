@@ -6,8 +6,11 @@
 // Nunca nombre, email, teléfono ni DNI, aunque n8n los mande en la respuesta.
 const { json, callN8n } = require("./_utils");
 
+// Valores que usa la planilla de reservas (HOLD_TRANSFER es el estado inicial
+// que escribe create-reservation; CONFIRMED lo escribe owner-approve).
 const ALLOWED_STATUS = [
   "HOLD",
+  "HOLD_TRANSFER",
   "PENDING",
   "PROOF_SENT",
   "CONFIRMED",
@@ -42,7 +45,9 @@ exports.handler = async (event) => {
   if (event.httpMethod !== "POST") return json(405, { message: "Method not allowed" });
 
   const baseUrl = process.env.N8N_BASE_URL;
-  const secret = process.env.N8N_SECRET;
+  // El workflow reservation-status valida la misma clave que el resto de los
+  // webhooks de dueño. Nunca llega al navegador: sólo se usa Netlify -> n8n.
+  const secret = process.env.LC_OWNER_SECRET;
   const path = process.env.N8N_RESERVATION_STATUS_PATH;
 
   // Mientras no esté configurado el webhook en n8n devolvemos 404 a propósito:

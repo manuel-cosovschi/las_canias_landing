@@ -1301,6 +1301,11 @@ async function loadPublicPrices(){
       badge.textContent = "Estado: EXPIRADA";
       return;
     }
+    if (status === "CANCELLED"){
+      badge.classList.add("bg-red-100","text-red-900","border-red-200");
+      badge.textContent = "Estado: CANCELADA";
+      return;
+    }
 
     badge.classList.add("bg-yellow-100","text-yellow-900","border-yellow-200");
     badge.textContent = "Estado: HOLD (pendiente)";
@@ -1414,6 +1419,13 @@ async function loadPublicPrices(){
           setBadge("EXPIRED");
           stopStatusPolling();
           stopHoldTimer();
+          return;
+        }
+        if (status === "CANCELLED"){
+          setBadge("CANCELLED");
+          stopStatusPolling();
+          stopHoldTimer();
+          showProofMsg("Esta reserva fue cancelada. Escribinos por WhatsApp para recoordinar.", "err");
           return;
         }
       } catch(e){
