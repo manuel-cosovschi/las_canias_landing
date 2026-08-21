@@ -42,6 +42,7 @@ Mezclarlos da 401 sin ninguna pista de por qué.
 | `N8N_OWNER_BLOCK_PATH` / `N8N_OWNER_UNBLOCK_PATH` | `owner-blocks`, `owner-unblocks` |
 | `N8N_ADMIN_UPDATE_RESERVATION_PATH` | `admin-update-reservation` (opcional) |
 | `WA_VERIFY_TOKEN` / `N8N_WA_INCOMING_URL` | `wa-webhook` |
+| `GOOGLE_SERVICE_ACCOUNT_JSON` / `LC_SHEET_ID` / `LC_SHEET_TAB` | `list-calendar`, `search-reservations` |
 
 **Las variables nuevas se aplican recién en el siguiente deploy.** Cargarlas en
 el panel de Netlify no alcanza: hay que redesplegar para que las funciones las
@@ -99,6 +100,53 @@ cargarle su período.
 
 La tarifa base vieja (`get-prices` / `set-prices` / `public-prices`) quedó sin
 uso: la página de reservas ya no la lee.
+
+## Los dos caminos a la planilla
+
+No todo pasa por n8n. Para **escribir** una reserva sí (n8n manda mails, arma
+el hold y actualiza el estado), pero para **leer muchas filas de una** las
+funciones van derecho a Google Sheets con la service account:
+
+| Camino | Funciones | Por qué |
+|---|---|---|
+| n8n | `list-pending`, `list-confirmed`, `confirm-transfer`, … | escriben, o disparan mails |
+| Sheets directo | `list-calendar`, `search-reservations` | sólo leen, y necesitan la planilla entera |
+
+`_sheet.js` tiene el cliente compartido: el rango y el nombre de la pestaña
+viven ahí para que dos funciones no terminen leyendo columnas distintas.
+`list-calendar` todavía tiene su propia copia, anterior al módulo.
+
+## Buscador de reservas
+
+`search-reservations` (dueño) filtra la planilla completa por texto, estado,
+casa y rango de fechas. Es lo único que muestra reservas vencidas o canceladas:
+`list-pending` sólo trae holds vivos y `list-confirmed` sólo confirmadas.
+
+El texto ignora mayúsculas y acentos —"pena" encuentra "Peña"— y busca en
+nombre, teléfono, mail, DNI, id, referencia de pago y notas. El rango de fechas
+se cruza contra la estadía, con `check_out` exclusivo: quien se va el 10 no
+aparece si buscás el 10.
+
+## Comprobantes
+
+Cuando un huésped sube el comprobante, `submit-proof` lo manda a n8n (que
+avisa por mail, como siempre) y además guarda una copia en el blob store
+`proofs` de Netlify, con el id de la reserva como clave. `proof-file` la
+devuelve al panel:
+
+- `?id=XXX` → los bytes del archivo
+- `?ids=A,B,C&meta=1` → cuáles de esos ids tienen comprobante, para no ofrecer
+  un botón que no lleva a ningún lado
+
+Las dos cosas piden Basic + `x-lc-secret`: son datos de pago de un huésped y
+no pueden salir sin credenciales. Por eso el panel lo baja con `fetch` y lo
+muestra desde un object URL, en vez de apuntar un `<img src>` a la función.
+La CSP de `netlify.toml` habilita `blob:` justo para eso.
+
+Guardar la copia es **best-effort**: va en un `try/catch` y el `require` de
+`@netlify/blobs` es perezoso. Si el almacenamiento falla, se pierde la copia
+del panel y nada más — la reserva sigue su curso y el mail igual sale. Los
+comprobantes anteriores a esto no están: para esos, sigue estando el mail.
 
 ## Reglas del calendario
 

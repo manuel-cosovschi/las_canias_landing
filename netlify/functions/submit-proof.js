@@ -1,6 +1,7 @@
 // /netlify/functions/submit-proof.js
 const Busboy = require("busboy");
 const { json } = require("./_utils");
+const { saveProof } = require("./_proofs");
 const { Blob } = require("buffer");
 
 exports.handler = async (event) => {
@@ -86,6 +87,18 @@ exports.handler = async (event) => {
 
     if (!res.ok) {
       return json(500, { message: "Error llamando a n8n", status: res.status, data });
+    }
+
+    // Copia para el panel. Va después de n8n y sin await bloqueante sobre el
+    // resultado: si falla, el comprobante ya llegó por mail y el huésped no
+    // tiene por qué enterarse de un problema nuestro de almacenamiento.
+    const guardado = await saveProof(fields.id, {
+      buffer: fileBuf,
+      contentType: fileType,
+      filename: fileName,
+    });
+    if (!guardado.ok) {
+      console.error("submit-proof: no se pudo guardar la copia del comprobante:", guardado.message);
     }
 
     // n8n ya responde {ok:false,...} o {ok:true,...}
