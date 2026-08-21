@@ -2124,31 +2124,48 @@
   proofModal.addEventListener("click", (e) => { if (e.target === proofModal) closeProofModal(); });
 
   // Qué reservas de una lista tienen comprobante, para no ofrecer un botón que
-  // no lleva a ningún lado. Si la consulta falla, no mostramos ninguno.
+  // no lleva a ningún lado.
   async function idsConComprobante(ids) {
     const limpios = (ids || []).filter(Boolean);
-    if (!limpios.length) return new Set();
+    if (!limpios.length) return { disponibles: new Set(), almacenamientoOk: true };
 
     try {
       const res = await fetch(
         `${EP_PROOF_FILE}?meta=1&ids=${encodeURIComponent(limpios.join(","))}`,
         { method: "GET", headers: buildHeaders({ withJson: false }) }
       );
-      if (!res.ok) return new Set();
+      if (!res.ok) return { disponibles: new Set(), almacenamientoOk: false };
       const data = await res.json().catch(() => null);
-      return new Set(data?.with_proof || []);
+      return {
+        disponibles: new Set(data?.with_proof || []),
+        almacenamientoOk: data?.storage_ok !== false,
+      };
     } catch {
-      return new Set();
+      return { disponibles: new Set(), almacenamientoOk: false };
     }
   }
 
   // Revela los botones .btnProof de un contenedor para los ids que sí tienen
   // archivo guardado.
+  //
+  // Si el almacenamiento no responde, lo decimos: sin ese aviso se vería igual
+  // que "todavía nadie mandó comprobante", y el dueño seguiría esperando un
+  // botón que no va a aparecer nunca.
   async function revelarComprobantes(contenedor, ids) {
-    const disponibles = await idsConComprobante(ids);
+    const { disponibles, almacenamientoOk } = await idsConComprobante(ids);
+
     contenedor.querySelectorAll(".btnProof").forEach((btn) => {
       if (disponibles.has(btn.dataset.id)) btn.classList.remove("hidden");
     });
+
+    contenedor.querySelectorAll(".avisoComprobantes").forEach((n) => n.remove());
+    if (!almacenamientoOk && (ids || []).length) {
+      const aviso = linea(
+        "⚠️ No se pudo consultar el guardado de comprobantes. Mientras tanto, buscalos en el mail.",
+        "avisoComprobantes p-3 text-xs rounded-2xl bg-amber-50 border border-amber-200 text-amber-900"
+      );
+      contenedor.prepend(aviso);
+    }
   }
 
   function botonComprobante(id) {

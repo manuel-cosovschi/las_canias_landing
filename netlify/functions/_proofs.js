@@ -72,11 +72,23 @@ async function readProof(id) {
 }
 
 // Para que la lista del panel sepa cuáles tienen comprobante sin bajarse los
-// archivos. Un id que falla se informa como "sin comprobante": es lo mismo que
-// ve el dueño, y no hay nada que arreglar desde la lista.
+// archivos.
+//
+// Devuelve también si el almacenamiento respondió. Sin ese dato, un store caído
+// se ve igual que "todavía nadie mandó comprobante": el panel no mostraría
+// ningún botón y el dueño no tendría manera de enterarse de que la función
+// dejó de guardar.
 async function whichHaveProof(ids) {
-  const s = store();
+  let s;
+  try {
+    s = store();
+  } catch (e) {
+    console.error("whichHaveProof: almacenamiento no disponible:", e?.message || e);
+    return { ids: [], storageOk: false };
+  }
+
   const out = [];
+  let storageOk = true;
 
   await Promise.all(
     (ids || []).map(async (id) => {
@@ -86,12 +98,14 @@ async function whichHaveProof(ids) {
         const meta = await s.getMetadata(key);
         if (meta) out.push(key);
       } catch (e) {
+        // Una clave que falla no es "no hay archivo": es el store fallando
         console.error("whichHaveProof:", key, e?.message || e);
+        storageOk = false;
       }
     })
   );
 
-  return out;
+  return { ids: out, storageOk };
 }
 
 module.exports = { saveProof, readProof, whichHaveProof };
