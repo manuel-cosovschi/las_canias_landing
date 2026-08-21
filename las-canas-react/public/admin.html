@@ -190,6 +190,10 @@
             class="px-4 py-2 rounded-full bg-white/70 border border-brand-beige font-semibold text-sm hover:bg-white transition">
             Confirmadas
           </button>
+          <button id="tabSearch"
+            class="px-4 py-2 rounded-full bg-white/70 border border-brand-beige font-semibold text-sm hover:bg-white transition">
+            Buscar
+          </button>
           <button id="tabCalendar"
             class="px-4 py-2 rounded-full bg-white/70 border border-brand-beige font-semibold text-sm hover:bg-white transition">
             Calendario
@@ -364,6 +368,82 @@
 
         <div id="confirmedList" class="space-y-3 text-sm"></div>
       </div>
+      <!-- BUSCAR -->
+      <div id="viewSearch" class="bg-white/75 rounded-2xl shadow-sm border border-brand-beige p-6 hidden">
+        <div class="flex items-start justify-between gap-3 mb-4">
+          <div>
+            <h2 class="serif text-xl sm:text-2xl font-bold">Buscar reservas</h2>
+            <p class="text-xs text-brand-accent mt-1">
+              Todas las reservas de la planilla, en cualquier estado: vencidas, canceladas y confirmadas incluidas.
+            </p>
+          </div>
+
+          <div class="px-3 py-2 rounded-2xl bg-white/70 border border-brand-beige text-xs">
+            <span class="font-semibold">Resultados:</span>
+            <span id="searchCount" class="text-brand-accent font-semibold">-</span>
+          </div>
+        </div>
+
+        <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-3">
+          <div class="lg:col-span-2">
+            <label class="block text-xs font-semibold text-brand-accent mb-1">Texto</label>
+            <input id="searchQ"
+              class="w-full border border-brand-beige rounded-2xl p-3 bg-white/80 focus:outline-none focus:ring-2 focus:ring-brand-accent/40"
+              placeholder="Nombre, teléfono, mail, DNI, ID..." />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-brand-accent mb-1">Estado</label>
+            <select id="searchStatus"
+              class="w-full border border-brand-beige rounded-2xl p-3 bg-white/80 focus:outline-none focus:ring-2 focus:ring-brand-accent/40">
+              <option value="">Todos</option>
+              <option value="CONFIRMED">Confirmadas</option>
+              <option value="HOLD_TRANSFER">Esperando transferencia</option>
+              <option value="PROOF_SENT">Comprobante enviado</option>
+              <option value="CANCELLED">Canceladas</option>
+              <option value="EXPIRED">Vencidas</option>
+              <option value="BLOCKED">Bloqueos</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-brand-accent mb-1">Casa</label>
+            <select id="searchHouse"
+              class="w-full border border-brand-beige rounded-2xl p-3 bg-white/80 focus:outline-none focus:ring-2 focus:ring-brand-accent/40">
+              <option value="">Todas</option>
+              <option value="LC1">LC1</option>
+              <option value="LC2">LC2</option>
+              <option value="LC3">LC3</option>
+              <option value="LC4">LC4</option>
+              <option value="LC5">LC5</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
+          <div>
+            <label class="block text-xs font-semibold text-brand-accent mb-1">Se alojan desde</label>
+            <input id="searchFrom" type="date"
+              class="w-full border border-brand-beige rounded-2xl p-3 bg-white/80 focus:outline-none focus:ring-2 focus:ring-brand-accent/40" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-brand-accent mb-1">Hasta</label>
+            <input id="searchTo" type="date"
+              class="w-full border border-brand-beige rounded-2xl p-3 bg-white/80 focus:outline-none focus:ring-2 focus:ring-brand-accent/40" />
+          </div>
+          <div class="flex items-end gap-2 lg:col-span-2">
+            <button id="btnSearch"
+              class="px-5 py-3 rounded-full bg-brand-brown text-brand-cream text-xs font-semibold hover:opacity-90 transition">
+              Buscar
+            </button>
+            <button id="btnSearchClear"
+              class="px-5 py-3 rounded-full bg-white/70 border border-brand-beige text-xs font-semibold hover:bg-white transition">
+              Limpiar
+            </button>
+          </div>
+        </div>
+
+        <div id="searchList" class="space-y-3 text-sm"></div>
+      </div>
+
       <!-- CALENDARIO -->
       <div id="viewCalendar" class="bg-white/75 rounded-2xl shadow-sm border border-brand-beige p-6 hidden">
         <div class="flex items-start justify-between gap-3 mb-4">
@@ -694,6 +774,35 @@
       </div>
     </div>
   </div>
+  <!-- COMPROBANTE MODAL -->
+  <div id="proofModal" class="fixed inset-0 hidden items-center justify-center bg-black/50 p-4 z-[1260]">
+    <div class="w-full max-w-3xl rounded-2xl bg-white shadow-xl p-6 border border-brand-beige">
+      <div class="flex items-start justify-between gap-3 mb-2">
+        <div class="min-w-0">
+          <h3 class="text-lg font-bold serif">Comprobante de transferencia</h3>
+          <p id="proofSubtitle" class="text-sm text-brand-accent truncate">-</p>
+        </div>
+        <button id="btnCloseProofModal" class="text-brand-brown/60 hover:text-brand-brown shrink-0">✕</button>
+      </div>
+
+      <div id="proofBody"
+        class="mt-4 bg-brand-cream border border-brand-beige rounded-2xl p-4 text-sm min-h-[200px] max-h-[70vh] overflow-auto flex items-center justify-center">
+        <span class="text-brand-accent">Cargando…</span>
+      </div>
+
+      <div class="mt-6 flex justify-end gap-2">
+        <a id="proofOpenTab" href="#" target="_blank" rel="noopener"
+          class="hidden py-3 px-4 rounded-2xl bg-white/70 border border-brand-beige font-semibold hover:bg-white transition">
+          Abrir en pestaña nueva
+        </a>
+        <button id="btnCloseProofModal2"
+          class="py-3 px-4 rounded-2xl bg-white/70 border border-brand-beige font-semibold hover:bg-white transition">
+          Cerrar
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Toast -->
   <div id="toast" class="fixed bottom-5 left-1/2 -translate-x-1/2 hidden z-[1300]">
     <div id="toastInner" class="px-4 py-3 rounded-2xl shadow-xl border text-sm bg-white">
@@ -732,6 +841,23 @@
 
   const tabRules = el("tabRules");
   const viewRules = el("viewRules");
+
+  const tabSearch = el("tabSearch");
+  const viewSearch = el("viewSearch");
+  const searchQ = el("searchQ");
+  const searchStatus = el("searchStatus");
+  const searchHouse = el("searchHouse");
+  const searchFrom = el("searchFrom");
+  const searchTo = el("searchTo");
+  const searchList = el("searchList");
+  const searchCount = el("searchCount");
+  const btnSearch = el("btnSearch");
+  const btnSearchClear = el("btnSearchClear");
+
+  const proofModal = el("proofModal");
+  const proofBody = el("proofBody");
+  const proofSubtitle = el("proofSubtitle");
+  const proofOpenTab = el("proofOpenTab");
   const ruleFirstDate = el("ruleFirstDate");
   const ruleLastDate = el("ruleLastDate");
   const ruleMinNights = el("ruleMinNights");
@@ -862,6 +988,8 @@
   const EP_SET_PRICE_PERIODS = "/.netlify/functions/set-price-periods";
   const EP_CALENDAR_CONFIG = "/api/calendar-config";
   const EP_SET_CALENDAR_CONFIG = "/.netlify/functions/set-calendar-config";
+  const EP_SEARCH_RESERVATIONS = "/.netlify/functions/search-reservations";
+  const EP_PROOF_FILE = "/.netlify/functions/proof-file";
 
   function setStatus(msg) { statusBox.textContent = msg; }
 
@@ -1019,6 +1147,7 @@
     const isCalendar = which === "calendar";
     const isPrices = which === "prices";
     const isRules = which === "rules";
+    const isSearch = which === "search";
 
     viewBlock.classList.toggle("hidden", !isBlock);
     viewTransfers.classList.toggle("hidden", !isTransfers);
@@ -1026,6 +1155,7 @@
     viewCalendar.classList.toggle("hidden", !isCalendar);
     viewPrices.classList.toggle("hidden", !isPrices);
     viewRules.classList.toggle("hidden", !isRules);
+    viewSearch.classList.toggle("hidden", !isSearch);
 
     // Refresh button solo para TRANSFERS (pendientes)
     btnRefresh.classList.toggle("hidden", !isTransfers);
@@ -1048,6 +1178,9 @@
 
     tabRules.classList.toggle("bg-brand-beige/40", isRules);
     tabRules.classList.toggle("bg-white/70", !isRules);
+
+    tabSearch.classList.toggle("bg-brand-beige/40", isSearch);
+    tabSearch.classList.toggle("bg-white/70", !isSearch);
 
     if (!isTransfers) stopCountdownTicker();
 
@@ -1792,46 +1925,62 @@
       const div = document.createElement("div");
       div.className = "p-4 border border-brand-beige rounded-2xl bg-white/80";
 
-      const guest = (r.guest_name || "-") + (r.phone ? ` — ${r.phone}` : "");
-      const email = r.email ? ` · ${r.email}` : "";
+      const fila = document.createElement("div");
+      fila.className = "flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3";
 
-      div.innerHTML = `
-        <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
-          <div class="min-w-0">
-            <div class="flex items-center gap-2">
-              <div class="font-semibold">${r.id}</div>
-              <span class="text-xs font-semibold px-3 py-1 rounded-full bg-brand-beige/50 border border-brand-beige/80">
-                ${r.house_code}
-              </span>
-            </div>
-            <div class="text-sm text-brand-brown/90 mt-1">${r.check_in} → ${r.check_out}</div>
-            <div class="text-xs text-brand-accent mt-1">${guest}${email}</div>
-            <div class="text-xs text-brand-accent mt-1 flex items-center gap-2">
-              <span>Vence: ${humanizeExpire(r.expires_at)}</span>
-              <span
-                class="countdown hidden px-2 py-1 rounded-full border text-[10px] font-semibold"
-                data-expires="${(r.expires_at || "").replace(/"/g, '&quot;')}"
-              >-</span>
-            </div>
-          </div>
+      const izq = document.createElement("div");
+      izq.className = "min-w-0";
 
-          <div class="flex flex-wrap gap-2">
-            <button
-              class="btnConfirm px-4 py-2 rounded-full bg-emerald-700 text-white text-xs font-semibold hover:opacity-90 transition"
-              data-id="${r.id}">
-              Confirmar
-            </button>
-            <button
-              class="btnCancel px-4 py-2 rounded-full bg-white/70 border border-brand-beige text-xs font-semibold hover:bg-white transition"
-              data-id="${r.id}">
-              Cancelar
-            </button>
-          </div>
-        </div>
-      `;
+      const cabecera = document.createElement("div");
+      cabecera.className = "flex items-center gap-2";
+      const idEl = document.createElement("div");
+      idEl.className = "font-semibold";
+      idEl.textContent = r.id;
+      cabecera.appendChild(idEl);
+      cabecera.appendChild(chip(r.house_code || "-", "bg-brand-beige/50 border-brand-beige/80"));
+      izq.appendChild(cabecera);
+
+      izq.appendChild(linea(`${r.check_in} → ${r.check_out}`, "text-sm text-brand-brown/90 mt-1"));
+
+      const contacto = [r.guest_name || "-", r.phone, r.email].filter(Boolean).join(" · ");
+      izq.appendChild(linea(contacto, "text-xs text-brand-accent mt-1 break-words"));
+
+      const vence = document.createElement("div");
+      vence.className = "text-xs text-brand-accent mt-1 flex items-center gap-2";
+      const venceTexto = document.createElement("span");
+      venceTexto.textContent = `Vence: ${humanizeExpire(r.expires_at)}`;
+      const cuenta = document.createElement("span");
+      cuenta.className = "countdown hidden px-2 py-1 rounded-full border text-[10px] font-semibold";
+      cuenta.dataset.expires = r.expires_at || "";
+      cuenta.textContent = "-";
+      vence.appendChild(venceTexto);
+      vence.appendChild(cuenta);
+      izq.appendChild(vence);
+
+      const der = document.createElement("div");
+      der.className = "flex flex-wrap gap-2";
+      der.appendChild(botonComprobante(r.id));
+
+      const btnConfirm = document.createElement("button");
+      btnConfirm.className = "btnConfirm px-4 py-2 rounded-full bg-emerald-700 text-white text-xs font-semibold hover:opacity-90 transition";
+      btnConfirm.dataset.id = r.id;
+      btnConfirm.textContent = "Confirmar";
+      der.appendChild(btnConfirm);
+
+      const btnCancel = document.createElement("button");
+      btnCancel.className = "btnCancel px-4 py-2 rounded-full bg-white/70 border border-brand-beige text-xs font-semibold hover:bg-white transition";
+      btnCancel.dataset.id = r.id;
+      btnCancel.textContent = "Cancelar";
+      der.appendChild(btnCancel);
+
+      fila.appendChild(izq);
+      fila.appendChild(der);
+      div.appendChild(fila);
 
       pendingList.appendChild(div);
     });
+
+    revelarComprobantes(pendingList, filtered.map(r => r.id));
 
     pendingList.querySelectorAll(".btnConfirm").forEach(btn => {
       btn.onclick = () => {
@@ -1884,6 +2033,273 @@
   };
 
   // =====================
+  // COMPROBANTE
+  // =====================
+  // El archivo llega por fetch autenticado (lleva datos de pago de un huésped:
+  // no puede ir en un <img src> suelto, que viajaría sin credenciales) y se
+  // muestra desde un object URL que se libera al cerrar.
+  let proofObjectUrl = null;
+
+  function releaseProofUrl() {
+    if (proofObjectUrl) {
+      URL.revokeObjectURL(proofObjectUrl);
+      proofObjectUrl = null;
+    }
+  }
+
+  function proofMessage(text) {
+    const p = document.createElement("p");
+    p.className = "text-brand-accent text-center px-6";
+    p.textContent = text;
+    return p;
+  }
+
+  function closeProofModal() {
+    proofModal.classList.add("hidden");
+    proofModal.classList.remove("flex");
+    proofBody.replaceChildren();
+    proofOpenTab.classList.add("hidden");
+    proofOpenTab.removeAttribute("href");
+    releaseProofUrl();
+  }
+
+  async function openProof(id) {
+    releaseProofUrl();
+    proofSubtitle.textContent = `Reserva ${id}`;
+    proofBody.replaceChildren(proofMessage("Cargando…"));
+    proofOpenTab.classList.add("hidden");
+    proofModal.classList.remove("hidden");
+    proofModal.classList.add("flex");
+
+    try {
+      const res = await fetch(`${EP_PROOF_FILE}?id=${encodeURIComponent(id)}`, {
+        method: "GET",
+        headers: buildHeaders({ withJson: false }),
+      });
+
+      if (res.status === 404) {
+        proofBody.replaceChildren(proofMessage(
+          "No hay comprobante guardado para esta reserva. Los que se enviaron antes de que el panel empezara a guardarlos siguen estando en el mail."
+        ));
+        return;
+      }
+      if (!res.ok) throw new Error(`No se pudo traer el comprobante (HTTP ${res.status})`);
+
+      const blob = await res.blob();
+      proofObjectUrl = URL.createObjectURL(blob);
+
+      proofOpenTab.href = proofObjectUrl;
+      proofOpenTab.classList.remove("hidden");
+
+      const tipo = String(blob.type || "");
+
+      if (tipo.startsWith("image/")) {
+        const img = document.createElement("img");
+        img.src = proofObjectUrl;
+        img.alt = `Comprobante de la reserva ${id}`;
+        img.className = "max-w-full h-auto rounded-xl";
+        proofBody.replaceChildren(img);
+        return;
+      }
+
+      if (tipo === "application/pdf") {
+        const frame = document.createElement("iframe");
+        frame.src = proofObjectUrl;
+        frame.className = "w-full h-[60vh] rounded-xl bg-white";
+        frame.title = `Comprobante de la reserva ${id}`;
+        proofBody.replaceChildren(frame);
+        return;
+      }
+
+      proofBody.replaceChildren(proofMessage(
+        "El comprobante no es una imagen ni un PDF. Abrilo en una pestaña nueva para verlo."
+      ));
+    } catch (e) {
+      proofBody.replaceChildren(proofMessage(e.message || "Error trayendo el comprobante"));
+    }
+  }
+
+  el("btnCloseProofModal").onclick = closeProofModal;
+  el("btnCloseProofModal2").onclick = closeProofModal;
+  proofModal.addEventListener("click", (e) => { if (e.target === proofModal) closeProofModal(); });
+
+  // Qué reservas de una lista tienen comprobante, para no ofrecer un botón que
+  // no lleva a ningún lado. Si la consulta falla, no mostramos ninguno.
+  async function idsConComprobante(ids) {
+    const limpios = (ids || []).filter(Boolean);
+    if (!limpios.length) return new Set();
+
+    try {
+      const res = await fetch(
+        `${EP_PROOF_FILE}?meta=1&ids=${encodeURIComponent(limpios.join(","))}`,
+        { method: "GET", headers: buildHeaders({ withJson: false }) }
+      );
+      if (!res.ok) return new Set();
+      const data = await res.json().catch(() => null);
+      return new Set(data?.with_proof || []);
+    } catch {
+      return new Set();
+    }
+  }
+
+  // Revela los botones .btnProof de un contenedor para los ids que sí tienen
+  // archivo guardado.
+  async function revelarComprobantes(contenedor, ids) {
+    const disponibles = await idsConComprobante(ids);
+    contenedor.querySelectorAll(".btnProof").forEach((btn) => {
+      if (disponibles.has(btn.dataset.id)) btn.classList.remove("hidden");
+    });
+  }
+
+  function botonComprobante(id) {
+    const btn = document.createElement("button");
+    btn.className =
+      "btnProof hidden px-4 py-2 rounded-full bg-white/70 border border-brand-beige text-xs font-semibold hover:bg-white transition";
+    btn.dataset.id = id;
+    btn.textContent = "Ver comprobante";
+    btn.onclick = () => openProof(id);
+    return btn;
+  }
+
+  // =====================
+  // BUSCAR RESERVAS
+  // =====================
+  const ESTADO_ESTILO = {
+    CONFIRMED: "bg-emerald-50 border-emerald-200 text-emerald-900",
+    HOLD_TRANSFER: "bg-amber-50 border-amber-200 text-amber-900",
+    PROOF_SENT: "bg-sky-50 border-sky-200 text-sky-900",
+    CANCELLED: "bg-rose-50 border-rose-200 text-rose-900",
+    EXPIRED: "bg-slate-50 border-slate-200 text-slate-700",
+    BLOCKED: "bg-slate-50 border-slate-200 text-slate-700",
+  };
+
+  // Todo lo que sigue se arma con createElement y textContent: el nombre, el
+  // mail y las notas los escribe un desconocido desde la página pública, y
+  // esto se renderiza dentro de la sesión del dueño.
+  function chip(texto, clases) {
+    const span = document.createElement("span");
+    span.className = `text-xs font-semibold px-3 py-1 rounded-full border ${clases}`;
+    span.textContent = texto;
+    return span;
+  }
+
+  function linea(texto, clases) {
+    const div = document.createElement("div");
+    div.className = clases;
+    div.textContent = texto;
+    return div;
+  }
+
+  function tarjetaReserva(r) {
+    const card = document.createElement("div");
+    card.className = "p-4 border border-brand-beige rounded-2xl bg-white/80";
+
+    const fila = document.createElement("div");
+    fila.className = "flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3";
+
+    const izq = document.createElement("div");
+    izq.className = "min-w-0";
+
+    const cabecera = document.createElement("div");
+    cabecera.className = "flex flex-wrap items-center gap-2";
+    const idEl = document.createElement("div");
+    idEl.className = "font-semibold";
+    idEl.textContent = r.id;
+    cabecera.appendChild(idEl);
+    cabecera.appendChild(chip(r.status || "-", ESTADO_ESTILO[r.status] || "bg-brand-beige/50 border-brand-beige/80"));
+    if (r.house_code) cabecera.appendChild(chip(r.house_code, "bg-brand-beige/50 border-brand-beige/80"));
+    izq.appendChild(cabecera);
+
+    izq.appendChild(linea(`${r.check_in || "-"} → ${r.check_out || "-"}`, "text-sm text-brand-brown/90 mt-1"));
+
+    const contacto = [r.guest_name || "-", r.phone, r.email].filter(Boolean).join(" · ");
+    izq.appendChild(linea(contacto, "text-xs text-brand-accent mt-1 break-words"));
+
+    const extra = [];
+    if (r.guests) extra.push(`${r.guests} personas`);
+    if (r.dni) extra.push(`DNI ${r.dni}`);
+    if (r.payment_ref) extra.push(`Ref ${r.payment_ref}`);
+    if (r.status_reason) extra.push(r.status_reason);
+    if (extra.length) izq.appendChild(linea(extra.join(" · "), "text-xs text-brand-accent/80 mt-1 break-words"));
+
+    if (r.notes) izq.appendChild(linea(r.notes, "text-xs text-brand-accent/80 mt-1 break-words"));
+
+    const der = document.createElement("div");
+    der.className = "flex flex-wrap gap-2 shrink-0";
+    der.appendChild(botonComprobante(r.id));
+
+    fila.appendChild(izq);
+    fila.appendChild(der);
+    card.appendChild(fila);
+    return card;
+  }
+
+  function renderSearch(out) {
+    searchList.replaceChildren();
+
+    const items = out.items || [];
+    searchCount.textContent = out.truncated ? `${items.length} de ${out.total}` : String(items.length);
+
+    if (!items.length) {
+      searchList.appendChild(
+        linea("No hay reservas con esos filtros.", "p-4 bg-white/70 border border-brand-beige rounded-2xl")
+      );
+      return;
+    }
+
+    items.forEach((r) => searchList.appendChild(tarjetaReserva(r)));
+
+    if (out.truncated) {
+      searchList.appendChild(
+        linea(
+          `Se muestran las primeras ${items.length} de ${out.total}. Afiná los filtros para ver el resto.`,
+          "p-3 text-xs text-brand-accent"
+        )
+      );
+    }
+
+    revelarComprobantes(searchList, items.map((r) => r.id));
+  }
+
+  async function runSearch() {
+    const params = new URLSearchParams();
+    if (searchQ.value.trim()) params.set("q", searchQ.value.trim());
+    if (searchStatus.value) params.set("status", searchStatus.value);
+    if (searchHouse.value) params.set("house_code", searchHouse.value);
+    if (searchFrom.value) params.set("from", searchFrom.value);
+    if (searchTo.value) params.set("to", searchTo.value);
+
+    try {
+      btnSearch.disabled = true;
+      setStatus("Buscando reservas...");
+      const out = await apiFetch(`${EP_SEARCH_RESERVATIONS}?${params.toString()}`, { method: "GET", body: null });
+      renderSearch(out);
+      setStatus(`✅ ${out.total} reserva(s) encontradas.`);
+    } catch (e) {
+      setStatus(`❌ ${e.message}`);
+      showToast(e.message || "Error", "err");
+    } finally {
+      btnSearch.disabled = false;
+    }
+  }
+
+  btnSearch.onclick = runSearch;
+  btnSearchClear.onclick = () => {
+    searchQ.value = "";
+    searchStatus.value = "";
+    searchHouse.value = "";
+    searchFrom.value = "";
+    searchTo.value = "";
+    searchList.replaceChildren();
+    searchCount.textContent = "-";
+  };
+  [searchQ, searchFrom, searchTo].forEach((input) => {
+    input.addEventListener("keydown", (e) => { if (e.key === "Enter") runSearch(); });
+  });
+
+  tabSearch.onclick = () => showTab("search");
+
+  // =====================
   // CONFIRMADAS
   // =====================
   let confirmedRaw = [];
@@ -1927,37 +2343,45 @@
       const div = document.createElement("div");
       div.className = "p-4 border border-brand-beige rounded-2xl bg-white/80";
 
-      const guest = (r.guest_name || "-") + (r.phone ? ` — ${r.phone}` : "");
-      const email = r.email ? ` · ${r.email}` : "";
+      const fila = document.createElement("div");
+      fila.className = "flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3";
 
-      div.innerHTML = `
-        <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
-          <div class="min-w-0">
-            <div class="flex items-center gap-2">
-              <div class="font-semibold">${r.id}</div>
-              <span class="text-xs font-semibold px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-900">
-                CONFIRMED
-              </span>
-              <span class="text-xs font-semibold px-3 py-1 rounded-full bg-brand-beige/50 border border-brand-beige/80">
-                ${r.house_code}
-              </span>
-            </div>
-            <div class="text-sm text-brand-brown/90 mt-1">${r.check_in} → ${r.check_out}</div>
-            <div class="text-xs text-brand-accent mt-1">${guest}${email}</div>
-          </div>
+      const izq = document.createElement("div");
+      izq.className = "min-w-0";
 
-          <div class="flex flex-wrap gap-2">
-            <button
-              class="btnCancelConfirmed px-4 py-2 rounded-full bg-white/70 border border-brand-beige text-xs font-semibold hover:bg-white transition"
-              data-id="${r.id}">
-              Cancelar confirmada
-            </button>
-          </div>
-        </div>
-      `;
+      const cabecera = document.createElement("div");
+      cabecera.className = "flex items-center gap-2";
+      const idEl = document.createElement("div");
+      idEl.className = "font-semibold";
+      idEl.textContent = r.id;
+      cabecera.appendChild(idEl);
+      cabecera.appendChild(chip("CONFIRMED", ESTADO_ESTILO.CONFIRMED));
+      cabecera.appendChild(chip(r.house_code || "-", "bg-brand-beige/50 border-brand-beige/80"));
+      izq.appendChild(cabecera);
+
+      izq.appendChild(linea(`${r.check_in} → ${r.check_out}`, "text-sm text-brand-brown/90 mt-1"));
+
+      const contacto = [r.guest_name || "-", r.phone, r.email].filter(Boolean).join(" · ");
+      izq.appendChild(linea(contacto, "text-xs text-brand-accent mt-1 break-words"));
+
+      const der = document.createElement("div");
+      der.className = "flex flex-wrap gap-2";
+      der.appendChild(botonComprobante(r.id));
+
+      const btnCancelar = document.createElement("button");
+      btnCancelar.className = "btnCancelConfirmed px-4 py-2 rounded-full bg-white/70 border border-brand-beige text-xs font-semibold hover:bg-white transition";
+      btnCancelar.dataset.id = r.id;
+      btnCancelar.textContent = "Cancelar confirmada";
+      der.appendChild(btnCancelar);
+
+      fila.appendChild(izq);
+      fila.appendChild(der);
+      div.appendChild(fila);
 
       confirmedList.appendChild(div);
     });
+
+    revelarComprobantes(confirmedList, filtered.map(r => r.id));
 
     confirmedList.querySelectorAll(".btnCancelConfirmed").forEach(btn => {
       btn.onclick = () => {
