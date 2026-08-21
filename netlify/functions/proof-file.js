@@ -40,9 +40,10 @@ exports.handler = async (event) => {
         .filter(Boolean)
         .slice(0, MAX_IDS);
 
-      if (!ids.length) return json(200, { ok: true, with_proof: [] });
+      if (!ids.length) return json(200, { ok: true, with_proof: [], storage_ok: true });
 
-      return json(200, { ok: true, with_proof: await whichHaveProof(ids) });
+      const { ids: conArchivo, storageOk } = await whichHaveProof(ids);
+      return json(200, { ok: true, with_proof: conArchivo, storage_ok: storageOk });
     }
 
     const id = String(p.id || "").trim();
