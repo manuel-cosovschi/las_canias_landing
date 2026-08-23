@@ -204,9 +204,21 @@ noche igual que `reservar.html`. Si alguna noche no tiene tarifa, el documento
 igual se genera pero con los importes a coordinar: vale más que salga sin
 precios a que el huésped no reciba nada al confirmar.
 
-**Para que salga solo al confirmar**, el flujo de aprobación de n8n tiene que
-sumar dos nodos después de escribir `CONFIRMED` en la planilla: un HTTP Request
-a este endpoint (con el header `x-lc-secret`, pasándole la fila) y un nodo de
-mail que use el `html` de la respuesta como cuerpo, al `email` de la reserva.
-Mientras tanto, el panel tiene un botón **Ver documento** en cada reserva
-confirmada para abrirlo y mandarlo a mano.
+### El mail automático
+
+Al confirmar, el mail ya sale solo: lo manda el workflow `owner-approve` de n8n,
+que antes enviaba un resumen de dos líneas y ahora manda este documento.
+
+El armado no pasa por esta function. El nodo `Preparar Email (CONFIRMED)` genera
+el HTML inline, con las tarifas que le pasa un nodo Data Table (`precios_periodos`)
+intercalado después de `Update row in sheet`. Es a propósito: ese mail sale en el
+momento en que se confirma una reserva y no puede quedar colgado de que Netlify
+esté arriba. El nodo tiene try/catch — si el armado falla, sale un mail simple
+antes que ninguno.
+
+El costo de esa decisión es que el documento vive en dos lugares. **Si lo cambiás
+acá, cambialo también en `n8n/owner-approve--preparar-email.js`**, que es copia
+exacta del código del nodo y está en el repo para que quede versionado.
+
+Esta function queda para el botón **Ver documento** del panel, que abre el mismo
+documento de cualquier reserva confirmada para imprimirlo o reenviarlo a mano.
