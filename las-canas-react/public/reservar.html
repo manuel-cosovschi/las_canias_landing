@@ -89,8 +89,15 @@
     <div class="mb-6 p-5 rounded-2xl bg-white/70 border border-brand-beige shadow-sm">
       <div class="font-semibold mb-1">📌 Importante</div>
       <div class="text-sm text-brand-brown/90">
-        Si necesitás una excepción (menos días o ajustar un día más/menos), consultanos por <strong>WhatsApp</strong>.
-        <div class="mt-2 font-semibold">👉 PARA EXCEPCIONES DE ESTADÍAS MENORES CONSULTAR POR WHATSAPP.</div>
+        <div class="mb-2">
+          <strong>Temporada alta (20/12 al 1/3):</strong> mínimo 7 noches, de sábado a sábado
+          o de domingo a domingo.
+        </div>
+        <div class="mb-2">
+          <strong>Resto del año:</strong> mínimo 2 noches, entrando cualquier día.
+        </div>
+        Si necesitás algo distinto —menos noches, o arrancar otro día de la semana—
+        lo coordinamos por <strong>WhatsApp</strong>.
       </div>
     </div>
 
@@ -153,8 +160,12 @@
       <div id="minNightsBanner" class="mt-4 p-4 rounded-2xl bg-white/70 border border-brand-beige">
         <div class="text-sm"><strong>Mínimo:</strong> <span id="minNightsText">-</span>.</div>
         <div class="mt-1 text-xs text-brand-accent">
-          Si el sistema no habilita tu caso, consultá por WhatsApp (excepciones).
+          ¿Necesitás otras fechas o menos noches? Lo vemos por WhatsApp.
         </div>
+        <a id="waExcepcion" href="https://wa.me/542236882986" target="_blank" rel="noopener"
+          class="mt-3 inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-emerald-600 text-white text-sm font-semibold hover:bg-emerald-700 transition">
+          <span aria-hidden="true">💬</span> Consultar por WhatsApp
+        </a>
       </div>
 
       <!-- PRECIOS -->
@@ -937,6 +948,39 @@ async function loadPricePeriods(){
     return null;
   }
 
+  // Temporada alta: del 20/12 al 1/3, todos los años (el rango cruza el año
+  // nuevo, por eso se compara mes/día y no la fecha completa). En ese tramo
+  // sólo se reserva por semanas completas que arrancan sábado o domingo.
+  const TEMPORADA_ALTA = {
+    desde: { mes: 12, dia: 20 },
+    hasta: { mes: 3, dia: 1 },
+    minNoches: 7,
+    diasCheckin: [6, 0], // 6 = sábado, 0 = domingo
+  };
+
+  const NOMBRE_DIA = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
+
+  function esTemporadaAlta(d){
+    if (!d) return false;
+
+    const mes = d.getMonth() + 1;
+    const dia = d.getDate();
+    const { desde, hasta } = TEMPORADA_ALTA;
+
+    const desdeElInicio = mes === desde.mes ? dia >= desde.dia : mes > desde.mes;
+    const hastaElFin = mes === hasta.mes ? dia <= hasta.dia : mes < hasta.mes;
+
+    return desdeElInicio || hastaElFin;
+  }
+
+  function esTemporadaAltaYmd(ymd){
+    return ymd ? esTemporadaAlta(parseYMD(ymd)) : false;
+  }
+
+  function esDiaDeCheckinDeTemporada(d){
+    return TEMPORADA_ALTA.diasCheckin.includes(d.getDay());
+  }
+
   function getMinRule(ciYmd, coYmd){
     if (!ciYmd) return { type:"none", min: null, label:"-" };
     if (!CALENDAR) return { type:"none", min: null, label:"-" };
@@ -965,6 +1009,20 @@ async function loadPricePeriods(){
     }
 
     const especial = getMinNightsRuleFor(ciYmd, coYmd);
+
+    // La temporada va después de las ventanas fijas (esas las carga el panel a
+    // mano y mandan) pero antes del mínimo por rango: si el panel cargó un
+    // mínimo mayor para este tramo se respeta el mayor, y la semana completa
+    // sábado→sábado / domingo→domingo se exige igual.
+    if (esTemporadaAltaYmd(ciYmd)){
+      const min = Math.max(TEMPORADA_ALTA.minNoches, especial ? especial.nights : 0);
+      return {
+        type: "temporada",
+        min,
+        label: `${min} noches mínimo, de sábado a sábado o de domingo a domingo (temporada alta: 20/12 al 1/3)`
+      };
+    }
+
     if (especial){
       const motivo = especial.label ? ` por ${especial.label}` : "";
       return {
@@ -977,9 +1035,29 @@ async function loadPricePeriods(){
     return { type:"min_default", min: CALENDAR.minNights, label: `${CALENDAR.minNights} noches mínimo` };
   }
 
+  const WA_NUMERO = "542236882986";
+  const waExcepcion = el("waExcepcion");
+
+  // El botón lleva precargado lo que la persona ya eligió, así el mensaje llega
+  // con casa y fechas y no hay que volver a preguntarlas.
+  function updateWhatsAppLink(){
+    if (!waExcepcion) return;
+
+    const casa = house.value ? (house.options[house.selectedIndex]?.text || house.value) : "";
+
+    const partes = ["¡Hola! Quiero consultar por una reserva en Las Cañas."];
+    if (casa) partes.push(`Casa: ${casa}.`);
+    if (guests.value) partes.push(`Personas: ${guests.value}.`);
+    if (checkin.value) partes.push(`Check-in: ${ymdToDMY(checkin.value)}.`);
+    if (checkout.value) partes.push(`Check-out: ${ymdToDMY(checkout.value)}.`);
+
+    waExcepcion.href = `https://wa.me/${WA_NUMERO}?text=${encodeURIComponent(partes.join(" "))}`;
+  }
+
   function updateMinBanner(){
     const rule = getMinRule(checkin.value, checkout.value);
     minNightsText.textContent = rule.label;
+    updateWhatsAppLink();
   }
 
   let blockedRanges = [];
@@ -1061,6 +1139,11 @@ async function loadPricePeriods(){
     if (fixed){
       const ymd = fmtYMD(d0);
       if (ymd !== fixed.checkin) return true;
+    } else if (esTemporadaAlta(d0) && !esDiaDeCheckinDeTemporada(d0)){
+      // En temporada alta la estadía arranca sábado o domingo. Las ventanas
+      // fijas del panel quedan afuera de esta regla: si el dueño cargó una a
+      // mano, manda esa.
+      return true;
     }
 
     for (const r of blockedRanges){
@@ -1085,6 +1168,10 @@ async function loadPricePeriods(){
 
     if (rule.type === "fixed_block") return true;
     if (rule.type === "fixed") return coYmd !== rule.fixed.checkout;
+
+    // Semana completa: el check-out cae el mismo día de la semana que el
+    // check-in, así sábado→sábado y domingo→domingo dan 7, 14, 21 noches.
+    if (rule.type === "temporada" && co.getDay() !== ci.getDay()) return true;
 
     const minCo = addDays(ci, rule.min);
     if (co < minCo) return true;
@@ -1178,7 +1265,11 @@ async function loadPricePeriods(){
           }
         });
 
-        setStatus(`3) Elegí el check-out (mínimo ${rule.min} noches).`);
+        setStatus(
+          rule.type === "temporada"
+            ? `3) Elegí el check-out: mínimo ${rule.min} noches y tiene que caer ${NOMBRE_DIA[ci0.getDay()]}, igual que el check-in.`
+            : `3) Elegí el check-out (mínimo ${rule.min} noches).`
+        );
       }
 
       updateMinBanner();
@@ -1279,6 +1370,10 @@ async function loadPricePeriods(){
   }
 
   function updateContinueState(){
+    // Se llama en casi toda interacción, así el link de WhatsApp queda al día
+    // aunque todavía no haya fechas elegidas.
+    updateWhatsAppLink();
+
     if (!availabilityLoaded){
       continueBtn.disabled = true;
       return;
@@ -1323,6 +1418,12 @@ async function loadPricePeriods(){
     if (rule.type === "fixed" && checkout.value !== rule.fixed.checkout){
       continueBtn.disabled = true;
       setStatus(`Estas fechas son fijas: check-out debe ser ${rule.fixed.checkout}.`);
+      return;
+    }
+
+    if (rule.type === "temporada" && co.getDay() !== ci.getDay()){
+      continueBtn.disabled = true;
+      setStatus(`En temporada alta la estadía va de ${NOMBRE_DIA[ci.getDay()]} a ${NOMBRE_DIA[ci.getDay()]}. Para otras fechas, escribinos por WhatsApp.`);
       return;
     }
 
