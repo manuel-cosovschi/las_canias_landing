@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 
 const img = (path) => encodeURI(path);
-const vid = (path) => encodeURI(path);
 
 /**
  * Datos según Master Doc (baños/ambientes/camas/observaciones + servicios comunes).
@@ -46,20 +45,16 @@ const housesData = [
       "Parque y parrilla privada",
       "Ideal familias",
     ],
+    // ✅ además de COMMON.includes
+    includesExtra: ["Aire acondicionado frío/calor"],
     images: [
       // AFUERA / ENTRADA
       img("/Casa 1 Imagenes/Entrada1LC1.jpeg"),
       img("/Casa 1 Imagenes/Entrada2LC1.jpeg"),
-      img("/Casa 1 Imagenes/EntradaILC1.jpeg"),
       img("/Casa 1 Imagenes/MesaEntrada1LC1.jpeg"),
       img("/Casa 1 Imagenes/MesaEntradaLC1.jpeg"),
 
-      // VIDEO (siempre lo ponemos después de la entrada para que “arranque” afuera)
-      vid("/Casa 1 Imagenes/video1.MP4"),
-      vid("/Casa 1 Imagenes/video1extra.MP4"),
-
-      // TRANSICIÓN / ESCALERA / PASILLO
-      img("/Casa 1 Imagenes/EscaleraLC1.jpeg"),
+      // TRANSICIÓN / PASILLO
       img("/Casa 1 Imagenes/PasilloLC1.jpeg"),
 
       // LIVING / ESTAR
@@ -78,7 +73,6 @@ const housesData = [
       // PATIO / PARQUE
       img("/Casa 1 Imagenes/patio1.JPG"),
       img("/Casa 1 Imagenes/patio1extra.JPG"),
-      img("/Casa 1 Imagenes/Patio1LC1.jpeg"),
       img("/Casa 1 Imagenes/vistapatio1LC1.JPG"),
     ],
   },
@@ -101,11 +95,9 @@ const housesData = [
       // AFUERA / ENTRADA
       img("/Casa 2 Imagenes/EntradaLC2.jpeg"),
       img("/Casa 2 Imagenes/Bienvenida1LC2.jpeg"),
-      img("/Casa 2 Imagenes/Bienvenida2LC2.jpeg"),
       img("/Casa 2 Imagenes/EntradaInteriorLC2.jpeg"),
 
       // TRANSICIÓN / ESCALERA
-      img("/Casa 2 Imagenes/Escalera1LC2.jpeg"),
       img("/Casa 2 Imagenes/SubidaLC2.jpeg"),
 
       // LIVING / COCINA
@@ -114,7 +106,6 @@ const housesData = [
 
       // HABITACIONES
       img("/Casa 2 Imagenes/Habitacion1LC2.jpeg"),
-      img("/Casa 2 Imagenes/Habitacion2LC2.jpeg"),
 
       // BAÑOS
       img("/Casa 2 Imagenes/BañoLC2.jpeg"),
@@ -144,16 +135,12 @@ const housesData = [
       // AFUERA / ENTRADA
       img("/Casa 3 Imagenes/EntradaLC3.jpeg"),
 
-      // VIDEO (ideal cerca de entrada para “recorrido”)
-      vid("/Casa 3 Imagenes/videoLC3.MP4"),
-
       // TRANSICIÓN / ESCALERAS
       img("/Casa 3 Imagenes/Escalera1LC3.jpeg"),
       img("/Casa 3 Imagenes/Escalera2LC3.jpeg"),
 
       // LIVING / COMEDOR
       img("/Casa 3 Imagenes/Living1LC3.jpeg"),
-      img("/Casa 3 Imagenes/Living+ComedorLC3.jpeg"),
 
       // COCINA / COMEDOR (DETALLE)
       img("/Casa 3 Imagenes/Cocina+ComedorLC3.jpeg"),
@@ -161,9 +148,7 @@ const housesData = [
 
       // HABITACIONES
       img("/Casa 3 Imagenes/Habitacion1LC3.jpeg"),
-      img("/Casa 3 Imagenes/Habitacion1BLC3.jpeg"),
       img("/Casa 3 Imagenes/HabitacionLC3.jpeg"),
-      img("/Casa 3 Imagenes/VistaHabitacionLC3.jpeg"),
 
       // BAÑOS
       img("/Casa 3 Imagenes/BañoLC3.jpeg"),
@@ -189,6 +174,8 @@ const housesData = [
         "Ideal para 2/3 adultos. Capacidad máxima: 2 adultos + 2 niños pequeños, o 3 adultos + 1 niño pequeño.",
     },
     highlights: ["Planta baja", "Parrilla privada", "Parque"],
+    // ✅ además de COMMON.includes
+    includesExtra: ["Aire acondicionado frío/calor"],
     images: [
       // AFUERA / ENTRADA
       img("/Casa 4 Imagenes/EntradaLC4.jpeg"),
@@ -198,17 +185,13 @@ const housesData = [
       img("/Casa 4 Imagenes/LivingLC4.jpeg"),
       img("/Casa 4 Imagenes/Living1LC4.jpeg"),
       img("/Casa 4 Imagenes/Living+CocinaLC4.jpeg"),
-      img("/Casa 4 Imagenes/Living+Cocina1LC4.jpeg"),
       img("/Casa 4 Imagenes/CocinaLC4.jpeg"),
-      img("/Casa 4 Imagenes/Cocina1LC4.jpeg"),
 
       // HABITACIÓN
       img("/Casa 4 Imagenes/Habitacion1LC4.jpeg"),
-      img("/Casa 4 Imagenes/HabitacionLC4.jpeg"),
 
       // BAÑO
       img("/Casa 4 Imagenes/BañoLC4.jpeg"),
-      img("/Casa 4 Imagenes/Ducha1LC4.jpeg"),
       img("/Casa 4 Imagenes/Ducha2LC4.jpeg"),
       img("/Casa 4 Imagenes/DuchaLC4.jpeg"),
       img("/Casa 4 Imagenes/ToiletteLC4.jpeg"),
@@ -252,8 +235,7 @@ const housesData = [
       img("/Casa 5 Imagenes/BañoLC5.jpeg"),
       img("/Casa 5 Imagenes/DuchaLC5.jpeg"),
 
-      // TOILETTE (si realmente existen estas fotos y son baño “chico”, dejalas; si no existen, borrarlas)
-      img("/Casa 5 Imagenes/Toilette1LC5.jpeg"),
+      // TOILETTE
       img("/Casa 5 Imagenes/ToiletteLC5.jpeg"),
 
       // PATIO
@@ -485,7 +467,7 @@ export default function HousesSection() {
                     </div>
 
                     <ul className="grid grid-cols-1 gap-2 text-sm text-brand-brown/70 font-light">
-                      {COMMON.includes.map((t) => (
+                      {[...COMMON.includes, ...(h.includesExtra || [])].map((t) => (
                         <li key={t} className="flex items-start gap-2">
                           <span className="mt-[1px] text-brand-accent font-black">✓</span>
                           <span>{t}</span>
