@@ -177,8 +177,7 @@
           <div><strong>Total:</strong> <span id="totalPriceText">-</span></div>
         </div>
         <div class="mt-2 text-xs text-brand-accent">
-          * Total estimado según tarifas vigentes. Para reservar se paga el <strong>50%</strong>
-          y el resto va en 2 cuotas consecutivas. Por otras modalidades, consultanos.
+          * Total estimado según tarifas vigentes. Seña: <strong>50%</strong>.
         </div>
       </div>
 
@@ -234,14 +233,30 @@
         <div><strong>Check-out:</strong> <span id="sumCheckout">-</span> (10:00)</div>
         <div><strong>Precio estimado:</strong> <span id="sumTotalPrice">-</span></div>
         <div><strong>Seña (50%):</strong> <span id="sumDeposit">-</span></div>
+      </div>
 
-        <div class="mt-3 pt-3 border-t border-brand-beige">
-          <div class="font-semibold mb-1">Forma de pago</div>
-          <div>50% para reservar y el resto en 2 cuotas consecutivas.</div>
-          <div class="mt-1 text-xs text-brand-accent">
-            Por otras modalidades, consultanos. Por el momento aceptamos
-            <strong>solo transferencia bancaria</strong>.
+      <!-- Forma de pago: va antes de los datos de transferencia, que es lo que
+           la persona necesita saber para decidir si reserva. -->
+      <div class="mt-4 p-5 rounded-2xl bg-brand-beige/40 border-2 border-brand-brown/25">
+        <div class="font-semibold text-base mb-3">💳 Forma de pago</div>
+
+        <ul class="text-sm space-y-2">
+          <li>• <strong>50%</strong> para confirmar la reserva.</li>
+          <li>• El saldo en <strong>2 cuotas mensuales consecutivas</strong>.</li>
+          <li>• La última cuota se abona en los <strong>primeros días de noviembre</strong>.</li>
+        </ul>
+
+        <div class="mt-4 p-4 rounded-xl bg-brand-brown text-brand-cream text-center">
+          <div class="font-bold text-sm uppercase tracking-wide mb-2">
+            ¿Necesitás otra modalidad de pago?
           </div>
+          <div class="text-sm mb-3 text-brand-cream/85">
+            Escribinos y lo vemos.
+          </div>
+          <a id="waPago" href="https://wa.me/542236882986" target="_blank" rel="noopener"
+            class="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold transition">
+            <span aria-hidden="true">💬</span> Consultar por WhatsApp
+          </a>
         </div>
       </div>
 
@@ -304,7 +319,7 @@
           <strong>Seña (50%):</strong> <span id="resDeposit">-</span>
         </div>
         <div class="text-xs text-brand-accent mt-1">
-          El <strong>saldo restante</strong> se coordina con los dueños cerca de la fecha de tu estadía.
+          El <strong>saldo</strong> se abona en 2 cuotas mensuales consecutivas; la última, en los primeros días de noviembre.
         </div>
       </div>
 
@@ -361,7 +376,7 @@
             <strong>Seña (50%):</strong> <span id="uxDepositAmount2">-</span>
           </div>
           <div class="mt-1 text-brand-accent text-xs">
-            El <strong>saldo restante</strong> se coordina con los dueños cerca de la fecha de tu estadía.
+            El <strong>saldo</strong> se abona en 2 cuotas mensuales consecutivas; la última, en los primeros días de noviembre.
           </div>
         </div>
       </div>
