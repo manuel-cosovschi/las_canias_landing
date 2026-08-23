@@ -177,7 +177,8 @@
           <div><strong>Total:</strong> <span id="totalPriceText">-</span></div>
         </div>
         <div class="mt-2 text-xs text-brand-accent">
-          * Total estimado según tarifas vigentes. Seña: <strong>50%</strong>.
+          * Total estimado según tarifas vigentes. Para reservar se paga el <strong>50%</strong>
+          y el resto va en 2 cuotas consecutivas. Por otras modalidades, consultanos.
         </div>
       </div>
 
@@ -199,14 +200,22 @@
 
     <!-- PASO 2 -->
     <section id="guestSection" class="bg-white/75 rounded-2xl shadow-sm border border-brand-beige p-6 mb-6 hidden">
-      <h2 class="serif text-xl sm:text-2xl font-bold mb-4">2) Datos del huésped</h2>
+      <h2 class="serif text-xl sm:text-2xl font-bold mb-1">2) Datos de los huéspedes</h2>
+      <p class="text-sm text-brand-accent mb-4">
+        Necesitamos los datos de <strong>todas</strong> las personas que se alojan, no sólo de quien reserva.
+      </p>
 
+      <div class="font-semibold text-sm mb-2">Quien reserva</div>
       <div class="grid sm:grid-cols-2 gap-4">
         <input id="name" class="border border-brand-beige rounded-2xl p-3 bg-white/80 focus:outline-none focus:ring-2 focus:ring-brand-accent/40" placeholder="Nombre y apellido">
         <input id="dni" class="border border-brand-beige rounded-2xl p-3 bg-white/80 focus:outline-none focus:ring-2 focus:ring-brand-accent/40" placeholder="DNI">
         <input id="email" type="email" class="border border-brand-beige rounded-2xl p-3 bg-white/80 focus:outline-none focus:ring-2 focus:ring-brand-accent/40" placeholder="Email">
         <input id="phone" class="border border-brand-beige rounded-2xl p-3 bg-white/80 focus:outline-none focus:ring-2 focus:ring-brand-accent/40" placeholder="WhatsApp">
       </div>
+
+      <!-- Un bloque por cada huésped además de quien reserva; lo arma el JS
+           según la cantidad de personas elegida en el paso 1. -->
+      <div id="acompanantes"></div>
 
       <button id="guestContinue" disabled
         class="mt-5 w-full py-3 rounded-2xl bg-brand-brown text-brand-cream font-semibold hover:opacity-90 transition disabled:opacity-40 disabled:cursor-not-allowed">
@@ -225,7 +234,15 @@
         <div><strong>Check-out:</strong> <span id="sumCheckout">-</span> (10:00)</div>
         <div><strong>Precio estimado:</strong> <span id="sumTotalPrice">-</span></div>
         <div><strong>Seña (50%):</strong> <span id="sumDeposit">-</span></div>
-        <div class="mt-2"><strong>Importante:</strong> Por el momento aceptamos <strong>solo transferencia bancaria</strong>.</div>
+
+        <div class="mt-3 pt-3 border-t border-brand-beige">
+          <div class="font-semibold mb-1">Forma de pago</div>
+          <div>50% para reservar y el resto en 2 cuotas consecutivas.</div>
+          <div class="mt-1 text-xs text-brand-accent">
+            Por otras modalidades, consultanos. Por el momento aceptamos
+            <strong>solo transferencia bancaria</strong>.
+          </div>
+        </div>
       </div>
 
       <div class="mt-4 p-4 rounded-2xl bg-brand-cream border border-brand-beige text-sm">
@@ -429,7 +446,7 @@
     LC2:{max:4,hint:"Máx 4. Ideal 2 adultos + 2 niños/adolescentes."},
     LC3:{max:6,hint:"Máx 4 adultos + 1 joven + 1 niño (según disposición)."},
     LC4:{max:4,hint:"Máx 3 adultos o 2 adultos + 2 niños pequeños."},
-    LC5:{max:3,hint:"Máx 2 adultos + 1 niño."}
+    LC5:{max:3,hint:"Máx 2 adultos + 1 niño de hasta 6 años."}
   };
 
   const el = (id)=>document.getElementById(id);
@@ -1438,8 +1455,63 @@ async function loadPricePeriods(){
     setStatus("4) Perfecto. Continuá para ingresar los datos del huésped.");
   }
 
+  const acompanantesBox = el("acompanantes");
+
+  function leerAcompanantes(){
+    if (!acompanantesBox) return [];
+
+    const nombres = [...acompanantesBox.querySelectorAll('[data-acompanante="nombre"]')];
+    const documentos = [...acompanantesBox.querySelectorAll('[data-acompanante="dni"]')];
+
+    return nombres.map((campo, i) => ({
+      nombre: campo.value.trim(),
+      dni: (documentos[i]?.value || "").trim(),
+    }));
+  }
+
+  // Un bloque por cada huésped que no sea quien reserva. Se rearma cada vez que
+  // cambia la cantidad de personas, conservando lo que ya se haya tipeado.
+  function renderAcompanantes(){
+    if (!acompanantesBox) return;
+
+    const extra = Math.max(0, (Number(guests.value) || 0) - 1);
+    const previos = leerAcompanantes();
+
+    acompanantesBox.innerHTML = "";
+    if (!extra) return;
+
+    const titulo = document.createElement("div");
+    titulo.className = "font-semibold text-sm mt-6 mb-2";
+    titulo.textContent = extra === 1 ? "Acompañante" : `Acompañantes (${extra})`;
+    acompanantesBox.appendChild(titulo);
+
+    for (let i = 0; i < extra; i++){
+      const fila = document.createElement("div");
+      fila.className = "grid sm:grid-cols-2 gap-4 mb-3";
+
+      for (const campo of ["nombre", "dni"]){
+        const input = document.createElement("input");
+        input.className = "border border-brand-beige rounded-2xl p-3 bg-white/80 focus:outline-none focus:ring-2 focus:ring-brand-accent/40";
+        input.placeholder = campo === "nombre"
+          ? `Nombre y apellido (huésped ${i + 2})`
+          : `DNI (huésped ${i + 2})`;
+        input.dataset.acompanante = campo;
+        input.value = previos[i]?.[campo] || "";
+        input.addEventListener("input", () => {
+          if (validateGuestData()) setStatus("6) Listo. Ya podés continuar.");
+        });
+        fila.appendChild(input);
+      }
+
+      acompanantesBox.appendChild(fila);
+    }
+  }
+
   function validateGuestData(){
-    const ok = name.value.trim() && dni.value.trim() && email.value.trim() && phone.value.trim();
+    const titularOk = name.value.trim() && dni.value.trim() && email.value.trim() && phone.value.trim();
+    const acompanantesOk = leerAcompanantes().every(a => a.nombre && a.dni);
+
+    const ok = !!titularOk && acompanantesOk;
     guestContinue.disabled = !ok;
     return ok;
   }
@@ -1699,9 +1771,12 @@ async function loadPricePeriods(){
     checkin.disabled = true;
     checkout.disabled = true;
 
+    renderAcompanantes();
+    validateGuestData();
+
     guestSection.classList.remove("hidden");
     guestSection.scrollIntoView({behavior:"smooth"});
-    setStatus("5) Completá los datos del huésped para continuar.");
+    setStatus("5) Completá los datos de todos los huéspedes para continuar.");
   });
 
   [name, dni, email, phone].forEach(inp=>{
@@ -1737,6 +1812,16 @@ async function loadPricePeriods(){
     setPayBusy(true);
     setStatus("Enviando solicitud de reserva...");
 
+    const acompanantes = leerAcompanantes();
+
+    // Además del campo estructurado mandamos la lista en `notes`, que ya viaja
+    // hasta la planilla y se ve en el panel: así los acompañantes quedan a la
+    // vista sin depender de que n8n sume una columna nueva.
+    const listaHuespedes = [
+      `1. ${name.value.trim()} (DNI ${dni.value.trim()})`,
+      ...acompanantes.map((a, i) => `${i + 2}. ${a.nombre} (DNI ${a.dni})`),
+    ].join(" · ");
+
     const payload = {
       house_code: house.value,
       guests: Number(guests.value),
@@ -1746,9 +1831,13 @@ async function loadPricePeriods(){
       dni: dni.value.trim(),
       email: email.value.trim(),
       phone: phone.value.trim(),
+      guests_details: [
+        { nombre: name.value.trim(), dni: dni.value.trim(), titular: true },
+        ...acompanantes.map(a => ({ ...a, titular: false })),
+      ],
       payment_method: "transfer",
       payment_ref: "",
-      notes: ""
+      notes: `Huéspedes: ${listaHuespedes}`
     };
 
     try{

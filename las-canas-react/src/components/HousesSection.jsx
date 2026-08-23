@@ -210,7 +210,7 @@ const housesData = [
     id: 5,
     code: "LC5",
     title: "Las Cañas 5",
-    people: "2 adultos + 1 niño",
+    people: "2 adultos + 1 niño (hasta 6)",
     description:
       "Ideal para parejas o familia chica. Planta baja. No se aceptan mascotas.",
     details: {
@@ -218,7 +218,7 @@ const housesData = [
       plantas: "Planta baja",
       banos: "1 baño",
       camas: "2 + futón",
-      extra: "Máximo: 2 adultos + 1 menor",
+      extra: "Máximo: 2 adultos + 1 niño de hasta 6 años",
     },
     highlights: ["Planta baja", "Parrilla privada", "Parque"],
     images: [

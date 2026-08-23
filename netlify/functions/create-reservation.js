@@ -21,6 +21,9 @@ exports.handler = async (event) => {
       dni: bodyIn.dni,
       email: bodyIn.email,
       phone: bodyIn.phone,
+      // Datos de todos los que se alojan, no sólo de quien reserva. No es
+      // obligatorio para no romper una página vieja que quedó cacheada.
+      guests_details: Array.isArray(bodyIn.guests_details) ? bodyIn.guests_details : [],
       payment_method: bodyIn.payment_method ? String(bodyIn.payment_method).toLowerCase() : bodyIn.payment_method,
       payment_ref: bodyIn.payment_ref || "",
       notes: bodyIn.notes || "",
