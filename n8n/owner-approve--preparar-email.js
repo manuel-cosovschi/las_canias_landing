@@ -115,7 +115,7 @@ function precioDeLaNoche(periodos, ymd, casa) {
 
 // Mismo criterio que reservar.html: noche por noche según el período en que
 // cae cada una, y si alguna quedó sin tarifa no se inventa un total.
-function calcularEstadia(periodos, casa, checkin, checkout) {
+function calcularEstadia(periodos, casa, checkin, checkout, fechaReserva) {
   const ci = String(checkin || "").slice(0, 10);
   const co = String(checkout || "").slice(0, 10);
   if (!/^\d{4}-\d{2}-\d{2}$/.test(ci) || !/^\d{4}-\d{2}-\d{2}$/.test(co)) return null;
@@ -132,15 +132,52 @@ function calcularEstadia(periodos, casa, checkin, checkout) {
 
   const sena = Math.round(total * 0.5);
   const saldo = total - sena;
-  const cuota = Math.round(saldo / 2);
 
-  return {
-    noches, total, sena, saldo,
-    cuotas: [
-      { numero: 1, monto: saldo - cuota, vence: "del 1 al 5 de octubre" },
-      { numero: 2, monto: cuota, vence: "del 1 al 5 de noviembre" },
-    ],
-  };
+  return { noches, total, sena, saldo, cuotas: planDeCuotas(saldo, ci, fechaReserva) };
+}
+
+function esTemporadaAltaYmd(ymd) {
+  const m = String(ymd || "").slice(0, 10).match(/^\d{4}-(\d{2})-(\d{2})$/);
+  if (!m) return false;
+
+  const mes = Number(m[1]);
+  const dia = Number(m[2]);
+
+  return (mes === 12 ? dia >= 20 : mes > 12) || (mes === 3 ? dia <= 1 : mes < 3);
+}
+
+// La temporada cruza el año nuevo, así que las cuotas se anclan al año en que
+// arranca: una estadía de enero de 2027 paga en octubre y noviembre de 2026.
+function anioDeTemporada(ymd) {
+  const m = String(ymd).match(/^(\d{4})-(\d{2})/);
+  const anio = Number(m[1]);
+  return Number(m[2]) >= 12 ? anio : anio - 1;
+}
+
+// Las cuotas son sólo para temporada alta, y cada tramo cuenta sólo si su
+// vencimiento todavía no llegó cuando se reservó: reservando en noviembre o
+// después ya no queda plan de cuotas y el saldo va en un pago.
+function planDeCuotas(saldo, checkinYmd, fechaReserva) {
+  if (!esTemporadaAltaYmd(checkinYmd)) return [];
+
+  const anio = anioDeTemporada(checkinYmd);
+  const hoy = String(fechaReserva || "").slice(0, 10) || new Date().toISOString().slice(0, 10);
+
+  const vigentes = [
+    { mes: "10", nombre: "octubre" },
+    { mes: "11", nombre: "noviembre" },
+  ].filter((t) => hoy < `${anio}-${t.mes}-01`);
+
+  if (!vigentes.length) return [];
+
+  // La última se lleva el redondeo para que las cuotas cierren el saldo exacto.
+  const base = Math.round(saldo / vigentes.length);
+
+  return vigentes.map((t, i) => ({
+    numero: i + 1,
+    monto: i === vigentes.length - 1 ? saldo - base * (vigentes.length - 1) : base,
+    vence: `del 1 al 5 de ${t.nombre} de ${anio}`,
+  }));
 }
 
 // Los acompañantes se guardan en `notes` con el formato que arma reservar.html.
@@ -171,7 +208,9 @@ function renderDocumento(reserva, periodos) {
   const huespedes = leerHuespedes(reserva);
   const ci = String(reserva.check_in || "").slice(0, 10);
   const co = String(reserva.check_out || "").slice(0, 10);
-  const estadia = calcularEstadia(periodos, String(reserva.house_code || "").toUpperCase(), ci, co);
+  // Las cuotas dependen de cuándo se reservó, no de cuándo se confirma.
+  const fechaReserva = String(reserva.created_at || "").slice(0, 10);
+  const estadia = calcularEstadia(periodos, String(reserva.house_code || "").toUpperCase(), ci, co, fechaReserva);
 
   const listaHuespedes = huespedes
     .map((g) => `<li>${escapar(g.nombre)}${g.dni ? ` — DNI ${escapar(g.dni)}` : ""}</li>`)
@@ -187,6 +226,7 @@ function renderDocumento(reserva, periodos) {
 
       <div class="fila"><span>Saldo</span><strong>${pesos(estadia.saldo)}</strong></div>
 
+      ${estadia.cuotas.length ? `
       <table class="cuotas">
         <thead><tr><th>Cuota</th><th>Vencimiento</th><th>Monto</th></tr></thead>
         <tbody>${estadia.cuotas.map((c) => `
@@ -197,7 +237,8 @@ function renderDocumento(reserva, periodos) {
           </tr>`).join("")}
         </tbody>
       </table>
-      <p class="nota">El saldo se abona en 2 cuotas mensuales consecutivas. Por otras modalidades de pago, consultar.</p>`
+      <p class="nota">El saldo se abona en ${estadia.cuotas.length === 1 ? "1 cuota" : `${estadia.cuotas.length} cuotas mensuales consecutivas`}. Por otras modalidades de pago, consultar.</p>`
+      : `<p class="nota">El saldo se abona en un pago, a coordinar con los propietarios. Por otras modalidades de pago, consultar.</p>`}`
     : `<p class="nota sinTarifa">Los importes de esta reserva se coordinan directamente con los propietarios.</p>`;
 
   return `<!doctype html>

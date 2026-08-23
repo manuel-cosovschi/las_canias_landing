@@ -240,10 +240,10 @@
       <div class="mt-4 p-5 rounded-2xl bg-brand-beige/40 border-2 border-brand-brown/25">
         <div class="font-semibold text-base mb-3">💳 Forma de pago</div>
 
-        <ul class="text-sm space-y-2">
+        <!-- El plan de cuotas depende de la estadía y de la fecha en que se
+             reserva, así que lo escribe el JS. -->
+        <ul id="formaPagoLista" class="text-sm space-y-2">
           <li>• <strong>50%</strong> para confirmar la reserva.</li>
-          <li>• El saldo en <strong>2 cuotas mensuales consecutivas</strong>.</li>
-          <li>• La última cuota se abona en los <strong>primeros días de noviembre</strong>.</li>
         </ul>
 
         <div class="mt-4 p-4 rounded-xl bg-brand-brown text-brand-cream text-center">
@@ -319,7 +319,7 @@
           <strong>Seña (50%):</strong> <span id="resDeposit">-</span>
         </div>
         <div class="text-xs text-brand-accent mt-1">
-          El <strong>saldo</strong> se abona en 2 cuotas mensuales consecutivas; la última, en los primeros días de noviembre.
+          <span class="saldoTexto">El <strong>saldo</strong> se coordina según la modalidad de pago elegida.</span>
         </div>
       </div>
 
@@ -376,7 +376,7 @@
             <strong>Seña (50%):</strong> <span id="uxDepositAmount2">-</span>
           </div>
           <div class="mt-1 text-brand-accent text-xs">
-            El <strong>saldo</strong> se abona en 2 cuotas mensuales consecutivas; la última, en los primeros días de noviembre.
+            <span class="saldoTexto">El <strong>saldo</strong> se coordina según la modalidad de pago elegida.</span>
           </div>
         </div>
       </div>
@@ -1085,10 +1085,75 @@ async function loadPricePeriods(){
     waExcepcion.href = `https://wa.me/${WA_NUMERO}?text=${encodeURIComponent(partes.join(" "))}`;
   }
 
+  // La temporada cruza el año nuevo, así que las cuotas se anclan al año en
+  // que arranca: una estadía de enero de 2027 paga en octubre y noviembre
+  // de 2026.
+  function anioDeTemporada(ymd){
+    const m = String(ymd).match(/^(\d{4})-(\d{2})/);
+    if (!m) return null;
+    const anio = Number(m[1]);
+    return Number(m[2]) >= 12 ? anio : anio - 1;
+  }
+
+  // Las cuotas son sólo para temporada alta, y cada tramo cuenta sólo si su
+  // vencimiento todavía no llegó: reservando en noviembre o después ya no hay
+  // plan de cuotas.
+  function cuotasDisponibles(ciYmd){
+    if (!esTemporadaAltaYmd(ciYmd)) return [];
+
+    const anio = anioDeTemporada(ciYmd);
+    if (!anio) return [];
+
+    const hoy = fmtYMD(new Date());
+
+    return [
+      { mes: "10", nombre: "octubre" },
+      { mes: "11", nombre: "noviembre" },
+    ].filter(t => hoy < `${anio}-${t.mes}-01`);
+  }
+
+  const formaPagoLista = el("formaPagoLista");
+
+  function updateFormaPago(){
+    if (!formaPagoLista) return;
+
+    const items = ["• <strong>50%</strong> para confirmar la reserva."];
+
+    if (!checkin.value){
+      items.push("• El saldo, según las fechas que elijas: en temporada se puede financiar en cuotas.");
+    } else {
+      const cuotas = cuotasDisponibles(checkin.value);
+
+      if (cuotas.length > 1){
+        items.push(`• El saldo en <strong>${cuotas.length} cuotas mensuales consecutivas</strong>.`);
+        items.push(`• La última se abona del <strong>1 al 5 de ${cuotas[cuotas.length - 1].nombre}</strong>.`);
+      } else if (cuotas.length === 1){
+        items.push(`• El saldo en <strong>1 cuota</strong>, del <strong>1 al 5 de ${cuotas[0].nombre}</strong>.`);
+      } else if (esTemporadaAltaYmd(checkin.value)){
+        items.push("• El saldo <strong>en un pago</strong>: las cuotas rigen para reservas hechas antes del 1 de noviembre.");
+      } else {
+        items.push("• El saldo <strong>en un pago</strong>. El plan de cuotas rige para estadías de temporada.");
+      }
+    }
+
+    formaPagoLista.innerHTML = items.map(t => `<li>${t}</li>`).join("");
+
+    // El mismo dato en la pantalla de después de enviar la solicitud
+    const cuotas = checkin.value ? cuotasDisponibles(checkin.value) : [];
+    const resumen = !checkin.value
+      ? "El <strong>saldo</strong> se coordina según la modalidad de pago elegida."
+      : cuotas.length
+        ? `El <strong>saldo</strong> se abona en ${cuotas.length === 1 ? "1 cuota" : `${cuotas.length} cuotas mensuales consecutivas`}; la última, del 1 al 5 de ${cuotas[cuotas.length - 1].nombre}.`
+        : "El <strong>saldo</strong> se abona en un pago, a coordinar con los dueños.";
+
+    document.querySelectorAll(".saldoTexto").forEach(n => { n.innerHTML = resumen; });
+  }
+
   function updateMinBanner(){
     const rule = getMinRule(checkin.value, checkout.value);
     minNightsText.textContent = rule.label;
     updateWhatsAppLink();
+    updateFormaPago();
   }
 
   let blockedRanges = [];
