@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 
 const img = (path) => encodeURI(path);
+const vid = (path) => encodeURI(path);
 
 /**
  * Datos según Master Doc (baños/ambientes/camas/observaciones + servicios comunes).
@@ -134,6 +135,9 @@ const housesData = [
     images: [
       // AFUERA / ENTRADA
       img("/Casa 3 Imagenes/EntradaLC3.jpeg"),
+
+      // VIDEO (recorrido completo; arranca en la puerta para seguir el orden de la galería)
+      vid("/Casa 3 Imagenes/videoRecorridoLC3.MP4"),
 
       // TRANSICIÓN / ESCALERAS
       img("/Casa 3 Imagenes/Escalera1LC3.jpeg"),
