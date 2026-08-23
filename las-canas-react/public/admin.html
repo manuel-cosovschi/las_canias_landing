@@ -59,6 +59,28 @@
     /* Flatpickr typography */
     .flatpickr-calendar { font-family: "Inter", ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; }
 
+    /* Navegación lateral: en escritorio es una columna fija; abajo de lg pasa
+       a una tira horizontal que scrollea, sin cambiar el markup. */
+    .navItem {
+      color: #4A3728;
+      border: 1px solid transparent;
+    }
+    .navItem:hover { background: rgba(228, 217, 200, .5); }
+    .navItem[aria-current="page"],
+    .navItem[aria-current="page"]:hover {
+      background: #4A3728;
+      color: #F5F1E9;
+      border-color: #4A3728;
+    }
+    .navItem[aria-current="page"] .navPunto { background: #F5F1E9; }
+    .navPunto {
+      width: 6px; height: 6px; border-radius: 999px;
+      background: transparent; flex: none;
+    }
+    /* La tira horizontal en mobile no muestra barra de scroll */
+    #navSecciones { scrollbar-width: none; }
+    #navSecciones::-webkit-scrollbar { display: none; }
+
     /* Calendario: el chip coloreado lo dibuja eventContent, así que le sacamos
        a FullCalendar su fondo/borde propio para que no pinte por debajo. */
     #calendar .fc-daygrid-event,
@@ -209,56 +231,51 @@
 
     <!-- APP -->
     <section id="app" class="hidden mt-8">
-      <!-- Toolbar -->
-      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
-        <!-- Tabs -->
-        <div class="flex flex-wrap gap-2">
-          <button id="tabBlock"
-            class="px-4 py-2 rounded-full bg-brand-beige/40 border border-brand-beige font-semibold text-sm hover:bg-brand-beige/55 transition">
-            Bloquear fechas
-          </button>
-          <button id="tabTransfers"
-            class="px-4 py-2 rounded-full bg-white/70 border border-brand-beige font-semibold text-sm hover:bg-white transition">
-            Transferencias
-          </button>
-          <button id="tabConfirmed"
-            class="px-4 py-2 rounded-full bg-white/70 border border-brand-beige font-semibold text-sm hover:bg-white transition">
-            Confirmadas
-          </button>
-          <button id="tabSearch"
-            class="px-4 py-2 rounded-full bg-white/70 border border-brand-beige font-semibold text-sm hover:bg-white transition">
-            Buscar
-          </button>
-          <button id="tabCalendar"
-            class="px-4 py-2 rounded-full bg-white/70 border border-brand-beige font-semibold text-sm hover:bg-white transition">
-            Calendario
-          </button>
-          <button id="tabPrices"
-            class="px-4 py-2 rounded-full bg-white/70 border border-brand-beige font-semibold text-sm hover:bg-white transition">
-            Precios
-          </button>
-          <button id="tabRules"
-            class="px-4 py-2 rounded-full bg-white/70 border border-brand-beige font-semibold text-sm hover:bg-white transition">
-            Reglas
-          </button>
-          <button id="tabGuide"
-            class="px-4 py-2 rounded-full bg-white/70 border border-brand-beige font-semibold text-sm hover:bg-white transition">
-            Guía
-          </button>
-        </div>
+      <div class="flex flex-col lg:flex-row gap-6 items-start">
 
-        <!-- Actions -->
-        <div class="flex items-center gap-2">
-          <button id="btnRefresh"
-            class="hidden px-4 py-2 rounded-full bg-brand-brown text-brand-cream text-xs font-semibold hover:opacity-90 transition">
-            Actualizar pendientes
+      <!-- NAVEGACIÓN LATERAL -->
+      <aside class="w-full lg:w-56 lg:shrink-0 lg:sticky lg:top-24">
+        <nav id="navSecciones" aria-label="Secciones del panel"
+          class="flex lg:flex-col gap-1 overflow-x-auto lg:overflow-visible bg-white/70 border border-brand-beige rounded-2xl p-2">
+          <button id="tabBlock" class="navItem shrink-0 lg:w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold text-left transition">
+            <span class="navPunto"></span><span class="whitespace-nowrap">Bloquear fechas</span>
           </button>
+          <button id="tabTransfers" class="navItem shrink-0 lg:w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold text-left transition">
+            <span class="navPunto"></span><span class="whitespace-nowrap">Transferencias</span>
+          </button>
+          <button id="tabConfirmed" class="navItem shrink-0 lg:w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold text-left transition">
+            <span class="navPunto"></span><span class="whitespace-nowrap">Confirmadas</span>
+          </button>
+          <button id="tabSearch" class="navItem shrink-0 lg:w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold text-left transition">
+            <span class="navPunto"></span><span class="whitespace-nowrap">Buscar</span>
+          </button>
+          <button id="tabCalendar" class="navItem shrink-0 lg:w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold text-left transition">
+            <span class="navPunto"></span><span class="whitespace-nowrap">Calendario</span>
+          </button>
+          <button id="tabPrices" class="navItem shrink-0 lg:w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold text-left transition">
+            <span class="navPunto"></span><span class="whitespace-nowrap">Precios</span>
+          </button>
+          <button id="tabRules" class="navItem shrink-0 lg:w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold text-left transition">
+            <span class="navPunto"></span><span class="whitespace-nowrap">Reglas</span>
+          </button>
+          <button id="tabGuide" class="navItem shrink-0 lg:w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold text-left transition">
+            <span class="navPunto"></span><span class="whitespace-nowrap">Guía</span>
+          </button>
+        </nav>
 
-          <div class="hidden sm:flex items-center gap-2 px-3 py-2 rounded-2xl bg-white/70 border border-brand-beige text-xs">
-            <span class="font-semibold">Owner Secret:</span>
-            <span id="secretBadge" class="text-brand-accent">No configurado</span>
-          </div>
+        <div class="hidden lg:flex items-center gap-2 mt-3 px-3 py-2.5 rounded-2xl bg-white/70 border border-brand-beige text-xs">
+          <span class="font-semibold">Owner Secret:</span>
+          <span id="secretBadge" class="text-brand-accent">No configurado</span>
         </div>
+      </aside>
+
+      <!-- CONTENIDO -->
+      <div class="flex-1 min-w-0 w-full">
+      <div class="flex justify-end mb-4">
+        <button id="btnRefresh"
+          class="hidden px-4 py-2 rounded-full bg-brand-brown text-brand-cream text-xs font-semibold hover:opacity-90 transition">
+          Actualizar pendientes
+        </button>
       </div>
 
       <!-- BLOQUEAR FECHAS -->
@@ -995,6 +1012,9 @@
           Al guardar se reemplazan todas las reglas. Los cambios impactan en la página al instante.
         </p>
       </div>
+
+      </div><!-- /contenido -->
+      </div><!-- /layout con nav lateral -->
     </section>
   </main>
 
@@ -1518,53 +1538,33 @@
   }
 
   // Tabs
-  function showTab(which) {
-    const isBlock = which === "block";
-    const isTransfers = which === "transfers";
-    const isConfirmed = which === "confirmed";
-    const isCalendar = which === "calendar";
-    const isPrices = which === "prices";
-    const isRules = which === "rules";
-    const isSearch = which === "search";
-    const isGuide = which === "guide";
+  // Una sola lista en vez de un par de toggles por sección: agregar una nueva
+  // es sumar una línea acá.
+  const SECCIONES = [
+    { id: "block",     boton: tabBlock,     vista: viewBlock },
+    { id: "transfers", boton: tabTransfers, vista: viewTransfers },
+    { id: "confirmed", boton: tabConfirmed, vista: viewConfirmed },
+    { id: "search",    boton: tabSearch,    vista: viewSearch },
+    { id: "calendar",  boton: tabCalendar,  vista: viewCalendar },
+    { id: "prices",    boton: tabPrices,    vista: viewPrices },
+    { id: "rules",     boton: tabRules,     vista: viewRules },
+    { id: "guide",     boton: tabGuide,     vista: viewGuide },
+  ];
 
-    viewBlock.classList.toggle("hidden", !isBlock);
-    viewTransfers.classList.toggle("hidden", !isTransfers);
-    viewConfirmed.classList.toggle("hidden", !isConfirmed);
-    viewCalendar.classList.toggle("hidden", !isCalendar);
-    viewPrices.classList.toggle("hidden", !isPrices);
-    viewRules.classList.toggle("hidden", !isRules);
-    viewSearch.classList.toggle("hidden", !isSearch);
-    viewGuide.classList.toggle("hidden", !isGuide);
+  function showTab(which) {
+    for (const s of SECCIONES) {
+      const activa = s.id === which;
+
+      s.vista.classList.toggle("hidden", !activa);
+
+      // El resaltado del ítem activo lo hace el CSS con [aria-current]
+      if (activa) s.boton.setAttribute("aria-current", "page");
+      else s.boton.removeAttribute("aria-current");
+    }
 
     // Refresh button solo para TRANSFERS (pendientes)
+    const isTransfers = which === "transfers";
     btnRefresh.classList.toggle("hidden", !isTransfers);
-
-    // estilos tabs
-    tabBlock.classList.toggle("bg-brand-beige/40", isBlock);
-    tabBlock.classList.toggle("bg-white/70", !isBlock);
-
-    tabTransfers.classList.toggle("bg-brand-beige/40", isTransfers);
-    tabTransfers.classList.toggle("bg-white/70", !isTransfers);
-
-    tabConfirmed.classList.toggle("bg-brand-beige/40", isConfirmed);
-    tabConfirmed.classList.toggle("bg-white/70", !isConfirmed);
-
-    tabCalendar.classList.toggle("bg-brand-beige/40", isCalendar);
-    tabCalendar.classList.toggle("bg-white/70", !isCalendar);
-
-    tabPrices.classList.toggle("bg-brand-beige/40", isPrices);
-    tabPrices.classList.toggle("bg-white/70", !isPrices);
-
-    tabRules.classList.toggle("bg-brand-beige/40", isRules);
-    tabRules.classList.toggle("bg-white/70", !isRules);
-
-    tabSearch.classList.toggle("bg-brand-beige/40", isSearch);
-    tabSearch.classList.toggle("bg-white/70", !isSearch);
-
-    tabGuide.classList.toggle("bg-brand-beige/40", isGuide);
-    tabGuide.classList.toggle("bg-white/70", !isGuide);
-
     if (!isTransfers) stopCountdownTicker();
 
    // no auto refresh en confirmadas
