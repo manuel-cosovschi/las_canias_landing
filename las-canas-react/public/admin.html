@@ -206,6 +206,10 @@
             class="px-4 py-2 rounded-full bg-white/70 border border-brand-beige font-semibold text-sm hover:bg-white transition">
             Reglas
           </button>
+          <button id="tabGuide"
+            class="px-4 py-2 rounded-full bg-white/70 border border-brand-beige font-semibold text-sm hover:bg-white transition">
+            Guía
+          </button>
         </div>
 
         <!-- Actions -->
@@ -368,6 +372,320 @@
 
         <div id="confirmedList" class="space-y-3 text-sm"></div>
       </div>
+      <!-- GUÍA -->
+      <div id="viewGuide" class="bg-white/75 rounded-2xl shadow-sm border border-brand-beige p-6 hidden">
+        <div class="flex items-start justify-between gap-4 mb-4">
+          <div>
+            <h2 class="serif text-xl sm:text-2xl font-bold">Guía del panel</h2>
+            <p class="text-xs text-brand-accent mt-1">
+              Qué hace cada pestaña y qué significa cada fecha. Tocá un título para abrirlo.
+            </p>
+          </div>
+          <span class="text-xs font-semibold px-3 py-1 rounded-full bg-brand-beige/50 border border-brand-beige/80">
+            Ayuda
+          </span>
+        </div>
+
+        <!-- Lo primero: las fechas -->
+        <div class="p-4 rounded-2xl bg-brand-cream border border-brand-beige mb-5">
+          <h3 class="font-semibold mb-2">Antes que nada: acá se cuentan noches, no días</h3>
+          <p class="text-sm text-brand-brown/90 mb-3">
+            Una estadía del <strong>10 al 12</strong> son <strong>2 noches</strong>: la del 10 y la del 11.
+            El 12 a la mañana el huésped se va, y esa misma tarde puede entrar otro.
+            <strong>La noche del check-out no se ocupa.</strong>
+          </p>
+          <p class="text-sm text-brand-brown/90 mb-3">
+            Eso vale para bloqueos, findes fijos y el calendario. Pero en
+            <strong>Precios</strong> y en <strong>Reglas</strong> la segunda fecha significa otra cosa:
+            es la <strong>última noche</strong>, incluida. Es la única diferencia que hay que tener presente,
+            y es la que más caro sale confundir.
+          </p>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm border-collapse">
+              <thead>
+                <tr class="border-b border-brand-beige text-left">
+                  <th class="py-2 pr-3 font-semibold">Dónde</th>
+                  <th class="py-2 pr-3 font-semibold">La segunda fecha es…</th>
+                  <th class="py-2 font-semibold">Ejemplo</th>
+                </tr>
+              </thead>
+              <tbody class="align-top">
+                <tr class="border-b border-brand-beige/50">
+                  <td class="py-2 pr-3">Bloquear fechas</td>
+                  <td class="py-2 pr-3">el día que se <strong>libera</strong> (check-out)</td>
+                  <td class="py-2 text-brand-accent">10 → 12 bloquea las noches del 10 y del 11</td>
+                </tr>
+                <tr class="border-b border-brand-beige/50">
+                  <td class="py-2 pr-3">Findes fijos</td>
+                  <td class="py-2 pr-3">el día que se <strong>van</strong> (check-out)</td>
+                  <td class="py-2 text-brand-accent">09/10 → 12/10 son 3 noches</td>
+                </tr>
+                <tr class="border-b border-brand-beige/50">
+                  <td class="py-2 pr-3">Precios → <em>Hasta</em></td>
+                  <td class="py-2 pr-3">la <strong>última noche</strong> a ese precio</td>
+                  <td class="py-2 text-brand-accent">01/12 → 19/12: la noche del 19 se cobra a ese precio</td>
+                </tr>
+                <tr class="border-b border-brand-beige/50">
+                  <td class="py-2 pr-3">Reglas → <em>Última noche reservable</em></td>
+                  <td class="py-2 pr-3">la <strong>última noche</strong> que se puede dormir</td>
+                  <td class="py-2 text-brand-accent">31/01: se puede reservar esa noche y salir el 01/02</td>
+                </tr>
+                <tr>
+                  <td class="py-2 pr-3">Buscar → <em>Se alojan desde / hasta</em></td>
+                  <td class="py-2 pr-3">noches ocupadas dentro del tramo</td>
+                  <td class="py-2 text-brand-accent">quien se va el 10 no aparece si buscás el 10</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="space-y-3 guia">
+
+          <details class="rounded-2xl border border-brand-beige bg-white/80 p-4">
+            <summary class="font-semibold cursor-pointer">Bloquear fechas</summary>
+            <div class="mt-3 text-sm text-brand-brown/90 space-y-2">
+              <p>
+                Para sacar fechas de la venta sin que haya una reserva: mantenimiento, uso de la
+                familia, o alguien que reservó por WhatsApp y no por la web.
+              </p>
+              <p>
+                Elegís casa, motivo, check-in y check-out, y tocás <strong>Bloquear fechas</strong>.
+                El motivo es sólo para tu referencia; el huésped nunca lo ve.
+              </p>
+              <p>
+                <strong>Bloquea por noches.</strong> Del 10 al 12 quedan tomadas la noche del 10 y la
+                del 11. El 12 sigue disponible para que entre alguien.
+              </p>
+              <p>
+                Si el rango pisa algo que ya está ocupado o bloqueado, no te deja y te avisa. Es a
+                propósito: evita tapar una reserva real sin darte cuenta.
+              </p>
+              <p>
+                <strong>Desbloquear fechas</strong> borra los bloqueos manuales que toquen ese rango
+                en esa casa. Sólo toca bloqueos: <em>nunca</em> borra una reserva de un huésped.
+              </p>
+            </div>
+          </details>
+
+          <details class="rounded-2xl border border-brand-beige bg-white/80 p-4">
+            <summary class="font-semibold cursor-pointer">Transferencias: aceptar o cancelar</summary>
+            <div class="mt-3 text-sm text-brand-brown/90 space-y-2">
+              <p>
+                Cuando alguien reserva desde la página y elige transferencia, la casa le queda
+                guardada <strong>6 horas</strong> y la reserva aparece en esta pestaña. La seña es el
+                <strong>50%</strong> del total de la estadía.
+              </p>
+              <p>
+                El contador al lado de cada reserva es lo que le queda. <strong>Si no hacés nada, la
+                reserva vence sola</strong> y las fechas se liberan automáticamente. No hace falta que
+                canceles las que no pagaron.
+              </p>
+              <p>
+                <strong>Ver comprobante</strong> aparece cuando el huésped ya subió el suyo. Si el botón
+                no está, todavía no lo mandó — o es una reserva anterior a que el panel empezara a
+                guardarlos, y en ese caso está en tu mail.
+              </p>
+              <p>
+                <strong>Confirmar</strong> marca la reserva como CONFIRMADA y le manda el mail de
+                confirmación al huésped. Lo que escribas en “Referencia de pago” queda anotado en la
+                reserva, para que después sepas de dónde salió la plata. Las fechas quedan tomadas en
+                firme.
+              </p>
+              <p>
+                <strong>Cancelar</strong> la marca como CANCELADA y libera las fechas. Usalo cuando el
+                huésped se arrepintió o el comprobante no cierra.
+              </p>
+              <p class="p-3 rounded-xl bg-brand-cream border border-brand-beige">
+                Esta lista muestra sólo las solicitudes que siguen vivas y sin resolver. Si buscás una
+                reserva puntual y no aparece acá, andá a <strong>Buscar</strong>: ahí están todas,
+                en cualquier estado.
+              </p>
+            </div>
+          </details>
+
+          <details class="rounded-2xl border border-brand-beige bg-white/80 p-4">
+            <summary class="font-semibold cursor-pointer">Confirmadas</summary>
+            <div class="mt-3 text-sm text-brand-brown/90 space-y-2">
+              <p>Las reservas con la seña ya pagada y aceptada por vos. Son las que están en firme.</p>
+              <p>
+                <strong>Cancelar confirmada</strong> existe para cuando hay que dar de baja algo que ya
+                estaba cerrado. Tratalo con cuidado: esa persona ya pagó, así que la devolución la
+                arreglás vos aparte — el panel sólo libera las fechas y cambia el estado.
+              </p>
+            </div>
+          </details>
+
+          <details class="rounded-2xl border border-brand-beige bg-white/80 p-4">
+            <summary class="font-semibold cursor-pointer">Buscar</summary>
+            <div class="mt-3 text-sm text-brand-brown/90 space-y-2">
+              <p>
+                La única pestaña que muestra <strong>todas</strong> las reservas, en cualquier estado:
+                vencidas, canceladas, viejas y futuras. Las otras listas muestran sólo un pedazo.
+              </p>
+              <p>
+                El campo de texto busca por nombre, teléfono, mail, DNI, ID de reserva, referencia de
+                pago y notas. <strong>No hace falta poner los acentos</strong>: escribiendo “pena”
+                encontrás “Peña”.
+              </p>
+              <p>
+                Los filtros de fecha buscan por noches ocupadas. Si ponés del 01/12 al 31/12, salen
+                todas las estadías que duerman aunque sea una noche de diciembre.
+              </p>
+              <p>Cuando una reserva está cancelada, la tarjeta muestra el motivo.</p>
+            </div>
+          </details>
+
+          <details class="rounded-2xl border border-brand-beige bg-white/80 p-4">
+            <summary class="font-semibold cursor-pointer">Calendario</summary>
+            <div class="mt-3 text-sm text-brand-brown/90 space-y-2">
+              <p>Vista mensual de todo lo que ocupa las casas, con un color por tipo:</p>
+              <ul class="list-disc pl-5 space-y-1">
+                <li><strong>Verde</strong>: confirmada, seña pagada.</li>
+                <li><strong>Ámbar</strong>: esperando transferencia, todavía puede caerse.</li>
+                <li><strong>Gris</strong>: bloqueo tuyo.</li>
+              </ul>
+              <p>
+                Cada barra termina el día de check-out, que ya aparece libre. Si dos barras parecen
+                tocarse, está bien: uno se va a la mañana y el otro entra a la tarde.
+              </p>
+              <p>Tocando un evento se abre el detalle completo de esa reserva.</p>
+            </div>
+          </details>
+
+          <details class="rounded-2xl border border-brand-beige bg-white/80 p-4">
+            <summary class="font-semibold cursor-pointer">Precios</summary>
+            <div class="mt-3 text-sm text-brand-brown/90 space-y-2">
+              <p>
+                Los precios se cargan por <strong>período</strong>: un tramo de fechas con el valor de
+                la noche de cada casa. Es lo que cobra la página de reservas.
+              </p>
+              <p>
+                <strong>“Hasta” es la última noche que se cobra a ese precio.</strong> Un período del
+                01/12 al 19/12 cobra la noche del 19 a ese valor, y el 20 ya entra en el siguiente.
+              </p>
+              <p>
+                Los períodos <strong>no se pueden superponer</strong>. Si dos se pisan, el panel no te
+                deja guardar y te dice cuáles son. Sin ese control se cobraría el tramo equivocado sin
+                que nadie se entere.
+              </p>
+              <p class="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-900">
+                <strong>Importante:</strong> una fecha que no está dentro de ningún período
+                <strong>no se puede reservar</strong> desde la página. Es a propósito — es preferible
+                no vender esa noche a venderla a un precio inventado. Cuando abras un mes nuevo,
+                acordate de cargarle su período.
+              </p>
+              <p>“Descartar cambios” vuelve a lo último guardado, por si te embarraste editando.</p>
+            </div>
+          </details>
+
+          <details class="rounded-2xl border border-brand-beige bg-white/80 p-4">
+            <summary class="font-semibold cursor-pointer">Reglas del calendario</summary>
+            <div class="mt-3 text-sm text-brand-brown/90 space-y-3">
+              <div>
+                <p class="font-semibold">Ventana de reservas</p>
+                <p>
+                  Hasta cuándo se puede reservar. <em>Desde</em> vacío significa “desde hoy”.
+                  <em>Última noche reservable</em> es la última noche que alguien puede dormir: si
+                  ponés 31/01, puede reservar esa noche e irse el 01/02 a la mañana.
+                </p>
+              </div>
+              <div>
+                <p class="font-semibold">Noches mínimo (general)</p>
+                <p>El mínimo que se aplica a cualquier fecha que no tenga una regla especial.</p>
+              </div>
+              <div>
+                <p class="font-semibold">Findes que se reservan enteros</p>
+                <p>
+                  Para los fines de semana largos: o se toma el bloque completo o no se toma. El
+                  huésped sólo puede entrar el día de check-in y salir el de check-out, ni un día
+                  antes ni uno después. Los días del medio le aparecen bloqueados.
+                </p>
+              </div>
+              <div>
+                <p class="font-semibold">Mínimos especiales por fecha</p>
+                <p>
+                  Para temporada alta o feriados. Alcanza con que la estadía <strong>toque</strong> el
+                  tramo para que se le exija ese mínimo, aunque la mayoría de las noches caigan afuera.
+                </p>
+              </div>
+              <p class="p-3 rounded-xl bg-brand-cream border border-brand-beige">
+                Para que un mes se pueda reservar necesita <strong>las dos cosas</strong>: estar dentro
+                de la ventana <em>y</em> tener su período de precio cargado.
+              </p>
+            </div>
+          </details>
+
+          <details class="rounded-2xl border border-brand-beige bg-white/80 p-4">
+            <summary class="font-semibold cursor-pointer">Abrir un mes nuevo: los pasos</summary>
+            <div class="mt-3 text-sm text-brand-brown/90 space-y-2">
+              <p>Es la tarea más común y son tres pasos, en este orden:</p>
+              <ol class="list-decimal pl-5 space-y-1">
+                <li><strong>Reglas</strong> → correr <em>Última noche reservable</em> hasta donde quieras abrir.</li>
+                <li><strong>Precios</strong> → agregar el período con el valor de cada casa para esas fechas.</li>
+                <li>Abrir la página de reservas y probar que el mes nuevo se pueda elegir.</li>
+              </ol>
+              <p>
+                Si salteás el paso 2, el calendario deja elegir las fechas pero no cotiza y la reserva
+                no avanza. Si salteás el paso 1, no se pueden ni elegir.
+              </p>
+            </div>
+          </details>
+
+          <details class="rounded-2xl border border-brand-beige bg-white/80 p-4">
+            <summary class="font-semibold cursor-pointer">Qué significa cada estado</summary>
+            <div class="mt-3 overflow-x-auto">
+              <table class="w-full text-sm border-collapse">
+                <tbody class="align-top">
+                  <tr class="border-b border-brand-beige/50">
+                    <td class="py-2 pr-3 font-semibold whitespace-nowrap">HOLD_TRANSFER</td>
+                    <td class="py-2">Reservó y tiene 6 horas para transferir. Las fechas están guardadas pero no vendidas.</td>
+                  </tr>
+                  <tr class="border-b border-brand-beige/50">
+                    <td class="py-2 pr-3 font-semibold whitespace-nowrap">PROOF_SENT</td>
+                    <td class="py-2">Subió el comprobante y espera que lo revises.</td>
+                  </tr>
+                  <tr class="border-b border-brand-beige/50">
+                    <td class="py-2 pr-3 font-semibold whitespace-nowrap">CONFIRMED</td>
+                    <td class="py-2">Vos la aceptaste. Seña cobrada y fechas tomadas en firme.</td>
+                  </tr>
+                  <tr class="border-b border-brand-beige/50">
+                    <td class="py-2 pr-3 font-semibold whitespace-nowrap">EXPIRED</td>
+                    <td class="py-2">Pasaron las 6 horas sin transferencia. Se venció sola y las fechas volvieron a estar libres.</td>
+                  </tr>
+                  <tr class="border-b border-brand-beige/50">
+                    <td class="py-2 pr-3 font-semibold whitespace-nowrap">CANCELLED</td>
+                    <td class="py-2">Cancelada a mano, por vos. La tarjeta muestra el motivo.</td>
+                  </tr>
+                  <tr>
+                    <td class="py-2 pr-3 font-semibold whitespace-nowrap">BLOCKED</td>
+                    <td class="py-2">No es una reserva: es un bloqueo tuyo desde “Bloquear fechas”.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </details>
+
+          <details class="rounded-2xl border border-brand-beige bg-white/80 p-4">
+            <summary class="font-semibold cursor-pointer">La clave de dueños</summary>
+            <div class="mt-3 text-sm text-brand-brown/90 space-y-2">
+              <p>
+                Además de usuario y contraseña, el panel pide una <strong>clave de dueños</strong>. Es
+                una segunda llave: sin ella se puede entrar y mirar, pero no confirmar, cancelar,
+                bloquear ni cambiar precios.
+              </p>
+              <p>
+                Queda guardada en el navegador que estés usando, así que la vas a tener que poner de
+                nuevo en cada dispositivo o si borrás los datos del navegador. Si algo te da “no
+                autorizado”, empezá por revisar que esté cargada, arriba a la derecha.
+              </p>
+            </div>
+          </details>
+
+        </div>
+      </div>
+
       <!-- BUSCAR -->
       <div id="viewSearch" class="bg-white/75 rounded-2xl shadow-sm border border-brand-beige p-6 hidden">
         <div class="flex items-start justify-between gap-3 mb-4">
@@ -842,6 +1160,9 @@
   const tabRules = el("tabRules");
   const viewRules = el("viewRules");
 
+  const tabGuide = el("tabGuide");
+  const viewGuide = el("viewGuide");
+
   const tabSearch = el("tabSearch");
   const viewSearch = el("viewSearch");
   const searchQ = el("searchQ");
@@ -1148,6 +1469,7 @@
     const isPrices = which === "prices";
     const isRules = which === "rules";
     const isSearch = which === "search";
+    const isGuide = which === "guide";
 
     viewBlock.classList.toggle("hidden", !isBlock);
     viewTransfers.classList.toggle("hidden", !isTransfers);
@@ -1156,6 +1478,7 @@
     viewPrices.classList.toggle("hidden", !isPrices);
     viewRules.classList.toggle("hidden", !isRules);
     viewSearch.classList.toggle("hidden", !isSearch);
+    viewGuide.classList.toggle("hidden", !isGuide);
 
     // Refresh button solo para TRANSFERS (pendientes)
     btnRefresh.classList.toggle("hidden", !isTransfers);
@@ -1181,6 +1504,9 @@
 
     tabSearch.classList.toggle("bg-brand-beige/40", isSearch);
     tabSearch.classList.toggle("bg-white/70", !isSearch);
+
+    tabGuide.classList.toggle("bg-brand-beige/40", isGuide);
+    tabGuide.classList.toggle("bg-white/70", !isGuide);
 
     if (!isTransfers) stopCountdownTicker();
 
@@ -2315,6 +2641,7 @@
   });
 
   tabSearch.onclick = () => showTab("search");
+  tabGuide.onclick = () => showTab("guide");
 
   // =====================
   // CONFIRMADAS
