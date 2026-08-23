@@ -40,6 +40,7 @@ Mezclarlos da 401 sin ninguna pista de por qué.
 | `N8N_OWNER_CANCEL_PATH` | `cancel-reservation` |
 | `N8N_OWNER_CANCEL_CONFIRMED_PATH` | `cancel-confirmed` |
 | `N8N_OWNER_BLOCK_PATH` / `N8N_OWNER_UNBLOCK_PATH` | `owner-blocks`, `owner-unblocks` |
+| `N8N_GET_PRICE_PERIODS_PATH` | `reservation-document` (opcional, tiene default) |
 | `N8N_ADMIN_UPDATE_RESERVATION_PATH` | `admin-update-reservation` (opcional) |
 | `WA_VERIFY_TOKEN` / `N8N_WA_INCOMING_URL` | `wa-webhook` |
 | `GOOGLE_SERVICE_ACCOUNT_JSON` / `LC_SHEET_ID` / `LC_SHEET_TAB` | `list-calendar`, `search-reservations` |
@@ -180,3 +181,32 @@ un mínimo abriría fechas que los dueños no habilitaron.
 Ojo: habilitar un mes nuevo son **dos** pasos — correr la ventana en *Reglas* y
 cargarle su período en *Precios*. Con uno solo el mes sigue sin poder
 reservarse.
+
+## El documento de reserva confirmada
+
+`reservation-document` devuelve, ya armado y con los colores de Las Cañas, el
+documento que antes se mandaba a mano en Word: unidad y dirección, todos los
+huéspedes con su DNI, fechas con horarios de ingreso y egreso, importes (total,
+seña y las 2 cuotas) y las condiciones del complejo.
+
+Se le manda la fila de la reserva en el body y responde el HTML. Con
+`?format=html` devuelve la página directamente en vez de envolverla en JSON.
+
+```
+POST /.netlify/functions/reservation-document
+x-lc-secret: <LC_OWNER_SECRET>
+
+{ "reservation": { ...la fila de la planilla... } }
+```
+
+El total sale de las tarifas cargadas (`precios_periodos`), cobrando noche por
+noche igual que `reservar.html`. Si alguna noche no tiene tarifa, el documento
+igual se genera pero con los importes a coordinar: vale más que salga sin
+precios a que el huésped no reciba nada al confirmar.
+
+**Para que salga solo al confirmar**, el flujo de aprobación de n8n tiene que
+sumar dos nodos después de escribir `CONFIRMED` en la planilla: un HTTP Request
+a este endpoint (con el header `x-lc-secret`, pasándole la fila) y un nodo de
+mail que use el `html` de la respuesta como cuerpo, al `email` de la reserva.
+Mientras tanto, el panel tiene un botón **Ver documento** en cada reserva
+confirmada para abrirlo y mandarlo a mano.

@@ -1360,6 +1360,7 @@
   const EP_LIST_CONFIRMED = "/.netlify/functions/list-confirmed";
   const EP_CANCEL_CONFIRMED = "/.netlify/functions/cancel-confirmed";
   const EP_LIST_CALENDAR = "/.netlify/functions/list-calendar";
+  const EP_RESERVATION_DOCUMENT = "/.netlify/functions/reservation-document";
   const EP_OWNER_UNBLOCKS = "/.netlify/functions/owner-unblocks";
   const EP_PRICE_PERIODS = "/api/price-periods";
   const EP_SET_PRICE_PERIODS = "/.netlify/functions/set-price-periods";
@@ -2768,6 +2769,12 @@
       der.className = "flex flex-wrap gap-2";
       der.appendChild(botonComprobante(r.id));
 
+      const btnDoc = document.createElement("button");
+      btnDoc.className = "btnDocConfirmed px-4 py-2 rounded-full bg-brand-brown text-brand-cream text-xs font-semibold hover:opacity-90 transition";
+      btnDoc.dataset.id = r.id;
+      btnDoc.textContent = "Ver documento";
+      der.appendChild(btnDoc);
+
       const btnCancelar = document.createElement("button");
       btnCancelar.className = "btnCancelConfirmed px-4 py-2 rounded-full bg-white/70 border border-brand-beige text-xs font-semibold hover:bg-white transition";
       btnCancelar.dataset.id = r.id;
@@ -2788,6 +2795,40 @@
         const id = btn.dataset.id;
         const row = confirmedRaw.find(x => String(x.id) === String(id));
         openCancelConfirmedModal(row);
+      };
+    });
+
+    // El documento que se le manda al huésped al confirmar. Se abre en otra
+    // pestaña para poder imprimirlo o guardarlo en PDF desde el navegador.
+    confirmedList.querySelectorAll(".btnDocConfirmed").forEach(btn => {
+      btn.onclick = async () => {
+        const row = confirmedRaw.find(x => String(x.id) === String(btn.dataset.id));
+        if (!row) return;
+
+        const textoOriginal = btn.textContent;
+        btn.disabled = true;
+        btn.textContent = "Generando...";
+
+        try {
+          const out = await apiFetch(EP_RESERVATION_DOCUMENT, {
+            method: "POST",
+            body: { reservation: row },
+          });
+
+          const ventana = window.open("", "_blank");
+          if (!ventana) {
+            showToast("El navegador bloqueó la ventana emergente", "err");
+            return;
+          }
+
+          ventana.document.write(out.html);
+          ventana.document.close();
+        } catch (e) {
+          showToast(e.message || "No se pudo generar el documento", "err");
+        } finally {
+          btn.disabled = false;
+          btn.textContent = textoOriginal;
+        }
       };
     });
   }
