@@ -1117,6 +1117,69 @@
     </div>
   </div>
 
+  <!-- IMPORTES DE UNA RESERVA -->
+  <div id="pagoModal" class="fixed inset-0 hidden items-center justify-center bg-black/50 p-4 z-[1300]">
+    <div class="w-full max-w-md rounded-2xl bg-white shadow-xl p-6 border border-brand-beige">
+      <div class="flex items-start justify-between gap-3 mb-1">
+        <h3 class="text-lg font-bold serif">Importes de la reserva</h3>
+        <button id="btnClosePago" class="text-brand-brown/60 hover:text-brand-brown">✕</button>
+      </div>
+      <p id="pagoSubtitulo" class="text-sm text-brand-accent mb-4">-</p>
+
+      <div class="space-y-3">
+        <div>
+          <label class="block text-sm font-semibold mb-1">Importe total</label>
+          <input id="pagoImporte" type="number" min="0" step="1000" inputmode="numeric"
+            class="w-full border border-brand-beige rounded-2xl p-3 bg-white/80 focus:outline-none focus:ring-2 focus:ring-brand-accent/40"
+            placeholder="0">
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold mb-1">Anticipo cobrado</label>
+          <input id="pagoAnticipo" type="number" min="0" step="1000" inputmode="numeric"
+            class="w-full border border-brand-beige rounded-2xl p-3 bg-white/80 focus:outline-none focus:ring-2 focus:ring-brand-accent/40"
+            placeholder="0">
+        </div>
+
+        <div class="rounded-2xl border border-brand-beige bg-brand-beige/30 p-3 flex items-center justify-between">
+          <span class="text-sm font-semibold">Saldo</span>
+          <span id="pagoSaldo" class="text-lg font-bold">-</span>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-sm font-semibold mb-1">Cotización USD</label>
+            <input id="pagoCotizacion" type="number" min="0" step="1" inputmode="numeric"
+              class="w-full border border-brand-beige rounded-2xl p-3 bg-white/80 focus:outline-none focus:ring-2 focus:ring-brand-accent/40"
+              placeholder="0">
+          </div>
+          <div>
+            <label class="block text-sm font-semibold mb-1">Facturada</label>
+            <label class="flex items-center gap-2 p-3 rounded-2xl border border-brand-beige bg-white/80 cursor-pointer">
+              <input id="pagoFacturado" type="checkbox" class="w-4 h-4">
+              <span class="text-sm">Sí</span>
+            </label>
+          </div>
+        </div>
+
+        <p id="pagoDolares" class="text-xs text-brand-accent">&nbsp;</p>
+      </div>
+
+      <div id="pagoMsg" class="hidden mt-3 text-sm"></div>
+
+      <div class="mt-5 flex gap-3">
+        <button id="btnGuardarPago"
+          class="flex-1 py-3 rounded-2xl bg-brand-brown text-brand-cream font-semibold hover:opacity-90 transition disabled:opacity-50">
+          Guardar
+        </button>
+        <button id="btnClosePago2"
+          class="py-3 px-4 rounded-2xl bg-white/70 border border-brand-beige font-semibold hover:bg-white transition">
+          Cancelar
+        </button>
+      </div>
+    </div>
+  </div>
+
     <!-- CALENDAR DETAIL MODAL -->
   <div id="calendarModal" class="fixed inset-0 hidden items-center justify-center bg-black/50 p-4 z-[1250]">
     <div class="w-full max-w-xl rounded-2xl bg-white shadow-xl p-6 border border-brand-beige">
@@ -1381,6 +1444,7 @@
   const EP_CANCEL_CONFIRMED = "/.netlify/functions/cancel-confirmed";
   const EP_LIST_CALENDAR = "/.netlify/functions/list-calendar";
   const EP_RESERVATION_DOCUMENT = "/.netlify/functions/reservation-document";
+  const EP_SET_PAYMENT = "/.netlify/functions/set-reservation-payment";
   const EP_OWNER_UNBLOCKS = "/.netlify/functions/owner-unblocks";
   const EP_PRICE_PERIODS = "/api/price-periods";
   const EP_SET_PRICE_PERIODS = "/.netlify/functions/set-price-periods";
@@ -2765,9 +2829,33 @@
       const contacto = [r.guest_name || "-", r.phone, r.email].filter(Boolean).join(" · ");
       izq.appendChild(linea(contacto, "text-xs text-brand-accent mt-1 break-words"));
 
+      // El saldo a la vista: es el dato que los dueños miraban en el Excel
+      // para saber a quién hay que cobrarle.
+      const importe = Number(r.importe) || 0;
+      if (importe) {
+        const saldo = importe - (Number(r.anticipo) || 0);
+        const plata = document.createElement("div");
+        plata.className = "text-xs mt-2 flex flex-wrap items-center gap-2";
+        plata.innerHTML =
+          `<span class="text-brand-brown/70">Total ${pesosAR(importe)}</span>` +
+          (saldo > 0
+            ? `<span class="px-2 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-900 font-semibold">Saldo ${pesosAR(saldo)}</span>`
+            : `<span class="px-2 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-900 font-semibold">Cobrada</span>`) +
+          (String(r.facturado || "").toLowerCase() === "si"
+            ? `<span class="px-2 py-1 rounded-full bg-white border border-brand-beige">Facturada</span>`
+            : "");
+        izq.appendChild(plata);
+      }
+
       const der = document.createElement("div");
       der.className = "flex flex-wrap gap-2";
       der.appendChild(botonComprobante(r.id));
+
+      const btnPago = document.createElement("button");
+      btnPago.className = "btnPagoConfirmed px-4 py-2 rounded-full bg-white/70 border border-brand-beige text-xs font-semibold hover:bg-white transition";
+      btnPago.dataset.id = r.id;
+      btnPago.textContent = importe ? "Importes" : "Cargar importes";
+      der.appendChild(btnPago);
 
       const btnDoc = document.createElement("button");
       btnDoc.className = "btnDocConfirmed px-4 py-2 rounded-full bg-brand-brown text-brand-cream text-xs font-semibold hover:opacity-90 transition";
@@ -2795,6 +2883,13 @@
         const id = btn.dataset.id;
         const row = confirmedRaw.find(x => String(x.id) === String(id));
         openCancelConfirmedModal(row);
+      };
+    });
+
+    confirmedList.querySelectorAll(".btnPagoConfirmed").forEach(btn => {
+      btn.onclick = () => {
+        const row = confirmedRaw.find(x => String(x.id) === String(btn.dataset.id));
+        if (row) openPagoModal(row);
       };
     });
 
@@ -2832,6 +2927,114 @@
       };
     });
   }
+
+  // =====================
+  // IMPORTES DE UNA RESERVA
+  // =====================
+  const pagoModal = el("pagoModal");
+  const pagoImporte = el("pagoImporte");
+  const pagoAnticipo = el("pagoAnticipo");
+  const pagoCotizacion = el("pagoCotizacion");
+  const pagoFacturado = el("pagoFacturado");
+  const pagoSaldo = el("pagoSaldo");
+  const pagoDolares = el("pagoDolares");
+  const pagoMsg = el("pagoMsg");
+  const btnGuardarPago = el("btnGuardarPago");
+
+  let pagoReserva = null;
+
+  function pesosAR(n) {
+    const v = Number(n);
+    return Number.isFinite(v) ? "$ " + Math.round(v).toLocaleString("es-AR") : "-";
+  }
+
+  // El saldo no se guarda en ningún lado: siempre sale de importe - anticipo,
+  // así no hay dos números que puedan quedar en desacuerdo.
+  function refrescarSaldo() {
+    const importe = Number(pagoImporte.value) || 0;
+    const anticipo = Number(pagoAnticipo.value) || 0;
+    const saldo = importe - anticipo;
+
+    pagoSaldo.textContent = importe ? pesosAR(saldo) : "-";
+    pagoSaldo.classList.toggle("text-red-700", saldo < 0);
+
+    const cotiz = Number(pagoCotizacion.value) || 0;
+    pagoDolares.innerHTML = (importe && cotiz)
+      ? `Equivale a US$ ${Math.round(importe / cotiz).toLocaleString("es-AR")}`
+      : "&nbsp;";
+  }
+
+  [pagoImporte, pagoAnticipo, pagoCotizacion].forEach(i => i.addEventListener("input", refrescarSaldo));
+
+  function openPagoModal(row) {
+    pagoReserva = row;
+
+    el("pagoSubtitulo").textContent =
+      `${row.id} · ${houseName(row.house_code)} · ${row.check_in} → ${row.check_out}`;
+
+    pagoImporte.value = row.importe ?? "";
+    pagoAnticipo.value = row.anticipo ?? "";
+    pagoCotizacion.value = row.cotizacion_usd ?? "";
+    pagoFacturado.checked = String(row.facturado || "").toLowerCase() === "si";
+
+    pagoMsg.classList.add("hidden");
+    refrescarSaldo();
+
+    pagoModal.classList.remove("hidden");
+    pagoModal.classList.add("flex");
+  }
+
+  function closePagoModal() {
+    pagoModal.classList.add("hidden");
+    pagoModal.classList.remove("flex");
+    pagoReserva = null;
+  }
+
+  el("btnClosePago").onclick = closePagoModal;
+  el("btnClosePago2").onclick = closePagoModal;
+  pagoModal.addEventListener("click", (e) => { if (e.target === pagoModal) closePagoModal(); });
+
+  btnGuardarPago.onclick = async () => {
+    if (!pagoReserva) return;
+
+    const importe = Number(pagoImporte.value) || 0;
+    const anticipo = Number(pagoAnticipo.value) || 0;
+
+    // Cobrar más que el total casi siempre es un error de tipeo, y queda
+    // guardado como un saldo negativo que después nadie entiende.
+    if (importe && anticipo > importe) {
+      pagoMsg.textContent = "El anticipo no puede ser mayor que el importe total.";
+      pagoMsg.className = "mt-3 text-sm text-red-700";
+      return;
+    }
+
+    btnGuardarPago.disabled = true;
+    const textoOriginal = btnGuardarPago.textContent;
+    btnGuardarPago.textContent = "Guardando...";
+
+    try {
+      await apiFetch(EP_SET_PAYMENT, {
+        method: "POST",
+        body: {
+          id: pagoReserva.id,
+          importe: pagoImporte.value.trim(),
+          anticipo: pagoAnticipo.value.trim(),
+          cotizacion_usd: pagoCotizacion.value.trim(),
+          facturado: pagoFacturado.checked,
+        },
+      });
+
+      showToast("Importes guardados ✅", "ok");
+      closePagoModal();
+      await loadConfirmed();
+    } catch (e) {
+      pagoMsg.textContent = e.message || "No se pudo guardar";
+      pagoMsg.className = "mt-3 text-sm text-red-700";
+    } finally {
+      btnGuardarPago.disabled = false;
+      btnGuardarPago.textContent = textoOriginal;
+    }
+  };
 
   async function loadConfirmed() {
     const out = await apiFetch(EP_LIST_CONFIRMED, { method: "GET", body: null });

@@ -136,6 +136,37 @@ function calcularEstadia(periodos, casa, checkin, checkout, fechaReserva) {
   return { noches, total, sena, saldo, cuotas: planDeCuotas(saldo, ci, fechaReserva) };
 }
 
+function nochesEntre(ci, co) {
+  const ms = Date.parse(`${co}T00:00:00Z`) - Date.parse(`${ci}T00:00:00Z`);
+  const noches = Math.round(ms / 86400000);
+  return Number.isFinite(noches) && noches > 0 ? noches : 0;
+}
+
+// El importe guardado en la reserva manda sobre el calculado: es el que se
+// acordó de verdad, y las tarifas pueden haber cambiado desde entonces. Lo
+// mismo con el anticipo, que puede no ser el 50% si se negoció distinto.
+function estadiaDeLaReserva(reserva, periodos, casa, ci, co, fechaReserva) {
+  const calculada = calcularEstadia(periodos, casa, ci, co, fechaReserva);
+
+  const total = Number(reserva.importe);
+  if (!Number.isFinite(total) || total <= 0) return calculada;
+
+  const anticipo = Number(reserva.anticipo);
+  const sena = Number.isFinite(anticipo) && anticipo > 0
+    ? Math.round(anticipo)
+    : Math.round(total * 0.5);
+
+  const saldo = Math.round(total) - sena;
+
+  return {
+    noches: calculada ? calculada.noches : nochesEntre(ci, co),
+    total: Math.round(total),
+    sena,
+    saldo,
+    cuotas: saldo > 0 ? planDeCuotas(saldo, ci, fechaReserva) : [],
+  };
+}
+
 function esTemporadaAltaYmd(ymd) {
   const m = String(ymd || "").slice(0, 10).match(/^\d{4}-(\d{2})-(\d{2})$/);
   if (!m) return false;
@@ -210,7 +241,9 @@ function renderDocumento(reserva, periodos) {
   const co = String(reserva.check_out || "").slice(0, 10);
   // Las cuotas dependen de cuándo se reservó, no de cuándo se confirma.
   const fechaReserva = String(reserva.created_at || "").slice(0, 10);
-  const estadia = calcularEstadia(periodos, String(reserva.house_code || "").toUpperCase(), ci, co, fechaReserva);
+  const estadia = estadiaDeLaReserva(
+    reserva, periodos, String(reserva.house_code || "").toUpperCase(), ci, co, fechaReserva
+  );
 
   const listaHuespedes = huespedes
     .map((g) => `<li>${escapar(g.nombre)}${g.dni ? ` — DNI ${escapar(g.dni)}` : ""}</li>`)
@@ -221,7 +254,7 @@ function renderDocumento(reserva, periodos) {
       <div class="fila"><span>Valor total del alquiler</span><strong>${pesos(estadia.total)}</strong></div>
       <div class="letras">(${importeEnLetras(estadia.total)})</div>
 
-      <div class="fila recibido"><span>Recibimos en concepto de seña (50%)</span><strong>${pesos(estadia.sena)}</strong></div>
+      <div class="fila recibido"><span>Recibimos en concepto de seña (${Math.round(estadia.sena / estadia.total * 100)}%)</span><strong>${pesos(estadia.sena)}</strong></div>
       <div class="letras">(${importeEnLetras(estadia.sena)})</div>
 
       <div class="fila"><span>Saldo</span><strong>${pesos(estadia.saldo)}</strong></div>
