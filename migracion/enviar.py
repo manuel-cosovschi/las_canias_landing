@@ -9,12 +9,16 @@ import os
 import subprocess
 import time
 
-URL = 'https://cosovschim.app.n8n.cloud/webhook/importar-excel'
 TANDA = 30
 
-# El mismo secreto que usan las funciones de Netlify. No va en el repo:
-#   LC_OWNER_SECRET=... python3 enviar.py
+# Ni la base de n8n ni el secreto van escritos acá: son los mismos valores que
+# Netlify tiene como variables de entorno, y si aparecen en el repo el escáner
+# de secretos de Netlify corta el build.
+#
+#   N8N_BASE_URL=https://... LC_OWNER_SECRET=... python3 enviar.py
+BASE = os.environ.get('N8N_BASE_URL', '').rstrip('/')
 SECRETO = os.environ.get('LC_OWNER_SECRET', '')
+URL = f'{BASE}/webhook/importar-excel'
 
 
 def postear(filas):
@@ -39,8 +43,8 @@ def postear(filas):
 
 
 def main():
-    if not SECRETO:
-        raise SystemExit('falta LC_OWNER_SECRET en el entorno')
+    if not BASE or not SECRETO:
+        raise SystemExit('faltan N8N_BASE_URL y/o LC_OWNER_SECRET en el entorno')
 
     filas = json.load(open('filas_planilla.json'))
 
