@@ -42,7 +42,7 @@ python3 extraer.py     # alquileres.xlsx        -> extraido.json
 python3 convertir.py   # extraido.json          -> reservas_excel.json
 python3 filas.py       # reservas_excel.json    -> filas_planilla.json
 
-LC_OWNER_SECRET=... python3 enviar.py   # -> webhook importar-excel de n8n
+N8N_BASE_URL=... LC_OWNER_SECRET=... python3 enviar.py   # -> webhook importar-excel
 ```
 
 `convertir.py` además chequea que dos estadías de la misma casa no se pisen
