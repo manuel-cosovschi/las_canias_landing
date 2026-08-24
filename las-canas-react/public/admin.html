@@ -3725,6 +3725,7 @@
       check_in: String(ev.startStr || "").slice(0, 10),
       check_out: String(ev.endStr || "").slice(0, 10),
       guest_name: row.guest_name || "",
+      email: String(row.email || "").trim(),
     };
 
     calFechas.classList.add("hidden");
@@ -3811,9 +3812,19 @@
     if (!calSeleccion) return;
 
     const esBloqueo = calSeleccion.status === "BLOCKED";
+    // Cancelar dispara el aviso al huésped. Si tiene mail cargado, se lo
+    // decimos antes: cancelar por error y que le llegue el aviso no se
+    // deshace. Para mover una reserva de fechas está "Cambiar fechas", que no
+    // notifica nada.
     const que = esBloqueo
       ? `Desbloquear ${houseName(calSeleccion.house_code)} del ${calSeleccion.check_in} al ${calSeleccion.check_out}?`
-      : `Cancelar la reserva${calSeleccion.guest_name ? " de " + calSeleccion.guest_name : ""} (${calSeleccion.check_in} → ${calSeleccion.check_out})?`;
+      : [
+          `Cancelar la reserva${calSeleccion.guest_name ? " de " + calSeleccion.guest_name : ""} (${calSeleccion.check_in} → ${calSeleccion.check_out})?`,
+          calSeleccion.email
+            ? `\nSe le va a avisar por mail a ${calSeleccion.email}.`
+            : "\nEsta reserva no tiene mail cargado, así que al huésped no le llega nada.",
+          "\nSi lo que querés es moverla de fecha, usá \"Cambiar fechas\": eso no le avisa nada al huésped.",
+        ].join("");
 
     if (!window.confirm(que)) return;
 
