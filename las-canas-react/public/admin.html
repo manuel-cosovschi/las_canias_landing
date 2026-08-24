@@ -1270,7 +1270,49 @@
         </div>
       </div>
 
-      <div class="mt-6 flex justify-end">
+      <!-- Cambiar fechas: aparece recién cuando se aprieta el botón, para que
+           el modal siga siendo de lectura mientras no se toque nada. -->
+      <div id="calFechas" class="hidden mt-4 bg-white border border-brand-beige rounded-2xl p-4">
+        <p class="text-xs text-brand-accent mb-3">
+          La salida es el día que se van: esa noche ya no ocupa.
+        </p>
+        <div class="grid sm:grid-cols-2 gap-3">
+          <label class="block">
+            <span class="block text-xs font-bold uppercase tracking-wider text-brand-accent mb-1">Entrada</span>
+            <input id="calNuevoCheckin" type="date"
+              class="w-full rounded-xl border border-brand-beige px-3 py-2 text-sm">
+          </label>
+          <label class="block">
+            <span class="block text-xs font-bold uppercase tracking-wider text-brand-accent mb-1">Salida</span>
+            <input id="calNuevoCheckout" type="date"
+              class="w-full rounded-xl border border-brand-beige px-3 py-2 text-sm">
+          </label>
+        </div>
+        <p id="calNoches" class="text-xs text-brand-accent mt-2">-</p>
+        <p id="calFechasMsg" class="text-sm mt-2"></p>
+        <div class="mt-3 flex flex-wrap gap-2 justify-end">
+          <button id="btnCancelarCambioFechas"
+            class="py-2 px-4 rounded-2xl bg-white/70 border border-brand-beige text-sm font-semibold hover:bg-white transition">
+            Volver
+          </button>
+          <button id="btnGuardarFechas"
+            class="py-2 px-4 rounded-2xl bg-brand-brown text-brand-cream text-sm font-semibold hover:opacity-90 transition">
+            Guardar fechas
+          </button>
+        </div>
+      </div>
+
+      <p id="calAccionMsg" class="text-sm mt-3"></p>
+
+      <div class="mt-6 flex flex-wrap gap-2 justify-end">
+        <button id="btnCalCambiarFechas"
+          class="hidden py-3 px-4 rounded-2xl bg-white/70 border border-brand-beige font-semibold hover:bg-white transition">
+          Cambiar fechas
+        </button>
+        <button id="btnCalQuitar"
+          class="hidden py-3 px-4 rounded-2xl bg-red-700 text-white font-semibold hover:opacity-90 transition">
+          Cancelar reserva
+        </button>
         <button id="btnCloseCalendarModal2"
           class="py-3 px-4 rounded-2xl bg-white/70 border border-brand-beige font-semibold hover:bg-white transition">
           Cerrar
@@ -1518,6 +1560,7 @@
   const EP_LIST_CALENDAR = "/.netlify/functions/list-calendar";
   const EP_RESERVATION_DOCUMENT = "/.netlify/functions/reservation-document";
   const EP_SET_PAYMENT = "/.netlify/functions/set-reservation-payment";
+  const EP_SET_DATES = "/.netlify/functions/set-reservation-dates";
   const EP_OWNER_UNBLOCKS = "/.netlify/functions/owner-unblocks";
   const EP_PRICE_PERIODS = "/api/price-periods";
   const EP_SET_PRICE_PERIODS = "/.netlify/functions/set-price-periods";
@@ -3571,6 +3614,21 @@
     return `${startISO} → ${endISO}`;
   }
 
+  // En el calendario los eventos ya dicen "Confirmada"/"Hold"/"Bloqueada"; el
+  // detalle mostraba el código crudo de la planilla.
+  const ESTADOS = {
+    CONFIRMED: "Confirmada",
+    HOLD_TRANSFER: "Esperando transferencia",
+    BLOCKED: "Bloqueada",
+    CANCELLED: "Cancelada",
+    EXPIRED: "Vencida",
+    PENDING: "Pendiente",
+  };
+  function estadoEnCastellano(status) {
+    const k = String(status || "").trim().toUpperCase();
+    return ESTADOS[k] || k || "-";
+  }
+
   function fillCalendarModal(ev) {
     const p = ev?.extendedProps || {};
     const row = p.row || {};
@@ -3580,9 +3638,9 @@
     const end = String(ev.endStr || "").slice(0, 10);
 
     calTitle.textContent = "Detalle de ocupación";
-    calSubtitle.textContent = "Click en evento del calendario";
+    calSubtitle.textContent = `${p.house_name || houseName(house)} · ${fmtDates(start, end)}`;
 
-    cal_status.textContent = status;
+    cal_status.textContent = estadoEnCastellano(status);
     cal_house.textContent = p.house_name || houseName(house);
     cal_dates.textContent = fmtDates(start, end);
     cal_id.textContent = row.id || ev.id || "-";
@@ -3609,6 +3667,187 @@
 
     cal_notes.textContent = row.notes || "-";
   }
+
+  /* =====================
+     ACCIONES DESDE EL CALENDARIO
+  ===================== */
+
+  // Lo que se está mirando en el modal. Hace falta guardarlo porque los
+  // botones actúan sobre eso y no sobre el evento de FullCalendar.
+  let calSeleccion = null;
+
+  const calFechas = el("calFechas");
+  const calNuevoCheckin = el("calNuevoCheckin");
+  const calNuevoCheckout = el("calNuevoCheckout");
+  const calNoches = el("calNoches");
+  const calFechasMsg = el("calFechasMsg");
+  const calAccionMsg = el("calAccionMsg");
+  const btnCalCambiarFechas = el("btnCalCambiarFechas");
+  const btnCalQuitar = el("btnCalQuitar");
+  const btnGuardarFechas = el("btnGuardarFechas");
+  const btnCancelarCambioFechas = el("btnCancelarCambioFechas");
+
+  function nochesEntreYmd(ci, co) {
+    const a = Date.parse(`${ci}T00:00:00Z`);
+    const b = Date.parse(`${co}T00:00:00Z`);
+    if (!Number.isFinite(a) || !Number.isFinite(b)) return null;
+    return Math.round((b - a) / 86400000);
+  }
+
+  function pintarMsg(nodo, texto, tipo) {
+    nodo.textContent = texto || "";
+    nodo.className = "text-sm mt-2 " + (
+      tipo === "err" ? "text-red-700 font-semibold" :
+      tipo === "ok" ? "text-green-700 font-semibold" : "text-brand-accent"
+    );
+  }
+
+  function refrescarNoches() {
+    const n = nochesEntreYmd(calNuevoCheckin.value, calNuevoCheckout.value);
+    calNoches.textContent = n && n > 0
+      ? `${n} ${n === 1 ? "noche" : "noches"}`
+      : "La salida tiene que ser posterior a la entrada";
+  }
+  calNuevoCheckin.oninput = refrescarNoches;
+  calNuevoCheckout.oninput = refrescarNoches;
+
+  // Un bloqueo no siempre tiene id propio en la planilla, así que se identifica
+  // por casa + fechas; una reserva sí, y se toca por id.
+  function prepararAcciones(ev) {
+    const p = ev?.extendedProps || {};
+    const row = p.row || {};
+    const status = String(p.status || row.status || "").toUpperCase();
+
+    calSeleccion = {
+      status,
+      id: String(row.id || "").trim(),
+      house_code: String(p.house_code || row.house_code || "").toUpperCase(),
+      check_in: String(ev.startStr || "").slice(0, 10),
+      check_out: String(ev.endStr || "").slice(0, 10),
+      guest_name: row.guest_name || "",
+    };
+
+    calFechas.classList.add("hidden");
+    pintarMsg(calAccionMsg, "", "info");
+    pintarMsg(calFechasMsg, "", "info");
+
+    const esBloqueo = status === "BLOCKED";
+    const esReserva = status === "CONFIRMED" || status === "HOLD_TRANSFER";
+
+    btnCalQuitar.classList.toggle("hidden", !esBloqueo && !esReserva);
+    btnCalQuitar.textContent = esBloqueo ? "Desbloquear" : "Cancelar reserva";
+
+    // Mover un bloqueo es borrarlo y crearlo de nuevo; mover una reserva sin id
+    // no se puede, porque la planilla se busca por id.
+    btnCalCambiarFechas.classList.toggle("hidden", !(esBloqueo || (esReserva && calSeleccion.id)));
+  }
+
+  btnCalCambiarFechas.onclick = () => {
+    if (!calSeleccion) return;
+    calNuevoCheckin.value = calSeleccion.check_in;
+    calNuevoCheckout.value = calSeleccion.check_out;
+    refrescarNoches();
+    pintarMsg(calFechasMsg, "", "info");
+    calFechas.classList.remove("hidden");
+  };
+
+  btnCancelarCambioFechas.onclick = () => calFechas.classList.add("hidden");
+
+  btnGuardarFechas.onclick = async () => {
+    if (!calSeleccion) return;
+
+    const ci = calNuevoCheckin.value;
+    const co = calNuevoCheckout.value;
+    const n = nochesEntreYmd(ci, co);
+
+    if (!ci || !co || !n || n <= 0) {
+      pintarMsg(calFechasMsg, "La salida tiene que ser posterior a la entrada", "err");
+      return;
+    }
+    if (ci === calSeleccion.check_in && co === calSeleccion.check_out) {
+      pintarMsg(calFechasMsg, "Son las mismas fechas que ya tenía", "err");
+      return;
+    }
+
+    btnGuardarFechas.disabled = true;
+    pintarMsg(calFechasMsg, "Guardando...", "info");
+
+    try {
+      if (calSeleccion.status === "BLOCKED") {
+        // Primero el bloqueo nuevo: si esas fechas están ocupadas, owner-blocks
+        // lo rechaza y el bloqueo original sigue intacto. Al revés se perdería.
+        await apiFetch(EP_OWNER_BLOCKS, {
+          method: "POST",
+          body: { house_code: calSeleccion.house_code, checkin: ci, checkout: co, note: "Movido desde el calendario" },
+        });
+        await apiFetch(EP_OWNER_UNBLOCKS, {
+          method: "POST",
+          body: {
+            house_code: calSeleccion.house_code,
+            checkin: calSeleccion.check_in,
+            checkout: calSeleccion.check_out,
+            note: "Movido desde el calendario",
+          },
+        });
+      } else {
+        await apiFetch(EP_SET_DATES, {
+          method: "POST",
+          body: { id: calSeleccion.id, check_in: ci, check_out: co },
+        });
+      }
+
+      calFechas.classList.add("hidden");
+      closeCalendarModal();
+      showToast(`Fechas actualizadas: ${ci} → ${co}`, "ok");
+      await refreshCalendar();
+    } catch (e) {
+      pintarMsg(calFechasMsg, e.message || "No se pudieron cambiar las fechas", "err");
+    } finally {
+      btnGuardarFechas.disabled = false;
+    }
+  };
+
+  btnCalQuitar.onclick = async () => {
+    if (!calSeleccion) return;
+
+    const esBloqueo = calSeleccion.status === "BLOCKED";
+    const que = esBloqueo
+      ? `Desbloquear ${houseName(calSeleccion.house_code)} del ${calSeleccion.check_in} al ${calSeleccion.check_out}?`
+      : `Cancelar la reserva${calSeleccion.guest_name ? " de " + calSeleccion.guest_name : ""} (${calSeleccion.check_in} → ${calSeleccion.check_out})?`;
+
+    if (!window.confirm(que)) return;
+
+    btnCalQuitar.disabled = true;
+    pintarMsg(calAccionMsg, esBloqueo ? "Desbloqueando..." : "Cancelando...", "info");
+
+    try {
+      if (esBloqueo) {
+        await apiFetch(EP_OWNER_UNBLOCKS, {
+          method: "POST",
+          body: {
+            house_code: calSeleccion.house_code,
+            checkin: calSeleccion.check_in,
+            checkout: calSeleccion.check_out,
+            note: "Desbloqueado desde el calendario",
+          },
+        });
+      } else {
+        const ep = calSeleccion.status === "HOLD_TRANSFER" ? EP_CANCEL_RESERVATION : EP_CANCEL_CONFIRMED;
+        await apiFetch(ep, {
+          method: "POST",
+          body: { id: calSeleccion.id, reason: "Cancelada desde el calendario" },
+        });
+      }
+
+      closeCalendarModal();
+      showToast(esBloqueo ? "Fechas liberadas" : "Reserva cancelada", "ok");
+      await refreshCalendar();
+    } catch (e) {
+      pintarMsg(calAccionMsg, e.message || "No se pudo completar", "err");
+    } finally {
+      btnCalQuitar.disabled = false;
+    }
+  };
 
   // La referencia se arma desde HOUSE_COLORS/HOUSE_NAMES para que no se
   // desincronice de lo que realmente se pinta en el calendario.
@@ -3685,6 +3924,7 @@
       eventClick: (info) => {
         info.jsEvent.preventDefault();
         fillCalendarModal(info.event);
+        prepararAcciones(info.event);
         openCalendarModal();
       },
     });
