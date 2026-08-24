@@ -24,6 +24,11 @@ exports.handler = async (event) => {
       // Datos de todos los que se alojan, no sólo de quien reserva. No es
       // obligatorio para no romper una página vieja que quedó cacheada.
       guests_details: Array.isArray(bodyIn.guests_details) ? bodyIn.guests_details : [],
+      // Importe total de la estadía, calculado en la página con las tarifas
+      // vigentes al momento de reservar. Tampoco es obligatorio, por lo mismo.
+      importe: Number.isFinite(Number(bodyIn.importe)) && Number(bodyIn.importe) > 0
+        ? Math.round(Number(bodyIn.importe))
+        : "",
       payment_method: bodyIn.payment_method ? String(bodyIn.payment_method).toLowerCase() : bodyIn.payment_method,
       payment_ref: bodyIn.payment_ref || "",
       notes: bodyIn.notes || "",

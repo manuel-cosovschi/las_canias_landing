@@ -1915,6 +1915,9 @@ async function loadPricePeriods(){
         { nombre: name.value.trim(), dni: dni.value.trim(), titular: true },
         ...acompanantes.map(a => ({ ...a, titular: false })),
       ],
+      // El importe ya está calculado acá; guardarlo desde el arranque evita
+      // tener que recalcularlo después con tarifas que pueden haber cambiado.
+      importe: lastCalc?.total ?? "",
       payment_method: "transfer",
       payment_ref: "",
       notes: `Huéspedes: ${listaHuespedes}`

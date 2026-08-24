@@ -13,6 +13,8 @@ const CAMPOS = [
   "guest_name", "dni", "email", "phone", "guests",
   "payment_method", "payment_ref", "notes",
   "created_at", "expires_at", "approved_at", "cancelled_at", "status_reason",
+  // La parte de plata, que antes sólo vivía en el Excel de los dueños
+  "importe", "anticipo", "facturado", "cotizacion_usd",
 ];
 
 // Lo que se puede escribir en el buscador libre
