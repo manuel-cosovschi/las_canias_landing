@@ -264,7 +264,11 @@ function leerHuespedes(reserva) {
 
 // ---------- render ----------
 
-function renderDocumento(reserva, periodos) {
+// `opciones.botones` agrega una barra para descargar el PDF. Va apagada por
+// defecto a propósito: este mismo HTML es el cuerpo del mail al huésped, y ahí
+// un botón no sirve para nada (y encima se vería raro). La prende sólo el panel
+// de admin, vía reservation-document.js.
+function renderDocumento(reserva, periodos, opciones = {}) {
   const casa = CASAS[String(reserva.house_code || "").toUpperCase()];
   if (!casa) throw new Error(`Casa desconocida: ${reserva.house_code}`);
 
@@ -363,13 +367,40 @@ function renderDocumento(reserva, periodos) {
   .firma .dato { font-size:13px; color:#8C7B6B; }
   .pie { background:#F5F1E9; padding:20px 32px; text-align:center; font-size:12px; color:#8C7B6B; }
   .pie a { color:#4A3728; }
+  .barra { max-width:640px; margin:0 auto 14px; display:flex; gap:8px; flex-wrap:wrap;
+           align-items:center; justify-content:flex-end; }
+  .barra .ayuda { margin-right:auto; font-size:12px; color:#8C7B6B; }
+  .barra button { font:inherit; font-size:13px; font-weight:600; cursor:pointer;
+                  padding:9px 18px; border-radius:999px; border:1px solid #E4D9C8;
+                  background:#fff; color:#4A3728; }
+  .barra button.principal { background:#4A3728; color:#F5F1E9; border-color:#4A3728; }
+  .barra button:hover { opacity:.9; }
+
+  /* Todo lo de impresión vive sólo acá y no en la copia de n8n, a propósito:
+     ese HTML es el cuerpo de un mail, y los clientes de correo descartan las
+     media queries. El PDF lo saca el dueño desde el panel, que es esta copia. */
   @media print {
     body { background:#fff; padding:0; }
     .hoja { border:none; border-radius:0; max-width:none; }
+    /* Sin esto el navegador imprime la cabecera marrón en blanco y el
+       documento sale sin la marca. */
+    body, .hoja, .cabecera, .sello, .intro, .caja, .pie, table.cuotas th {
+      -webkit-print-color-adjust:exact; print-color-adjust:exact;
+    }
+    /* La botonera es sólo para la pantalla del dueño. */
+    .barra { display:none !important; }
+    /* Que no se parta la tabla de cuotas ni la firma entre dos páginas. */
+    table.cuotas, .firma, .estadia { break-inside:avoid; page-break-inside:avoid; }
   }
+  @page { margin:12mm; }
 </style>
 </head>
 <body>
+${opciones.botones ? `  <div class="barra">
+    <span class="ayuda">Elegí "Guardar como PDF" para tenerlo como archivo.</span>
+    <button type="button" class="principal" onclick="window.print()">Descargar PDF</button>
+  </div>
+` : ""}
   <div class="hoja">
     <div class="cabecera">
       <p class="marca">Las Cañas</p>
@@ -426,7 +457,13 @@ function renderDocumento(reserva, periodos) {
       <a href="https://wa.me/542236882986">WhatsApp +54 223 688-2986</a>
     </div>
   </div>
-</body>
+${opciones.imprimirAlAbrir ? `  <script>
+    // El dueño pidió descargarlo: lo dejamos directo en el diálogo de impresión,
+    // donde "Guardar como PDF" le da el archivo. Va en load y no antes porque
+    // si se imprime a medio maquetar salen páginas cortadas.
+    window.addEventListener("load", function () { window.print(); });
+  </script>
+` : ""}</body>
 </html>`;
 }
 

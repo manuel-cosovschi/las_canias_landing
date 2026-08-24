@@ -68,10 +68,19 @@ exports.handler = async (event) => {
     }
 
     const periodos = await traerPeriodos();
-    const html = renderDocumento(reserva, periodos);
+
+    // El mail al huésped pide el documento pelado; el panel lo pide con la
+    // barra para bajarlo en PDF, y con ?descargar=1 además abre el diálogo de
+    // impresión solo.
+    const q = event.queryStringParameters || {};
+    const paraElPanel = q.botones === "1" || q.descargar === "1";
+    const html = renderDocumento(reserva, periodos, {
+      botones: paraElPanel,
+      imprimirAlAbrir: q.descargar === "1",
+    });
 
     // format=html devuelve la página tal cual, para abrirla directo en el panel
-    if ((event.queryStringParameters?.format || "") === "html") {
+    if ((q.format || "") === "html") {
       return {
         statusCode: 200,
         headers: {

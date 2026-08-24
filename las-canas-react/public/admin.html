@@ -2948,6 +2948,12 @@
       btnDoc.textContent = "Ver documento";
       der.appendChild(btnDoc);
 
+      const btnDescargar = document.createElement("button");
+      btnDescargar.className = "btnDescargarDoc px-4 py-2 rounded-full bg-white/70 border border-brand-beige text-xs font-semibold hover:bg-white transition";
+      btnDescargar.dataset.id = r.id;
+      btnDescargar.textContent = "Descargar PDF";
+      der.appendChild(btnDescargar);
+
       const btnCancelar = document.createElement("button");
       btnCancelar.className = "btnCancelConfirmed px-4 py-2 rounded-full bg-white/70 border border-brand-beige text-xs font-semibold hover:bg-white transition";
       btnCancelar.dataset.id = r.id;
@@ -2978,39 +2984,55 @@
       };
     });
 
-    // El documento que se le manda al huésped al confirmar. Se abre en otra
-    // pestaña para poder imprimirlo o guardarlo en PDF desde el navegador.
     confirmedList.querySelectorAll(".btnDocConfirmed").forEach(btn => {
-      btn.onclick = async () => {
-        const row = confirmedRaw.find(x => String(x.id) === String(btn.dataset.id));
-        if (!row) return;
-
-        const textoOriginal = btn.textContent;
-        btn.disabled = true;
-        btn.textContent = "Generando...";
-
-        try {
-          const out = await apiFetch(EP_RESERVATION_DOCUMENT, {
-            method: "POST",
-            body: { reservation: row },
-          });
-
-          const ventana = window.open("", "_blank");
-          if (!ventana) {
-            showToast("El navegador bloqueó la ventana emergente", "err");
-            return;
-          }
-
-          ventana.document.write(out.html);
-          ventana.document.close();
-        } catch (e) {
-          showToast(e.message || "No se pudo generar el documento", "err");
-        } finally {
-          btn.disabled = false;
-          btn.textContent = textoOriginal;
-        }
-      };
+      btn.onclick = () => abrirDocumento(btn, { descargar: false });
     });
+
+    confirmedList.querySelectorAll(".btnDescargarDoc").forEach(btn => {
+      btn.onclick = () => abrirDocumento(btn, { descargar: true });
+    });
+  }
+
+  // El mismo documento que le llega al huésped por mail cuando se confirma la
+  // transferencia. Se abre en otra pestaña, con una barra para bajarlo en PDF;
+  // con descargar:true el diálogo de impresión se abre solo.
+  //
+  // La ventana se abre ANTES de pedir el documento: si se abriera después del
+  // await, el navegador lo trata como popup no pedido por el usuario y lo
+  // bloquea.
+  async function abrirDocumento(btn, { descargar }) {
+    const row = confirmedRaw.find(x => String(x.id) === String(btn.dataset.id));
+    if (!row) return;
+
+    const ventana = window.open("", "_blank");
+    if (!ventana) {
+      showToast("El navegador bloqueó la ventana emergente. Permitila para este sitio.", "err");
+      return;
+    }
+    ventana.document.write("<!doctype html><meta charset='utf-8'><title>Generando…</title>" +
+      "<body style=\"font-family:system-ui;padding:40px;color:#4A3728;background:#F5F1E9\">Generando el documento…</body>");
+
+    const textoOriginal = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = "Generando...";
+
+    try {
+      const query = descargar ? "?descargar=1" : "?botones=1";
+      const out = await apiFetch(`${EP_RESERVATION_DOCUMENT}${query}`, {
+        method: "POST",
+        body: { reservation: row },
+      });
+
+      ventana.document.open();
+      ventana.document.write(out.html);
+      ventana.document.close();
+    } catch (e) {
+      ventana.close();
+      showToast(e.message || "No se pudo generar el documento", "err");
+    } finally {
+      btn.disabled = false;
+      btn.textContent = textoOriginal;
+    }
   }
 
   // =====================
