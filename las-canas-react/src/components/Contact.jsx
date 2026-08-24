@@ -1,13 +1,14 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
+
+// Si vuelve con ?contact=success (acción del form), mostramos mensajito.
+// El form navega de verdad, así que la página se recarga y esto se vuelve a
+// evaluar: no hace falta estado ni un efecto que fuerce un segundo render.
+function volvioDelForm() {
+  return new URLSearchParams(window.location.search).get("contact") === "success";
+}
 
 export default function Contact() {
-  const [sent, setSent] = useState(false);
-
-  // Si vuelve con ?contact=success (acción del form), mostramos mensajito
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get("contact") === "success") setSent(true);
-  }, []);
+  const sent = volvioDelForm();
 
   // acción para volver a la misma página y mostrar success
   const formAction = useMemo(() => "/?contact=success#contact", []);

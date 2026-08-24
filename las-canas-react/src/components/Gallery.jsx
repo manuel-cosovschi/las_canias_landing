@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 export default function Gallery() {
   const images = useMemo(
@@ -43,10 +43,18 @@ export default function Gallery() {
     setOpen(true);
   };
 
-  const close = () => setOpen(false);
+  // useCallback para que los efectos de abajo puedan declararlos como
+  // dependencia sin recrear los listeners en cada render.
+  const close = useCallback(() => setOpen(false), []);
 
-  const prev = () => setIdx((i) => (i - 1 + images.length) % images.length);
-  const next = () => setIdx((i) => (i + 1) % images.length);
+  const prev = useCallback(
+    () => setIdx((i) => (i - 1 + images.length) % images.length),
+    [images.length]
+  );
+  const next = useCallback(
+    () => setIdx((i) => (i + 1) % images.length),
+    [images.length]
+  );
 
   // ✅ teclado: ESC cierra, flechas navegan
   useEffect(() => {
@@ -59,7 +67,7 @@ export default function Gallery() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [open, images.length]);
+  }, [open, close, prev, next]);
 
   // ✅ swipe básico (mobile)
   useEffect(() => {
@@ -90,7 +98,7 @@ export default function Gallery() {
       window.removeEventListener("touchmove", onTouchMove);
       window.removeEventListener("touchend", onTouchEnd);
     };
-  }, [open, images.length]);
+  }, [open, prev, next]);
 
   return (
     <section id="gallery" className="py-24 bg-white">
