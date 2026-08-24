@@ -1,0 +1,16 @@
+# OJO: el node_modules de la raíz va versionado a propósito. El build de
+# Netlify sólo corre `npm ci` dentro de las-canas-react (ver netlify.toml), así
+# que las dependencias de netlify/functions salen del repo. No lo saques.
+
+las-canas-react/node_modules/
+las-canas-react/dist/
+
+# Python de los scripts de migración
+__pycache__/
+*.pyc
+
+.DS_Store
+*.log
+.env
+.env.*
+.netlify/
