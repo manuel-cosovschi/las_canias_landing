@@ -58,6 +58,63 @@
 
     /* Flatpickr typography */
     .flatpickr-calendar { font-family: "Inter", ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; }
+
+    /* Navegación lateral: en escritorio es una columna fija; abajo de lg pasa
+       a una tira horizontal que scrollea, sin cambiar el markup. */
+    .navItem {
+      color: #4A3728;
+      border: 1px solid transparent;
+    }
+    .navItem:hover { background: rgba(228, 217, 200, .5); }
+    .navItem[aria-current="page"],
+    .navItem[aria-current="page"]:hover {
+      background: #4A3728;
+      color: #F5F1E9;
+      border-color: #4A3728;
+    }
+    .navItem[aria-current="page"] .navPunto { background: #F5F1E9; }
+    .navPunto {
+      width: 6px; height: 6px; border-radius: 999px;
+      background: transparent; flex: none;
+    }
+    /* La tira horizontal en mobile no muestra barra de scroll */
+    #navSecciones { scrollbar-width: none; }
+    #navSecciones::-webkit-scrollbar { display: none; }
+
+    /* Calendario: el chip coloreado lo dibuja eventContent, así que le sacamos
+       a FullCalendar su fondo/borde propio para que no pinte por debajo. */
+    #calendar .fc-daygrid-event,
+    #calendar .fc-daygrid-event:hover {
+      background: transparent !important;
+      border: none !important;
+      box-shadow: none !important;
+      padding: 0 !important;
+      margin: 1px 2px !important;
+    }
+    #calendar .fc-daygrid-event .fc-event-main { padding: 0 !important; }
+    #calendar .fc-event { cursor: pointer; }
+
+    .lc-ev {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 6px;
+      border-radius: 7px;
+      overflow: hidden;
+      color: #fff;
+    }
+    .lc-ev-txt {
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 1.15;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    /* Hold: rayado diagonal = reserva provisoria, todavía sin confirmar. */
+    .lc-ev--hold { background-image: repeating-linear-gradient(45deg, rgba(255,255,255,.45) 0 5px, transparent 5px 10px); }
+    /* Blocked: sin huésped, se despinta y va con borde punteado. */
+    .lc-ev--blocked { opacity: .72; border: 2px dashed rgba(255,255,255,.75); padding: 1px 4px; }
   </style>
 </head>
 
@@ -174,56 +231,51 @@
 
     <!-- APP -->
     <section id="app" class="hidden mt-8">
-      <!-- Toolbar -->
-      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
-        <!-- Tabs -->
-        <div class="flex flex-wrap gap-2">
-          <button id="tabBlock"
-            class="px-4 py-2 rounded-full bg-brand-beige/40 border border-brand-beige font-semibold text-sm hover:bg-brand-beige/55 transition">
-            Bloquear fechas
-          </button>
-          <button id="tabTransfers"
-            class="px-4 py-2 rounded-full bg-white/70 border border-brand-beige font-semibold text-sm hover:bg-white transition">
-            Transferencias
-          </button>
-          <button id="tabConfirmed"
-            class="px-4 py-2 rounded-full bg-white/70 border border-brand-beige font-semibold text-sm hover:bg-white transition">
-            Confirmadas
-          </button>
-          <button id="tabSearch"
-            class="px-4 py-2 rounded-full bg-white/70 border border-brand-beige font-semibold text-sm hover:bg-white transition">
-            Buscar
-          </button>
-          <button id="tabCalendar"
-            class="px-4 py-2 rounded-full bg-white/70 border border-brand-beige font-semibold text-sm hover:bg-white transition">
-            Calendario
-          </button>
-          <button id="tabPrices"
-            class="px-4 py-2 rounded-full bg-white/70 border border-brand-beige font-semibold text-sm hover:bg-white transition">
-            Precios
-          </button>
-          <button id="tabRules"
-            class="px-4 py-2 rounded-full bg-white/70 border border-brand-beige font-semibold text-sm hover:bg-white transition">
-            Reglas
-          </button>
-          <button id="tabGuide"
-            class="px-4 py-2 rounded-full bg-white/70 border border-brand-beige font-semibold text-sm hover:bg-white transition">
-            Guía
-          </button>
-        </div>
+      <div class="flex flex-col lg:flex-row gap-6 items-start">
 
-        <!-- Actions -->
-        <div class="flex items-center gap-2">
-          <button id="btnRefresh"
-            class="hidden px-4 py-2 rounded-full bg-brand-brown text-brand-cream text-xs font-semibold hover:opacity-90 transition">
-            Actualizar pendientes
+      <!-- NAVEGACIÓN LATERAL -->
+      <aside class="w-full lg:w-56 lg:shrink-0 lg:sticky lg:top-24">
+        <nav id="navSecciones" aria-label="Secciones del panel"
+          class="flex lg:flex-col gap-1 overflow-x-auto lg:overflow-visible bg-white/70 border border-brand-beige rounded-2xl p-2">
+          <button id="tabBlock" class="navItem shrink-0 lg:w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold text-left transition">
+            <span class="navPunto"></span><span class="whitespace-nowrap">Bloquear fechas</span>
           </button>
+          <button id="tabTransfers" class="navItem shrink-0 lg:w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold text-left transition">
+            <span class="navPunto"></span><span class="whitespace-nowrap">Transferencias</span>
+          </button>
+          <button id="tabConfirmed" class="navItem shrink-0 lg:w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold text-left transition">
+            <span class="navPunto"></span><span class="whitespace-nowrap">Confirmadas</span>
+          </button>
+          <button id="tabSearch" class="navItem shrink-0 lg:w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold text-left transition">
+            <span class="navPunto"></span><span class="whitespace-nowrap">Buscar</span>
+          </button>
+          <button id="tabCalendar" class="navItem shrink-0 lg:w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold text-left transition">
+            <span class="navPunto"></span><span class="whitespace-nowrap">Calendario</span>
+          </button>
+          <button id="tabPrices" class="navItem shrink-0 lg:w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold text-left transition">
+            <span class="navPunto"></span><span class="whitespace-nowrap">Precios</span>
+          </button>
+          <button id="tabRules" class="navItem shrink-0 lg:w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold text-left transition">
+            <span class="navPunto"></span><span class="whitespace-nowrap">Reglas</span>
+          </button>
+          <button id="tabGuide" class="navItem shrink-0 lg:w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold text-left transition">
+            <span class="navPunto"></span><span class="whitespace-nowrap">Guía</span>
+          </button>
+        </nav>
 
-          <div class="hidden sm:flex items-center gap-2 px-3 py-2 rounded-2xl bg-white/70 border border-brand-beige text-xs">
-            <span class="font-semibold">Owner Secret:</span>
-            <span id="secretBadge" class="text-brand-accent">No configurado</span>
-          </div>
+        <div class="hidden lg:flex items-center gap-2 mt-3 px-3 py-2.5 rounded-2xl bg-white/70 border border-brand-beige text-xs">
+          <span class="font-semibold">Owner Secret:</span>
+          <span id="secretBadge" class="text-brand-accent">No configurado</span>
         </div>
+      </aside>
+
+      <!-- CONTENIDO -->
+      <div class="flex-1 min-w-0 w-full">
+      <div class="flex justify-end mb-4">
+        <button id="btnRefresh"
+          class="hidden px-4 py-2 rounded-full bg-brand-brown text-brand-cream text-xs font-semibold hover:opacity-90 transition">
+          Actualizar pendientes
+        </button>
       </div>
 
       <!-- BLOQUEAR FECHAS -->
@@ -764,25 +816,27 @@
 
       <!-- CALENDARIO -->
       <div id="viewCalendar" class="bg-white/75 rounded-2xl shadow-sm border border-brand-beige p-6 hidden">
-        <div class="flex items-start justify-between gap-3 mb-4">
-          <div>
-            <h2 class="serif text-xl sm:text-2xl font-bold">Calendario</h2>
-            <p class="text-xs text-brand-accent mt-1">
-              CONFIRMED / HOLD_TRANSFER / BLOCKED. Click en un evento para ver el detalle.
-            </p>
-          </div>
+        <div class="mb-4">
+          <h2 class="serif text-xl sm:text-2xl font-bold">Calendario</h2>
+          <p class="text-xs text-brand-accent mt-1">
+            Cada casa tiene su color. Click en un evento para ver el detalle.
+          </p>
+        </div>
 
-          <div class="flex items-center gap-2 text-xs">
-            <span class="inline-flex items-center gap-2 px-3 py-2 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-900 font-semibold">
-              <span class="w-2 h-2 rounded-full" style="background:#059669"></span> Confirmed
-            </span>
-            <span class="inline-flex items-center gap-2 px-3 py-2 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 font-semibold">
-              <span class="w-2 h-2 rounded-full" style="background:#F59E0B"></span> Hold
-            </span>
-            <span class="inline-flex items-center gap-2 px-3 py-2 rounded-2xl bg-slate-50 border border-slate-200 text-slate-900 font-semibold">
-              <span class="w-2 h-2 rounded-full" style="background:#64748B"></span> Blocked
-            </span>
-          </div>
+        <div class="flex flex-wrap items-center gap-2 text-xs mb-4">
+          <span id="calLegendHouses" class="contents"></span>
+
+          <span class="w-px h-6 bg-brand-beige mx-1 hidden sm:inline-block"></span>
+
+          <span class="inline-flex items-center gap-2 px-3 py-2 rounded-2xl bg-white/70 border border-brand-beige font-semibold">
+            <span class="w-6 h-3 rounded" style="background:#4A3728"></span> Confirmada
+          </span>
+          <span class="inline-flex items-center gap-2 px-3 py-2 rounded-2xl bg-white/70 border border-brand-beige font-semibold">
+            <span class="w-6 h-3 rounded" style="background:#4A3728;background-image:repeating-linear-gradient(45deg,rgba(255,255,255,.5) 0 4px,transparent 4px 8px)"></span> Hold
+          </span>
+          <span class="inline-flex items-center gap-2 px-3 py-2 rounded-2xl bg-white/70 border border-brand-beige font-semibold">
+            <span class="w-6 h-3 rounded border-2 border-dashed border-white" style="background:#4A3728;opacity:.72"></span> Bloqueada
+          </span>
         </div>
 
         <div id="calendar" class="rounded-2xl border border-brand-beige bg-white p-2"></div>
@@ -958,6 +1012,9 @@
           Al guardar se reemplazan todas las reglas. Los cambios impactan en la página al instante.
         </p>
       </div>
+
+      </div><!-- /contenido -->
+      </div><!-- /layout con nav lateral -->
     </section>
   </main>
 
@@ -1057,6 +1114,69 @@
       <p class="mt-3 text-xs text-brand-accent">
         Tip: al confirmar/cancelar, tus flujos n8n pueden enviar email automáticamente al huésped.
       </p>
+    </div>
+  </div>
+
+  <!-- IMPORTES DE UNA RESERVA -->
+  <div id="pagoModal" class="fixed inset-0 hidden items-center justify-center bg-black/50 p-4 z-[1300]">
+    <div class="w-full max-w-md rounded-2xl bg-white shadow-xl p-6 border border-brand-beige">
+      <div class="flex items-start justify-between gap-3 mb-1">
+        <h3 class="text-lg font-bold serif">Importes de la reserva</h3>
+        <button id="btnClosePago" class="text-brand-brown/60 hover:text-brand-brown">✕</button>
+      </div>
+      <p id="pagoSubtitulo" class="text-sm text-brand-accent mb-4">-</p>
+
+      <div class="space-y-3">
+        <div>
+          <label class="block text-sm font-semibold mb-1">Importe total</label>
+          <input id="pagoImporte" type="number" min="0" step="1000" inputmode="numeric"
+            class="w-full border border-brand-beige rounded-2xl p-3 bg-white/80 focus:outline-none focus:ring-2 focus:ring-brand-accent/40"
+            placeholder="0">
+        </div>
+
+        <div>
+          <label class="block text-sm font-semibold mb-1">Anticipo cobrado</label>
+          <input id="pagoAnticipo" type="number" min="0" step="1000" inputmode="numeric"
+            class="w-full border border-brand-beige rounded-2xl p-3 bg-white/80 focus:outline-none focus:ring-2 focus:ring-brand-accent/40"
+            placeholder="0">
+        </div>
+
+        <div class="rounded-2xl border border-brand-beige bg-brand-beige/30 p-3 flex items-center justify-between">
+          <span class="text-sm font-semibold">Saldo</span>
+          <span id="pagoSaldo" class="text-lg font-bold">-</span>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-sm font-semibold mb-1">Cotización USD</label>
+            <input id="pagoCotizacion" type="number" min="0" step="1" inputmode="numeric"
+              class="w-full border border-brand-beige rounded-2xl p-3 bg-white/80 focus:outline-none focus:ring-2 focus:ring-brand-accent/40"
+              placeholder="0">
+          </div>
+          <div>
+            <label class="block text-sm font-semibold mb-1">Facturada</label>
+            <label class="flex items-center gap-2 p-3 rounded-2xl border border-brand-beige bg-white/80 cursor-pointer">
+              <input id="pagoFacturado" type="checkbox" class="w-4 h-4">
+              <span class="text-sm">Sí</span>
+            </label>
+          </div>
+        </div>
+
+        <p id="pagoDolares" class="text-xs text-brand-accent">&nbsp;</p>
+      </div>
+
+      <div id="pagoMsg" class="hidden mt-3 text-sm"></div>
+
+      <div class="mt-5 flex gap-3">
+        <button id="btnGuardarPago"
+          class="flex-1 py-3 rounded-2xl bg-brand-brown text-brand-cream font-semibold hover:opacity-90 transition disabled:opacity-50">
+          Guardar
+        </button>
+        <button id="btnClosePago2"
+          class="py-3 px-4 rounded-2xl bg-white/70 border border-brand-beige font-semibold hover:bg-white transition">
+          Cancelar
+        </button>
+      </div>
     </div>
   </div>
 
@@ -1260,16 +1380,35 @@
   // =====================
   // COLORS POR CASA (para calendario)
   // =====================
+  // Los 5 tonos van al fondo del evento, así que están elegidos para que el
+  // texto blanco en negrita quede legible encima (todos >= 4.5:1).
   const HOUSE_COLORS = {
-    LC1: "#1D4ED8", // azul fuerte
-    LC2: "#7C3AED", // violeta
-    LC3: "#DC2626", // rojo
-    LC4: "#16A34A", // verde
-    LC5: "#EA580C", // naranja
+    LC1: "#1D4ED8", // azul
+    LC2: "#6D28D9", // violeta
+    LC3: "#B91C1C", // rojo
+    LC4: "#15803D", // verde
+    LC5: "#C2410C", // naranja
   };
+
+  const HOUSE_NAMES = {
+    LC1: "Las Cañas 1",
+    LC2: "Las Cañas 2",
+    LC3: "Las Cañas 3",
+    LC4: "Las Cañas 4",
+    LC5: "Las Cañas 5",
+  };
+
+  const HOUSE_CODES = ["LC1", "LC2", "LC3", "LC4", "LC5"];
 
   function houseColor(code){
     return HOUSE_COLORS[String(code || "").toUpperCase()] || "#0B0F14";
+  }
+
+  // Si algún día aparece una casa nueva en la planilla, mostramos el código
+  // crudo en vez de dejar el evento sin nombre.
+  function houseName(code){
+    const key = String(code || "").trim().toUpperCase();
+    return HOUSE_NAMES[key] || String(code || "").trim() || "-";
   }
   async function loadConfirmedSafe({ force = true } = {}) {
     // si ya hay request en vuelo, no dispares otra
@@ -1304,6 +1443,8 @@
   const EP_LIST_CONFIRMED = "/.netlify/functions/list-confirmed";
   const EP_CANCEL_CONFIRMED = "/.netlify/functions/cancel-confirmed";
   const EP_LIST_CALENDAR = "/.netlify/functions/list-calendar";
+  const EP_RESERVATION_DOCUMENT = "/.netlify/functions/reservation-document";
+  const EP_SET_PAYMENT = "/.netlify/functions/set-reservation-payment";
   const EP_OWNER_UNBLOCKS = "/.netlify/functions/owner-unblocks";
   const EP_PRICE_PERIODS = "/api/price-periods";
   const EP_SET_PRICE_PERIODS = "/.netlify/functions/set-price-periods";
@@ -1461,53 +1602,33 @@
   }
 
   // Tabs
-  function showTab(which) {
-    const isBlock = which === "block";
-    const isTransfers = which === "transfers";
-    const isConfirmed = which === "confirmed";
-    const isCalendar = which === "calendar";
-    const isPrices = which === "prices";
-    const isRules = which === "rules";
-    const isSearch = which === "search";
-    const isGuide = which === "guide";
+  // Una sola lista en vez de un par de toggles por sección: agregar una nueva
+  // es sumar una línea acá.
+  const SECCIONES = [
+    { id: "block",     boton: tabBlock,     vista: viewBlock },
+    { id: "transfers", boton: tabTransfers, vista: viewTransfers },
+    { id: "confirmed", boton: tabConfirmed, vista: viewConfirmed },
+    { id: "search",    boton: tabSearch,    vista: viewSearch },
+    { id: "calendar",  boton: tabCalendar,  vista: viewCalendar },
+    { id: "prices",    boton: tabPrices,    vista: viewPrices },
+    { id: "rules",     boton: tabRules,     vista: viewRules },
+    { id: "guide",     boton: tabGuide,     vista: viewGuide },
+  ];
 
-    viewBlock.classList.toggle("hidden", !isBlock);
-    viewTransfers.classList.toggle("hidden", !isTransfers);
-    viewConfirmed.classList.toggle("hidden", !isConfirmed);
-    viewCalendar.classList.toggle("hidden", !isCalendar);
-    viewPrices.classList.toggle("hidden", !isPrices);
-    viewRules.classList.toggle("hidden", !isRules);
-    viewSearch.classList.toggle("hidden", !isSearch);
-    viewGuide.classList.toggle("hidden", !isGuide);
+  function showTab(which) {
+    for (const s of SECCIONES) {
+      const activa = s.id === which;
+
+      s.vista.classList.toggle("hidden", !activa);
+
+      // El resaltado del ítem activo lo hace el CSS con [aria-current]
+      if (activa) s.boton.setAttribute("aria-current", "page");
+      else s.boton.removeAttribute("aria-current");
+    }
 
     // Refresh button solo para TRANSFERS (pendientes)
+    const isTransfers = which === "transfers";
     btnRefresh.classList.toggle("hidden", !isTransfers);
-
-    // estilos tabs
-    tabBlock.classList.toggle("bg-brand-beige/40", isBlock);
-    tabBlock.classList.toggle("bg-white/70", !isBlock);
-
-    tabTransfers.classList.toggle("bg-brand-beige/40", isTransfers);
-    tabTransfers.classList.toggle("bg-white/70", !isTransfers);
-
-    tabConfirmed.classList.toggle("bg-brand-beige/40", isConfirmed);
-    tabConfirmed.classList.toggle("bg-white/70", !isConfirmed);
-
-    tabCalendar.classList.toggle("bg-brand-beige/40", isCalendar);
-    tabCalendar.classList.toggle("bg-white/70", !isCalendar);
-
-    tabPrices.classList.toggle("bg-brand-beige/40", isPrices);
-    tabPrices.classList.toggle("bg-white/70", !isPrices);
-
-    tabRules.classList.toggle("bg-brand-beige/40", isRules);
-    tabRules.classList.toggle("bg-white/70", !isRules);
-
-    tabSearch.classList.toggle("bg-brand-beige/40", isSearch);
-    tabSearch.classList.toggle("bg-white/70", !isSearch);
-
-    tabGuide.classList.toggle("bg-brand-beige/40", isGuide);
-    tabGuide.classList.toggle("bg-white/70", !isGuide);
-
     if (!isTransfers) stopCountdownTicker();
 
    // no auto refresh en confirmadas
@@ -2708,9 +2829,39 @@
       const contacto = [r.guest_name || "-", r.phone, r.email].filter(Boolean).join(" · ");
       izq.appendChild(linea(contacto, "text-xs text-brand-accent mt-1 break-words"));
 
+      // El saldo a la vista: es el dato que los dueños miraban en el Excel
+      // para saber a quién hay que cobrarle.
+      const importe = Number(r.importe) || 0;
+      if (importe) {
+        const saldo = importe - (Number(r.anticipo) || 0);
+        const plata = document.createElement("div");
+        plata.className = "text-xs mt-2 flex flex-wrap items-center gap-2";
+        plata.innerHTML =
+          `<span class="text-brand-brown/70">Total ${pesosAR(importe)}</span>` +
+          (saldo > 0
+            ? `<span class="px-2 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-900 font-semibold">Saldo ${pesosAR(saldo)}</span>`
+            : `<span class="px-2 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-900 font-semibold">Cobrada</span>`) +
+          (String(r.facturado || "").toLowerCase() === "si"
+            ? `<span class="px-2 py-1 rounded-full bg-white border border-brand-beige">Facturada</span>`
+            : "");
+        izq.appendChild(plata);
+      }
+
       const der = document.createElement("div");
       der.className = "flex flex-wrap gap-2";
       der.appendChild(botonComprobante(r.id));
+
+      const btnPago = document.createElement("button");
+      btnPago.className = "btnPagoConfirmed px-4 py-2 rounded-full bg-white/70 border border-brand-beige text-xs font-semibold hover:bg-white transition";
+      btnPago.dataset.id = r.id;
+      btnPago.textContent = importe ? "Importes" : "Cargar importes";
+      der.appendChild(btnPago);
+
+      const btnDoc = document.createElement("button");
+      btnDoc.className = "btnDocConfirmed px-4 py-2 rounded-full bg-brand-brown text-brand-cream text-xs font-semibold hover:opacity-90 transition";
+      btnDoc.dataset.id = r.id;
+      btnDoc.textContent = "Ver documento";
+      der.appendChild(btnDoc);
 
       const btnCancelar = document.createElement("button");
       btnCancelar.className = "btnCancelConfirmed px-4 py-2 rounded-full bg-white/70 border border-brand-beige text-xs font-semibold hover:bg-white transition";
@@ -2734,7 +2885,156 @@
         openCancelConfirmedModal(row);
       };
     });
+
+    confirmedList.querySelectorAll(".btnPagoConfirmed").forEach(btn => {
+      btn.onclick = () => {
+        const row = confirmedRaw.find(x => String(x.id) === String(btn.dataset.id));
+        if (row) openPagoModal(row);
+      };
+    });
+
+    // El documento que se le manda al huésped al confirmar. Se abre en otra
+    // pestaña para poder imprimirlo o guardarlo en PDF desde el navegador.
+    confirmedList.querySelectorAll(".btnDocConfirmed").forEach(btn => {
+      btn.onclick = async () => {
+        const row = confirmedRaw.find(x => String(x.id) === String(btn.dataset.id));
+        if (!row) return;
+
+        const textoOriginal = btn.textContent;
+        btn.disabled = true;
+        btn.textContent = "Generando...";
+
+        try {
+          const out = await apiFetch(EP_RESERVATION_DOCUMENT, {
+            method: "POST",
+            body: { reservation: row },
+          });
+
+          const ventana = window.open("", "_blank");
+          if (!ventana) {
+            showToast("El navegador bloqueó la ventana emergente", "err");
+            return;
+          }
+
+          ventana.document.write(out.html);
+          ventana.document.close();
+        } catch (e) {
+          showToast(e.message || "No se pudo generar el documento", "err");
+        } finally {
+          btn.disabled = false;
+          btn.textContent = textoOriginal;
+        }
+      };
+    });
   }
+
+  // =====================
+  // IMPORTES DE UNA RESERVA
+  // =====================
+  const pagoModal = el("pagoModal");
+  const pagoImporte = el("pagoImporte");
+  const pagoAnticipo = el("pagoAnticipo");
+  const pagoCotizacion = el("pagoCotizacion");
+  const pagoFacturado = el("pagoFacturado");
+  const pagoSaldo = el("pagoSaldo");
+  const pagoDolares = el("pagoDolares");
+  const pagoMsg = el("pagoMsg");
+  const btnGuardarPago = el("btnGuardarPago");
+
+  let pagoReserva = null;
+
+  function pesosAR(n) {
+    const v = Number(n);
+    return Number.isFinite(v) ? "$ " + Math.round(v).toLocaleString("es-AR") : "-";
+  }
+
+  // El saldo no se guarda en ningún lado: siempre sale de importe - anticipo,
+  // así no hay dos números que puedan quedar en desacuerdo.
+  function refrescarSaldo() {
+    const importe = Number(pagoImporte.value) || 0;
+    const anticipo = Number(pagoAnticipo.value) || 0;
+    const saldo = importe - anticipo;
+
+    pagoSaldo.textContent = importe ? pesosAR(saldo) : "-";
+    pagoSaldo.classList.toggle("text-red-700", saldo < 0);
+
+    const cotiz = Number(pagoCotizacion.value) || 0;
+    pagoDolares.innerHTML = (importe && cotiz)
+      ? `Equivale a US$ ${Math.round(importe / cotiz).toLocaleString("es-AR")}`
+      : "&nbsp;";
+  }
+
+  [pagoImporte, pagoAnticipo, pagoCotizacion].forEach(i => i.addEventListener("input", refrescarSaldo));
+
+  function openPagoModal(row) {
+    pagoReserva = row;
+
+    el("pagoSubtitulo").textContent =
+      `${row.id} · ${houseName(row.house_code)} · ${row.check_in} → ${row.check_out}`;
+
+    pagoImporte.value = row.importe ?? "";
+    pagoAnticipo.value = row.anticipo ?? "";
+    pagoCotizacion.value = row.cotizacion_usd ?? "";
+    pagoFacturado.checked = String(row.facturado || "").toLowerCase() === "si";
+
+    pagoMsg.classList.add("hidden");
+    refrescarSaldo();
+
+    pagoModal.classList.remove("hidden");
+    pagoModal.classList.add("flex");
+  }
+
+  function closePagoModal() {
+    pagoModal.classList.add("hidden");
+    pagoModal.classList.remove("flex");
+    pagoReserva = null;
+  }
+
+  el("btnClosePago").onclick = closePagoModal;
+  el("btnClosePago2").onclick = closePagoModal;
+  pagoModal.addEventListener("click", (e) => { if (e.target === pagoModal) closePagoModal(); });
+
+  btnGuardarPago.onclick = async () => {
+    if (!pagoReserva) return;
+
+    const importe = Number(pagoImporte.value) || 0;
+    const anticipo = Number(pagoAnticipo.value) || 0;
+
+    // Cobrar más que el total casi siempre es un error de tipeo, y queda
+    // guardado como un saldo negativo que después nadie entiende.
+    if (importe && anticipo > importe) {
+      pagoMsg.textContent = "El anticipo no puede ser mayor que el importe total.";
+      pagoMsg.className = "mt-3 text-sm text-red-700";
+      return;
+    }
+
+    btnGuardarPago.disabled = true;
+    const textoOriginal = btnGuardarPago.textContent;
+    btnGuardarPago.textContent = "Guardando...";
+
+    try {
+      await apiFetch(EP_SET_PAYMENT, {
+        method: "POST",
+        body: {
+          id: pagoReserva.id,
+          importe: pagoImporte.value.trim(),
+          anticipo: pagoAnticipo.value.trim(),
+          cotizacion_usd: pagoCotizacion.value.trim(),
+          facturado: pagoFacturado.checked,
+        },
+      });
+
+      showToast("Importes guardados ✅", "ok");
+      closePagoModal();
+      await loadConfirmed();
+    } catch (e) {
+      pagoMsg.textContent = e.message || "No se pudo guardar";
+      pagoMsg.className = "mt-3 text-sm text-red-700";
+    } finally {
+      btnGuardarPago.disabled = false;
+      btnGuardarPago.textContent = textoOriginal;
+    }
+  };
 
   async function loadConfirmed() {
     const out = await apiFetch(EP_LIST_CONFIRMED, { method: "GET", body: null });
@@ -3176,7 +3476,7 @@
     calSubtitle.textContent = "Click en evento del calendario";
 
     cal_status.textContent = status;
-    cal_house.textContent = house;
+    cal_house.textContent = p.house_name || houseName(house);
     cal_dates.textContent = fmtDates(start, end);
     cal_id.textContent = row.id || ev.id || "-";
 
@@ -3203,11 +3503,37 @@
     cal_notes.textContent = row.notes || "-";
   }
 
+  // La referencia se arma desde HOUSE_COLORS/HOUSE_NAMES para que no se
+  // desincronice de lo que realmente se pinta en el calendario.
+  function renderHouseLegend() {
+    const box = el("calLegendHouses");
+    if (!box) return;
+
+    box.innerHTML = "";
+    for (const code of HOUSE_CODES) {
+      const chip = document.createElement("span");
+      chip.className = "inline-flex items-center gap-2 px-3 py-2 rounded-2xl bg-white/70 border border-brand-beige font-semibold";
+
+      const sw = document.createElement("span");
+      sw.className = "w-3 h-3 rounded";
+      sw.style.background = houseColor(code);
+
+      const label = document.createElement("span");
+      label.textContent = houseName(code);
+
+      chip.appendChild(sw);
+      chip.appendChild(label);
+      box.appendChild(chip);
+    }
+  }
+
   async function ensureCalendar() {
     if (calInited) return;
 
     const mount = el("calendar");
     if (!mount) throw new Error("No se encontró el contenedor del calendario.");
+
+    renderHouseLegend();
 
     cal = new FullCalendar.Calendar(mount, {
       initialView: "dayGridMonth",
@@ -3226,30 +3552,25 @@
         const ev = arg.event;
         const p = ev.extendedProps || {};
         const house = p.house_code || "";
-        const stripe = houseColor(house);
+        const status = String(p.status || "").toUpperCase();
 
+        // El color de fondo es la casa (para distinguirlas de un vistazo) y el
+        // estado va por relleno: lleno = confirmada, rayado = hold, punteado =
+        // bloqueo. Antes el color era el estado y las 5 casas se veían igual.
         const wrap = document.createElement("div");
-        wrap.style.display = "flex";
-        wrap.style.alignItems = "center";
-        wrap.style.gap = "6px";
-        wrap.style.padding = "2px 4px";
-        wrap.style.borderRadius = "6px";
-
-        const dot = document.createElement("span");
-        dot.style.width = "10px";
-        dot.style.height = "10px";
-        dot.style.borderRadius = "999px";
-        dot.style.background = stripe;
-        dot.style.border = "2px solid rgba(255,255,255,0.65)";
+        wrap.className = "lc-ev";
+        // backgroundColor y no el shorthand background: el shorthand inline
+        // pisaría el background-image del rayado de Hold.
+        wrap.style.backgroundColor = houseColor(house);
+        if (status === "HOLD_TRANSFER") wrap.classList.add("lc-ev--hold");
+        if (status === "BLOCKED") wrap.classList.add("lc-ev--blocked");
 
         const txt = document.createElement("span");
-        txt.textContent = ev.title || "";
-        txt.style.fontSize = "12px";
-        txt.style.fontWeight = "700";
-        txt.style.lineHeight = "1.1";
+        txt.className = "lc-ev-txt";
+        txt.textContent = ev.title || `${houseName(house)} · ${status}`;
 
-        wrap.appendChild(dot);
         wrap.appendChild(txt);
+        wrap.title = txt.textContent;
 
         return { domNodes: [wrap] };
       },

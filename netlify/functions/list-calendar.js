@@ -94,12 +94,20 @@ function normalizeRow(obj) {
   return row;
 }
 
-function eventColorByStatus(status) {
-  const st = String(status || "").toUpperCase();
-  if (st === "CONFIRMED") return "#059669";      // emerald-600
-  if (st === "HOLD_TRANSFER") return "#F59E0B";  // amber-500
-  if (st === "BLOCKED") return "#64748B";        // slate-500
-  return "#334155";                              // slate-700 (fallback)
+const HOUSE_NAMES = {
+  LC1: "Las Cañas 1",
+  LC2: "Las Cañas 2",
+  LC3: "Las Cañas 3",
+  LC4: "Las Cañas 4",
+  LC5: "Las Cañas 5",
+};
+
+// El calendario muestra el nombre completo; si aparece un código nuevo que no
+// está en el mapa, mostramos el código crudo antes que dejar el evento sin
+// identificar.
+function houseName(code) {
+  const key = String(code || "").trim().toUpperCase();
+  return HOUSE_NAMES[key] || String(code || "").trim();
 }
 
 async function getSheetsClient() {
@@ -178,24 +186,24 @@ exports.handler = async (event) => {
         if (!start || !end || !house) return null;
 
         const status = String(r.status || "").trim().toUpperCase();
-        const color = eventColorByStatus(status);
+        const name = houseName(house);
 
         // title corto; el detalle completo va en extendedProps
         const title =
-          status === "CONFIRMED" ? `${r.house_code} · Confirmada`
-          : status === "HOLD_TRANSFER" ? `${r.house_code} · Hold`
-          : `${r.house_code} · Blocked`;
+          status === "CONFIRMED" ? `${name} · Confirmada`
+          : status === "HOLD_TRANSFER" ? `${name} · Hold`
+          : `${name} · Bloqueada`;
 
+        // Sin colores acá a propósito: el calendario pinta cada evento con el
+        // color de su casa, y esa paleta vive en admin.html (una sola fuente).
         return {
           id: String(r.id || `${r.house_code}-${start}-${end}-${status}`),
           title,
           start, // all-day
           end,   // fullcalendar interpreta end como exclusive (perfecto)
           allDay: true,
-          backgroundColor: color,
-          borderColor: color,
-          textColor: "#0B0F14",
           extendedProps: {
+            house_name: name,
             status,
             house_code: house,
             row: r, // TODA la fila para mostrar en modal

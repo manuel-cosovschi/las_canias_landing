@@ -89,8 +89,15 @@
     <div class="mb-6 p-5 rounded-2xl bg-white/70 border border-brand-beige shadow-sm">
       <div class="font-semibold mb-1">📌 Importante</div>
       <div class="text-sm text-brand-brown/90">
-        Si necesitás una excepción (menos días o ajustar un día más/menos), consultanos por <strong>WhatsApp</strong>.
-        <div class="mt-2 font-semibold">👉 PARA EXCEPCIONES DE ESTADÍAS MENORES CONSULTAR POR WHATSAPP.</div>
+        <div class="mb-2">
+          <strong>Temporada alta (20/12 al 1/3):</strong> mínimo 7 noches, entrando
+          sábado o domingo. El check-out puede ser cualquier día.
+        </div>
+        <div class="mb-2">
+          <strong>Resto del año:</strong> mínimo 2 noches, entrando cualquier día.
+        </div>
+        Si necesitás algo distinto —menos noches, o arrancar otro día de la semana—
+        lo coordinamos por <strong>WhatsApp</strong>.
       </div>
     </div>
 
@@ -153,8 +160,12 @@
       <div id="minNightsBanner" class="mt-4 p-4 rounded-2xl bg-white/70 border border-brand-beige">
         <div class="text-sm"><strong>Mínimo:</strong> <span id="minNightsText">-</span>.</div>
         <div class="mt-1 text-xs text-brand-accent">
-          Si el sistema no habilita tu caso, consultá por WhatsApp (excepciones).
+          ¿Necesitás otras fechas o menos noches? Lo vemos por WhatsApp.
         </div>
+        <a id="waExcepcion" href="https://wa.me/542236882986" target="_blank" rel="noopener"
+          class="mt-3 inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-emerald-600 text-white text-sm font-semibold hover:bg-emerald-700 transition">
+          <span aria-hidden="true">💬</span> Consultar por WhatsApp
+        </a>
       </div>
 
       <!-- PRECIOS -->
@@ -188,14 +199,22 @@
 
     <!-- PASO 2 -->
     <section id="guestSection" class="bg-white/75 rounded-2xl shadow-sm border border-brand-beige p-6 mb-6 hidden">
-      <h2 class="serif text-xl sm:text-2xl font-bold mb-4">2) Datos del huésped</h2>
+      <h2 class="serif text-xl sm:text-2xl font-bold mb-1">2) Datos de los huéspedes</h2>
+      <p class="text-sm text-brand-accent mb-4">
+        Necesitamos los datos de <strong>todas</strong> las personas que se alojan, no sólo de quien reserva.
+      </p>
 
+      <div class="font-semibold text-sm mb-2">Quien reserva</div>
       <div class="grid sm:grid-cols-2 gap-4">
         <input id="name" class="border border-brand-beige rounded-2xl p-3 bg-white/80 focus:outline-none focus:ring-2 focus:ring-brand-accent/40" placeholder="Nombre y apellido">
         <input id="dni" class="border border-brand-beige rounded-2xl p-3 bg-white/80 focus:outline-none focus:ring-2 focus:ring-brand-accent/40" placeholder="DNI">
         <input id="email" type="email" class="border border-brand-beige rounded-2xl p-3 bg-white/80 focus:outline-none focus:ring-2 focus:ring-brand-accent/40" placeholder="Email">
         <input id="phone" class="border border-brand-beige rounded-2xl p-3 bg-white/80 focus:outline-none focus:ring-2 focus:ring-brand-accent/40" placeholder="WhatsApp">
       </div>
+
+      <!-- Un bloque por cada huésped además de quien reserva; lo arma el JS
+           según la cantidad de personas elegida en el paso 1. -->
+      <div id="acompanantes"></div>
 
       <button id="guestContinue" disabled
         class="mt-5 w-full py-3 rounded-2xl bg-brand-brown text-brand-cream font-semibold hover:opacity-90 transition disabled:opacity-40 disabled:cursor-not-allowed">
@@ -214,7 +233,31 @@
         <div><strong>Check-out:</strong> <span id="sumCheckout">-</span> (10:00)</div>
         <div><strong>Precio estimado:</strong> <span id="sumTotalPrice">-</span></div>
         <div><strong>Seña (50%):</strong> <span id="sumDeposit">-</span></div>
-        <div class="mt-2"><strong>Importante:</strong> Por el momento aceptamos <strong>solo transferencia bancaria</strong>.</div>
+      </div>
+
+      <!-- Forma de pago: va antes de los datos de transferencia, que es lo que
+           la persona necesita saber para decidir si reserva. -->
+      <div class="mt-4 p-5 rounded-2xl bg-brand-beige/40 border-2 border-brand-brown/25">
+        <div class="font-semibold text-base mb-3">💳 Forma de pago</div>
+
+        <!-- El plan de cuotas depende de la estadía y de la fecha en que se
+             reserva, así que lo escribe el JS. -->
+        <ul id="formaPagoLista" class="text-sm space-y-2">
+          <li>• <strong>50%</strong> para confirmar la reserva.</li>
+        </ul>
+
+        <div class="mt-4 p-4 rounded-xl bg-brand-brown text-brand-cream text-center">
+          <div class="font-bold text-sm uppercase tracking-wide mb-2">
+            ¿Necesitás otra modalidad de pago?
+          </div>
+          <div class="text-sm mb-3 text-brand-cream/85">
+            Escribinos y lo vemos.
+          </div>
+          <a id="waPago" href="https://wa.me/542236882986" target="_blank" rel="noopener"
+            class="inline-flex items-center gap-2 px-5 py-2.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold transition">
+            <span aria-hidden="true">💬</span> Consultar por WhatsApp
+          </a>
+        </div>
       </div>
 
       <div class="mt-4 p-4 rounded-2xl bg-brand-cream border border-brand-beige text-sm">
@@ -276,7 +319,7 @@
           <strong>Seña (50%):</strong> <span id="resDeposit">-</span>
         </div>
         <div class="text-xs text-brand-accent mt-1">
-          El <strong>saldo restante</strong> se coordina con los dueños cerca de la fecha de tu estadía.
+          <span class="saldoTexto">El <strong>saldo</strong> se coordina según la modalidad de pago elegida.</span>
         </div>
       </div>
 
@@ -333,7 +376,7 @@
             <strong>Seña (50%):</strong> <span id="uxDepositAmount2">-</span>
           </div>
           <div class="mt-1 text-brand-accent text-xs">
-            El <strong>saldo restante</strong> se coordina con los dueños cerca de la fecha de tu estadía.
+            <span class="saldoTexto">El <strong>saldo</strong> se coordina según la modalidad de pago elegida.</span>
           </div>
         </div>
       </div>
@@ -418,7 +461,7 @@
     LC2:{max:4,hint:"Máx 4. Ideal 2 adultos + 2 niños/adolescentes."},
     LC3:{max:6,hint:"Máx 4 adultos + 1 joven + 1 niño (según disposición)."},
     LC4:{max:4,hint:"Máx 3 adultos o 2 adultos + 2 niños pequeños."},
-    LC5:{max:3,hint:"Máx 2 adultos + 1 niño."}
+    LC5:{max:3,hint:"Máx 2 adultos + 1 niño de hasta 6 años."}
   };
 
   const el = (id)=>document.getElementById(id);
@@ -937,6 +980,38 @@ async function loadPricePeriods(){
     return null;
   }
 
+  // Temporada alta: del 20/12 al 1/3, todos los años (el rango cruza el año
+  // nuevo, por eso se compara mes/día y no la fecha completa). En ese tramo la
+  // estadía arranca sábado o domingo y dura 7 noches o más; el check-out puede
+  // caer cualquier día.
+  const TEMPORADA_ALTA = {
+    desde: { mes: 12, dia: 20 },
+    hasta: { mes: 3, dia: 1 },
+    minNoches: 7,
+    diasCheckin: [6, 0], // 6 = sábado, 0 = domingo
+  };
+
+  function esTemporadaAlta(d){
+    if (!d) return false;
+
+    const mes = d.getMonth() + 1;
+    const dia = d.getDate();
+    const { desde, hasta } = TEMPORADA_ALTA;
+
+    const desdeElInicio = mes === desde.mes ? dia >= desde.dia : mes > desde.mes;
+    const hastaElFin = mes === hasta.mes ? dia <= hasta.dia : mes < hasta.mes;
+
+    return desdeElInicio || hastaElFin;
+  }
+
+  function esTemporadaAltaYmd(ymd){
+    return ymd ? esTemporadaAlta(parseYMD(ymd)) : false;
+  }
+
+  function esDiaDeCheckinDeTemporada(d){
+    return TEMPORADA_ALTA.diasCheckin.includes(d.getDay());
+  }
+
   function getMinRule(ciYmd, coYmd){
     if (!ciYmd) return { type:"none", min: null, label:"-" };
     if (!CALENDAR) return { type:"none", min: null, label:"-" };
@@ -965,6 +1040,20 @@ async function loadPricePeriods(){
     }
 
     const especial = getMinNightsRuleFor(ciYmd, coYmd);
+
+    // La temporada va después de las ventanas fijas (esas las carga el panel a
+    // mano y mandan) pero antes del mínimo por rango: si el panel cargó un
+    // mínimo mayor para este tramo se respeta el mayor, y el check-in sigue
+    // atado a sábado o domingo.
+    if (esTemporadaAltaYmd(ciYmd)){
+      const min = Math.max(TEMPORADA_ALTA.minNoches, especial ? especial.nights : 0);
+      return {
+        type: "temporada",
+        min,
+        label: `${min} noches mínimo, entrando sábado o domingo (temporada alta: 20/12 al 1/3)`
+      };
+    }
+
     if (especial){
       const motivo = especial.label ? ` por ${especial.label}` : "";
       return {
@@ -977,9 +1066,94 @@ async function loadPricePeriods(){
     return { type:"min_default", min: CALENDAR.minNights, label: `${CALENDAR.minNights} noches mínimo` };
   }
 
+  const WA_NUMERO = "542236882986";
+  const waExcepcion = el("waExcepcion");
+
+  // El botón lleva precargado lo que la persona ya eligió, así el mensaje llega
+  // con casa y fechas y no hay que volver a preguntarlas.
+  function updateWhatsAppLink(){
+    if (!waExcepcion) return;
+
+    const casa = house.value ? (house.options[house.selectedIndex]?.text || house.value) : "";
+
+    const partes = ["¡Hola! Quiero consultar por una reserva en Las Cañas."];
+    if (casa) partes.push(`Casa: ${casa}.`);
+    if (guests.value) partes.push(`Personas: ${guests.value}.`);
+    if (checkin.value) partes.push(`Check-in: ${ymdToDMY(checkin.value)}.`);
+    if (checkout.value) partes.push(`Check-out: ${ymdToDMY(checkout.value)}.`);
+
+    waExcepcion.href = `https://wa.me/${WA_NUMERO}?text=${encodeURIComponent(partes.join(" "))}`;
+  }
+
+  // La temporada cruza el año nuevo, así que las cuotas se anclan al año en
+  // que arranca: una estadía de enero de 2027 paga en octubre y noviembre
+  // de 2026.
+  function anioDeTemporada(ymd){
+    const m = String(ymd).match(/^(\d{4})-(\d{2})/);
+    if (!m) return null;
+    const anio = Number(m[1]);
+    return Number(m[2]) >= 12 ? anio : anio - 1;
+  }
+
+  // Las cuotas son sólo para temporada alta, y cada tramo cuenta sólo si su
+  // vencimiento todavía no llegó: reservando en noviembre o después ya no hay
+  // plan de cuotas.
+  function cuotasDisponibles(ciYmd){
+    if (!esTemporadaAltaYmd(ciYmd)) return [];
+
+    const anio = anioDeTemporada(ciYmd);
+    if (!anio) return [];
+
+    const hoy = fmtYMD(new Date());
+
+    return [
+      { mes: "10", nombre: "octubre" },
+      { mes: "11", nombre: "noviembre" },
+    ].filter(t => hoy < `${anio}-${t.mes}-01`);
+  }
+
+  const formaPagoLista = el("formaPagoLista");
+
+  function updateFormaPago(){
+    if (!formaPagoLista) return;
+
+    const items = ["• <strong>50%</strong> para confirmar la reserva."];
+
+    if (!checkin.value){
+      items.push("• El saldo, según las fechas que elijas: en temporada se puede financiar en cuotas.");
+    } else {
+      const cuotas = cuotasDisponibles(checkin.value);
+
+      if (cuotas.length > 1){
+        items.push(`• El saldo en <strong>${cuotas.length} cuotas mensuales consecutivas</strong>.`);
+        items.push(`• La última se abona del <strong>1 al 5 de ${cuotas[cuotas.length - 1].nombre}</strong>.`);
+      } else if (cuotas.length === 1){
+        items.push(`• El saldo en <strong>1 cuota</strong>, del <strong>1 al 5 de ${cuotas[0].nombre}</strong>.`);
+      } else if (esTemporadaAltaYmd(checkin.value)){
+        items.push("• El saldo <strong>en un pago</strong>: las cuotas rigen para reservas hechas antes del 1 de noviembre.");
+      } else {
+        items.push("• El saldo <strong>en un pago</strong>. El plan de cuotas rige para estadías de temporada.");
+      }
+    }
+
+    formaPagoLista.innerHTML = items.map(t => `<li>${t}</li>`).join("");
+
+    // El mismo dato en la pantalla de después de enviar la solicitud
+    const cuotas = checkin.value ? cuotasDisponibles(checkin.value) : [];
+    const resumen = !checkin.value
+      ? "El <strong>saldo</strong> se coordina según la modalidad de pago elegida."
+      : cuotas.length
+        ? `El <strong>saldo</strong> se abona en ${cuotas.length === 1 ? "1 cuota" : `${cuotas.length} cuotas mensuales consecutivas`}; la última, del 1 al 5 de ${cuotas[cuotas.length - 1].nombre}.`
+        : "El <strong>saldo</strong> se abona en un pago, a coordinar con los dueños.";
+
+    document.querySelectorAll(".saldoTexto").forEach(n => { n.innerHTML = resumen; });
+  }
+
   function updateMinBanner(){
     const rule = getMinRule(checkin.value, checkout.value);
     minNightsText.textContent = rule.label;
+    updateWhatsAppLink();
+    updateFormaPago();
   }
 
   let blockedRanges = [];
@@ -1061,6 +1235,11 @@ async function loadPricePeriods(){
     if (fixed){
       const ymd = fmtYMD(d0);
       if (ymd !== fixed.checkin) return true;
+    } else if (esTemporadaAlta(d0) && !esDiaDeCheckinDeTemporada(d0)){
+      // En temporada alta la estadía arranca sábado o domingo. Las ventanas
+      // fijas del panel quedan afuera de esta regla: si el dueño cargó una a
+      // mano, manda esa.
+      return true;
     }
 
     for (const r of blockedRanges){
@@ -1279,6 +1458,10 @@ async function loadPricePeriods(){
   }
 
   function updateContinueState(){
+    // Se llama en casi toda interacción, así el link de WhatsApp queda al día
+    // aunque todavía no haya fechas elegidas.
+    updateWhatsAppLink();
+
     if (!availabilityLoaded){
       continueBtn.disabled = true;
       return;
@@ -1352,8 +1535,63 @@ async function loadPricePeriods(){
     setStatus("4) Perfecto. Continuá para ingresar los datos del huésped.");
   }
 
+  const acompanantesBox = el("acompanantes");
+
+  function leerAcompanantes(){
+    if (!acompanantesBox) return [];
+
+    const nombres = [...acompanantesBox.querySelectorAll('[data-acompanante="nombre"]')];
+    const documentos = [...acompanantesBox.querySelectorAll('[data-acompanante="dni"]')];
+
+    return nombres.map((campo, i) => ({
+      nombre: campo.value.trim(),
+      dni: (documentos[i]?.value || "").trim(),
+    }));
+  }
+
+  // Un bloque por cada huésped que no sea quien reserva. Se rearma cada vez que
+  // cambia la cantidad de personas, conservando lo que ya se haya tipeado.
+  function renderAcompanantes(){
+    if (!acompanantesBox) return;
+
+    const extra = Math.max(0, (Number(guests.value) || 0) - 1);
+    const previos = leerAcompanantes();
+
+    acompanantesBox.innerHTML = "";
+    if (!extra) return;
+
+    const titulo = document.createElement("div");
+    titulo.className = "font-semibold text-sm mt-6 mb-2";
+    titulo.textContent = extra === 1 ? "Acompañante" : `Acompañantes (${extra})`;
+    acompanantesBox.appendChild(titulo);
+
+    for (let i = 0; i < extra; i++){
+      const fila = document.createElement("div");
+      fila.className = "grid sm:grid-cols-2 gap-4 mb-3";
+
+      for (const campo of ["nombre", "dni"]){
+        const input = document.createElement("input");
+        input.className = "border border-brand-beige rounded-2xl p-3 bg-white/80 focus:outline-none focus:ring-2 focus:ring-brand-accent/40";
+        input.placeholder = campo === "nombre"
+          ? `Nombre y apellido (huésped ${i + 2})`
+          : `DNI (huésped ${i + 2})`;
+        input.dataset.acompanante = campo;
+        input.value = previos[i]?.[campo] || "";
+        input.addEventListener("input", () => {
+          if (validateGuestData()) setStatus("6) Listo. Ya podés continuar.");
+        });
+        fila.appendChild(input);
+      }
+
+      acompanantesBox.appendChild(fila);
+    }
+  }
+
   function validateGuestData(){
-    const ok = name.value.trim() && dni.value.trim() && email.value.trim() && phone.value.trim();
+    const titularOk = name.value.trim() && dni.value.trim() && email.value.trim() && phone.value.trim();
+    const acompanantesOk = leerAcompanantes().every(a => a.nombre && a.dni);
+
+    const ok = !!titularOk && acompanantesOk;
     guestContinue.disabled = !ok;
     return ok;
   }
@@ -1613,9 +1851,12 @@ async function loadPricePeriods(){
     checkin.disabled = true;
     checkout.disabled = true;
 
+    renderAcompanantes();
+    validateGuestData();
+
     guestSection.classList.remove("hidden");
     guestSection.scrollIntoView({behavior:"smooth"});
-    setStatus("5) Completá los datos del huésped para continuar.");
+    setStatus("5) Completá los datos de todos los huéspedes para continuar.");
   });
 
   [name, dni, email, phone].forEach(inp=>{
@@ -1651,6 +1892,16 @@ async function loadPricePeriods(){
     setPayBusy(true);
     setStatus("Enviando solicitud de reserva...");
 
+    const acompanantes = leerAcompanantes();
+
+    // Además del campo estructurado mandamos la lista en `notes`, que ya viaja
+    // hasta la planilla y se ve en el panel: así los acompañantes quedan a la
+    // vista sin depender de que n8n sume una columna nueva.
+    const listaHuespedes = [
+      `1. ${name.value.trim()} (DNI ${dni.value.trim()})`,
+      ...acompanantes.map((a, i) => `${i + 2}. ${a.nombre} (DNI ${a.dni})`),
+    ].join(" · ");
+
     const payload = {
       house_code: house.value,
       guests: Number(guests.value),
@@ -1660,9 +1911,16 @@ async function loadPricePeriods(){
       dni: dni.value.trim(),
       email: email.value.trim(),
       phone: phone.value.trim(),
+      guests_details: [
+        { nombre: name.value.trim(), dni: dni.value.trim(), titular: true },
+        ...acompanantes.map(a => ({ ...a, titular: false })),
+      ],
+      // El importe ya está calculado acá; guardarlo desde el arranque evita
+      // tener que recalcularlo después con tarifas que pueden haber cambiado.
+      importe: lastCalc?.total ?? "",
       payment_method: "transfer",
       payment_ref: "",
-      notes: ""
+      notes: `Huéspedes: ${listaHuespedes}`
     };
 
     try{

@@ -40,6 +40,8 @@ Mezclarlos da 401 sin ninguna pista de por qué.
 | `N8N_OWNER_CANCEL_PATH` | `cancel-reservation` |
 | `N8N_OWNER_CANCEL_CONFIRMED_PATH` | `cancel-confirmed` |
 | `N8N_OWNER_BLOCK_PATH` / `N8N_OWNER_UNBLOCK_PATH` | `owner-blocks`, `owner-unblocks` |
+| `N8N_GET_PRICE_PERIODS_PATH` | `reservation-document` (opcional, tiene default) |
+| `N8N_SET_PAYMENT_PATH` | `set-reservation-payment` (opcional, tiene default) |
 | `N8N_ADMIN_UPDATE_RESERVATION_PATH` | `admin-update-reservation` (opcional) |
 | `WA_VERIFY_TOKEN` / `N8N_WA_INCOMING_URL` | `wa-webhook` |
 | `GOOGLE_SERVICE_ACCOUNT_JSON` / `LC_SHEET_ID` / `LC_SHEET_TAB` | `list-calendar`, `search-reservations` |
@@ -180,3 +182,62 @@ un mínimo abriría fechas que los dueños no habilitaron.
 Ojo: habilitar un mes nuevo son **dos** pasos — correr la ventana en *Reglas* y
 cargarle su período en *Precios*. Con uno solo el mes sigue sin poder
 reservarse.
+
+## El documento de reserva confirmada
+
+`reservation-document` devuelve, ya armado y con los colores de Las Cañas, el
+documento que antes se mandaba a mano en Word: unidad y dirección, todos los
+huéspedes con su DNI, fechas con horarios de ingreso y egreso, importes (total,
+seña y las 2 cuotas) y las condiciones del complejo.
+
+Se le manda la fila de la reserva en el body y responde el HTML. Con
+`?format=html` devuelve la página directamente en vez de envolverla en JSON.
+
+```
+POST /.netlify/functions/reservation-document
+x-lc-secret: <LC_OWNER_SECRET>
+
+{ "reservation": { ...la fila de la planilla... } }
+```
+
+El total sale de las tarifas cargadas (`precios_periodos`), cobrando noche por
+noche igual que `reservar.html`. Si alguna noche no tiene tarifa, el documento
+igual se genera pero con los importes a coordinar: vale más que salga sin
+precios a que el huésped no reciba nada al confirmar.
+
+### El mail automático
+
+Al confirmar, el mail ya sale solo: lo manda el workflow `owner-approve` de n8n,
+que antes enviaba un resumen de dos líneas y ahora manda este documento.
+
+El armado no pasa por esta function. El nodo `Preparar Email (CONFIRMED)` genera
+el HTML inline, con las tarifas que le pasa un nodo Data Table (`precios_periodos`)
+intercalado después de `Update row in sheet`. Es a propósito: ese mail sale en el
+momento en que se confirma una reserva y no puede quedar colgado de que Netlify
+esté arriba. El nodo tiene try/catch — si el armado falla, sale un mail simple
+antes que ninguno.
+
+El costo de esa decisión es que el documento vive en dos lugares. **Si lo cambiás
+acá, cambialo también en `n8n/owner-approve--preparar-email.js`**, que es copia
+exacta del código del nodo y está en el repo para que quede versionado.
+
+Esta function queda para el botón **Ver documento** del panel, que abre el mismo
+documento de cualquier reserva confirmada para imprimirlo o reenviarlo a mano.
+
+## Los importes de una reserva
+
+La planilla no guardaba nada de plata: el total, el anticipo y el saldo vivían
+sólo en el Excel de los dueños. Por eso el documento de confirmación tenía que
+recalcular el total con las tarifas en vez de leerlo.
+
+Ahora la hoja `reservas` tiene cuatro columnas más, en **AA:AD** (las A:Z ya
+estaban todas ocupadas): `importe`, `anticipo`, `facturado` y `cotizacion_usd`.
+
+- `reservar.html` manda el importe ya calculado al crear la reserva, así queda
+  guardado desde el arranque.
+- `set-reservation-payment` los edita desde el panel. Sólo pisa los campos que
+  vienen en el pedido, así se puede guardar el anticipo sin tocar el resto.
+- El **saldo no se guarda**: sale de `importe - anticipo`. Guardarlo sería
+  tener dos números que pueden quedar en desacuerdo.
+- El documento de confirmación usa el importe guardado si existe, y si no cae
+  al cálculo con tarifas de siempre.
