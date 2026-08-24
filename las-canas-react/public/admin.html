@@ -252,6 +252,9 @@
           <button id="tabCalendar" class="navItem shrink-0 lg:w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold text-left transition">
             <span class="navPunto"></span><span class="whitespace-nowrap">Calendario</span>
           </button>
+          <button id="tabStats" class="navItem shrink-0 lg:w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold text-left transition">
+            <span class="navPunto"></span><span class="whitespace-nowrap">Números</span>
+          </button>
           <button id="tabPrices" class="navItem shrink-0 lg:w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold text-left transition">
             <span class="navPunto"></span><span class="whitespace-nowrap">Precios</span>
           </button>
@@ -454,7 +457,7 @@
           </p>
 
           <div class="overflow-x-auto">
-            <table class="w-full text-sm border-collapse">
+            <table class="w-full text-xs sm:text-sm border-collapse">
               <thead>
                 <tr class="border-b border-brand-beige text-left">
                   <th class="py-2 pr-3 font-semibold">Dónde</th>
@@ -688,7 +691,7 @@
           <details class="rounded-2xl border border-brand-beige bg-white/80 p-4">
             <summary class="font-semibold cursor-pointer">Qué significa cada estado</summary>
             <div class="mt-3 overflow-x-auto">
-              <table class="w-full text-sm border-collapse">
+              <table class="w-full text-xs sm:text-sm border-collapse">
                 <tbody class="align-top">
                   <tr class="border-b border-brand-beige/50">
                     <td class="py-2 pr-3 font-semibold whitespace-nowrap">HOLD_TRANSFER</td>
@@ -841,6 +844,69 @@
 
         <div id="calendar" class="rounded-2xl border border-brand-beige bg-white p-2"></div>
       </div>
+
+      <!-- NÚMEROS -->
+      <div id="viewStats" class="bg-white/75 rounded-2xl shadow-sm border border-brand-beige p-6 hidden">
+        <div class="flex flex-wrap items-start justify-between gap-4 mb-5">
+          <div>
+            <h2 class="serif text-xl sm:text-2xl font-bold">Números de la temporada</h2>
+            <p class="text-xs text-brand-accent mt-1">
+              Sale de las reservas confirmadas. La temporada va de diciembre a noviembre.
+            </p>
+          </div>
+          <div class="flex items-center gap-2">
+            <label for="statsTemporada" class="text-xs font-semibold">Temporada</label>
+            <select id="statsTemporada"
+              class="text-sm font-semibold rounded-xl border border-brand-beige bg-white px-3 py-2"></select>
+          </div>
+        </div>
+
+        <div id="statsResumen" class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6"></div>
+
+        <div class="grid lg:grid-cols-2 gap-6">
+          <figure class="m-0">
+            <figcaption class="mb-3">
+              <h3 class="font-bold text-sm">Facturado por mes</h3>
+              <p class="text-xs text-brand-accent">Las cinco casas juntas.</p>
+            </figcaption>
+            <div id="statsPorMes"></div>
+          </figure>
+
+          <figure class="m-0">
+            <figcaption class="mb-3">
+              <h3 class="font-bold text-sm">Facturado por casa</h3>
+              <p class="text-xs text-brand-accent">Mismo color que en el calendario.</p>
+            </figcaption>
+            <div id="statsPorCasa"></div>
+          </figure>
+        </div>
+
+        <div class="mt-7">
+          <h3 class="font-bold text-sm mb-1">El detalle, casa por casa</h3>
+          <p class="text-xs text-brand-accent mb-3">
+            Ocupación = noches vendidas sobre los días de la temporada que ya pasaron.
+          </p>
+          <div class="overflow-x-auto rounded-2xl border border-brand-beige bg-white">
+            <table class="w-full text-xs sm:text-sm border-collapse">
+              <thead>
+                <tr class="text-left text-[10px] uppercase tracking-wide text-brand-accent bg-brand-cream/60">
+                  <th class="px-2 py-3 font-bold">Casa</th>
+                  <th class="px-2 py-3 font-bold text-right">Est.</th>
+                  <th class="px-2 py-3 font-bold text-right">Noches</th>
+                  <th class="px-2 py-3 font-bold text-right">Ocup.</th>
+                  <th class="px-2 py-3 font-bold text-right">Facturado</th>
+                  <th class="px-2 py-3 font-bold text-right">Saldo</th>
+                  <th class="px-2 py-3 font-bold text-right">$/noche</th>
+                </tr>
+              </thead>
+              <tbody id="statsTabla"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <p id="statsVacio" class="hidden text-sm text-brand-accent mt-4"></p>
+      </div>
+
       <!-- PRECIOS -->
       <div id="viewPrices" class="bg-white/75 rounded-2xl shadow-sm border border-brand-beige p-6 hidden">
         <div class="flex items-start justify-between gap-4 mb-4">
@@ -863,7 +929,7 @@
         </div>
 
         <div class="overflow-x-auto">
-          <table class="w-full text-sm border-collapse">
+          <table class="w-full text-xs sm:text-sm border-collapse">
             <thead>
               <tr class="border-b border-brand-beige text-left">
                 <th class="py-2 pr-2 font-semibold">Desde</th>
@@ -953,7 +1019,7 @@
           Sólo se puede entrar el día de check-in y salir el de check-out, ni antes ni después.
         </p>
         <div class="overflow-x-auto">
-          <table class="w-full text-sm border-collapse">
+          <table class="w-full text-xs sm:text-sm border-collapse">
             <thead>
               <tr class="border-b border-brand-beige text-left">
                 <th class="py-2 pr-2 font-semibold">Check-in</th>
@@ -976,7 +1042,7 @@
           Para temporada alta o feriados largos. Alcanza con que la estadía toque el tramo.
         </p>
         <div class="overflow-x-auto">
-          <table class="w-full text-sm border-collapse">
+          <table class="w-full text-xs sm:text-sm border-collapse">
             <thead>
               <tr class="border-b border-brand-beige text-left">
                 <th class="py-2 pr-2 font-semibold">Desde</th>
@@ -1268,6 +1334,8 @@
   const viewConfirmed = el("viewConfirmed");
   const tabCalendar = el("tabCalendar");
   const viewCalendar = el("viewCalendar");
+  const tabStats = el("tabStats");
+  const viewStats = el("viewStats");
   const tabPrices = el("tabPrices");
   const viewPrices = el("viewPrices");
   const CASAS = ["LC1","LC2","LC3","LC4","LC5"];
@@ -1382,12 +1450,17 @@
   // =====================
   // Los 5 tonos van al fondo del evento, así que están elegidos para que el
   // texto blanco en negrita quede legible encima (todos >= 4.5:1).
+  // Estos cinco no son gusto: salieron de correr el validador de paletas con
+  // --pairs all (en el calendario dos casas cualesquiera pueden quedar pegadas).
+  // El violeta anterior de LC2 estaba a ΔE 0.3 del azul de LC1 con daltonismo
+  // deutan y a 11.4 con visión normal: en los hechos, el mismo color.
+  // Los cinco además aguantan el texto blanco que el calendario les pone encima.
   const HOUSE_COLORS = {
     LC1: "#1D4ED8", // azul
-    LC2: "#6D28D9", // violeta
-    LC3: "#B91C1C", // rojo
+    LC2: "#A21CAF", // magenta
+    LC3: "#B45309", // naranja quemado
     LC4: "#15803D", // verde
-    LC5: "#C2410C", // naranja
+    LC5: "#DB2777", // rosa
   };
 
   const HOUSE_NAMES = {
@@ -1610,6 +1683,7 @@
     { id: "confirmed", boton: tabConfirmed, vista: viewConfirmed },
     { id: "search",    boton: tabSearch,    vista: viewSearch },
     { id: "calendar",  boton: tabCalendar,  vista: viewCalendar },
+    { id: "stats",     boton: tabStats,     vista: viewStats },
     { id: "prices",    boton: tabPrices,    vista: viewPrices },
     { id: "rules",     boton: tabRules,     vista: viewRules },
     { id: "guide",     boton: tabGuide,     vista: viewGuide },
@@ -1665,6 +1739,17 @@
       await ensureCalendar();
       await refreshCalendar();
       setStatus("✅ Calendario actualizado.");
+    } catch (e) {
+      setStatus(`❌ ${e.message}`);
+    }
+  };
+
+  tabStats.onclick = async () => {
+    showTab("stats");
+    try {
+      setStatus("Sacando cuentas...");
+      const n = await cargarStats();
+      setStatus(`✅ Números al día. Reservas confirmadas: ${n}`);
     } catch (e) {
       setStatus(`❌ ${e.message}`);
     }
@@ -3601,6 +3686,304 @@
     if (!calInited || !cal) return;
     await refreshCalendar();
   }
+
+  /* =====================
+     NÚMEROS DE LA TEMPORADA
+  ===================== */
+
+  // La temporada corre de diciembre a noviembre: la de "25-26" arranca el
+  // 1/12/2025 y termina el 30/11/2026. Es como venían contando en el Excel.
+  function temporadaDe(ymd) {
+    const [a, m] = String(ymd).split("-").map(Number);
+    if (!a || !m) return null;
+    return m === 12 ? a : a - 1;
+  }
+
+  const nombreTemporada = (inicio) =>
+    `Temporada ${String(inicio).slice(2)}-${String(inicio + 1).slice(2)}`;
+
+  const diaDe = (ymd) => Date.parse(`${ymd}T00:00:00Z`);
+  const DIA = 86400000;
+
+  function nochesEntre(ci, co) {
+    const a = diaDe(ci), b = diaDe(co);
+    return Number.isFinite(a) && Number.isFinite(b) ? Math.max(0, Math.round((b - a) / DIA)) : 0;
+  }
+
+  // El importe se reparte entre los meses que toca la estadía, proporcional a
+  // las noches de cada uno. Los dueños ya imputaban así en el Excel: una
+  // estadía que cruza de mes aparecía partida en dos filas.
+  function nochesPorMes(ci, co) {
+    const salida = {};
+    const fin = diaDe(co);
+    for (let t = diaDe(ci); t < fin; t += DIA) {
+      const clave = new Date(t).toISOString().slice(0, 7);
+      salida[clave] = (salida[clave] || 0) + 1;
+    }
+    return salida;
+  }
+
+  let statsFilas = null;
+
+  // `tope` corta la temporada a los primeros N días. Sirve para comparar contra
+  // la temporada anterior en el mismo punto: si no, una que recién arranca
+  // siempre pierde contra una terminada y el porcentaje no dice nada.
+  function resumirTemporada(filas, inicio, tope) {
+    const desde = `${inicio}-12-01`;
+    const finTemporada = `${inicio + 1}-12-01`;
+    const hasta = Number.isFinite(tope)
+      ? new Date(diaDe(desde) + tope * DIA).toISOString().slice(0, 10)
+      : finTemporada;
+    const dentro = filas.filter((r) => r.check_in >= desde && r.check_in < hasta);
+
+    const porCasa = {};
+    for (const c of CASAS) {
+      porCasa[c] = { casa: c, estadias: 0, noches: 0, facturado: 0, cobrado: 0 };
+    }
+    const porMes = {};
+
+    for (const r of dentro) {
+      const noches = nochesEntre(r.check_in, r.check_out);
+      const importe = Number(r.importe) || 0;
+      const anticipo = Number(r.anticipo) || 0;
+
+      const casa = porCasa[r.house_code];
+      if (casa) {
+        casa.estadias += 1;
+        casa.noches += noches;
+        casa.facturado += importe;
+        casa.cobrado += anticipo;
+      }
+
+      const reparto = nochesPorMes(r.check_in, r.check_out);
+      for (const [mes, n] of Object.entries(reparto)) {
+        porMes[mes] = (porMes[mes] || 0) + (noches ? (importe * n) / noches : 0);
+      }
+    }
+
+    // Ocupación: sobre los días de la temporada que ya pasaron, no sobre los
+    // 365. Si no, una temporada que recién arranca siempre parece vacía.
+    const hoy = new Date().toISOString().slice(0, 10);
+    const corte = hoy < hasta ? hoy : hasta;
+    const transcurridos = Math.max(0, Math.round((diaDe(corte) - diaDe(desde)) / DIA));
+    const completa = hoy >= finTemporada;
+
+    for (const c of Object.values(porCasa)) {
+      c.ocupacion = transcurridos > 0 ? c.noches / transcurridos : null;
+      c.saldo = c.facturado - c.cobrado;
+      c.porNoche = c.noches > 0 ? c.facturado / c.noches : null;
+    }
+
+    const total = {
+      estadias: dentro.length,
+      noches: Object.values(porCasa).reduce((s, c) => s + c.noches, 0),
+      facturado: Object.values(porCasa).reduce((s, c) => s + c.facturado, 0),
+      cobrado: Object.values(porCasa).reduce((s, c) => s + c.cobrado, 0),
+      transcurridos,
+    };
+    total.saldo = total.facturado - total.cobrado;
+    total.porNoche = total.noches > 0 ? total.facturado / total.noches : null;
+
+    return { inicio, completa, porCasa: Object.values(porCasa), porMes, total };
+  }
+
+  function tarjeta(rotulo, valor, pie, ...extras) {
+    const caja = document.createElement("div");
+    caja.className = "rounded-2xl border border-brand-beige bg-white px-4 py-3";
+
+    const r = document.createElement("div");
+    r.className = "text-[10px] uppercase tracking-[0.18em] text-brand-accent font-bold";
+    r.textContent = rotulo;
+
+    const v = document.createElement("div");
+    v.className = "serif text-2xl font-bold mt-1 tabular-nums whitespace-nowrap";
+    v.textContent = valor;
+
+    caja.appendChild(r);
+    caja.appendChild(v);
+
+    for (const linea of [pie, ...extras]) {
+      if (!linea) continue;
+      const p = document.createElement("div");
+      p.className = "text-xs text-brand-accent mt-0.5 whitespace-nowrap";
+      p.textContent = linea;
+      caja.appendChild(p);
+    }
+    return caja;
+  }
+
+  // Barra horizontal con el rótulo a la izquierda y el valor al final: con
+  // pocas filas se lee mejor que un eje, y el número queda al lado del dato.
+  function filaBarra(rotulo, valor, texto, maximo, color) {
+    const fila = document.createElement("div");
+    fila.className = "flex items-center gap-3 py-1";
+
+    const r = document.createElement("div");
+    r.className = "w-24 shrink-0 text-xs font-semibold text-right";
+    r.textContent = rotulo;
+
+    const pista = document.createElement("div");
+    pista.className = "flex-1 min-w-0";
+
+    const barra = document.createElement("div");
+    barra.style.height = "14px";
+    barra.style.width = maximo > 0 ? `${Math.max(valor > 0 ? 2 : 0, (valor / maximo) * 100)}%` : "0%";
+    barra.style.backgroundColor = color;
+    barra.style.borderRadius = "0 4px 4px 0";
+    pista.appendChild(barra);
+
+    const v = document.createElement("div");
+    v.className = "w-28 shrink-0 text-xs font-semibold tabular-nums";
+    v.textContent = texto;
+
+    fila.appendChild(r);
+    fila.appendChild(pista);
+    fila.appendChild(v);
+    return fila;
+  }
+
+  const MESES_CORTOS = ["ene", "feb", "mar", "abr", "may", "jun",
+                        "jul", "ago", "sep", "oct", "nov", "dic"];
+
+  function renderStats() {
+    const inicio = Number(el("statsTemporada").value);
+    const resumen = resumirTemporada(statsFilas || [], inicio);
+
+    // Si la temporada está en curso, la anterior se corta en el mismo día para
+    // que la comparación sea contra el mismo tramo y no contra un año entero.
+    const anterior = resumirTemporada(
+      statsFilas || [], inicio - 1,
+      resumen.completa ? undefined : resumen.total.transcurridos
+    );
+
+    // --- tarjetas ---
+    const cajas = el("statsResumen");
+    cajas.innerHTML = "";
+    const delta = (ahora, antes) => {
+      if (!antes) return "";
+      const p = Math.round(((ahora - antes) / antes) * 100);
+      const contra = nombreTemporada(inicio - 1).toLowerCase();
+      return `${p >= 0 ? "+" : ""}${p}% vs ${contra}` + (resumen.completa ? "" : " a esta altura");
+    };
+    cajas.appendChild(tarjeta("Facturado", pesosAR(resumen.total.facturado),
+      delta(resumen.total.facturado, anterior.total.facturado)));
+    cajas.appendChild(tarjeta("Cobrado", pesosAR(resumen.total.cobrado),
+      resumen.total.facturado > 0
+        ? `${Math.round((resumen.total.cobrado / resumen.total.facturado) * 100)}% del total`
+        : ""));
+    cajas.appendChild(tarjeta("Saldo por cobrar", pesosAR(resumen.total.saldo), ""));
+    cajas.appendChild(tarjeta("Noches vendidas", String(resumen.total.noches),
+      `${resumen.total.estadias} estadías`,
+      resumen.total.porNoche ? `${pesosAR(resumen.total.porNoche)} la noche` : ""));
+
+    // --- por mes: diciembre primero, como corre la temporada ---
+    const cajaMes = el("statsPorMes");
+    cajaMes.innerHTML = "";
+    const meses = [];
+    for (let i = 0; i < 12; i++) {
+      const m = ((11 + i) % 12) + 1;
+      const anio = m === 12 ? inicio : inicio + 1;
+      const clave = `${anio}-${String(m).padStart(2, "0")}`;
+      meses.push({ clave, rotulo: `${MESES_CORTOS[m - 1]} ${String(anio).slice(2)}`, valor: resumen.porMes[clave] || 0 });
+    }
+    const maxMes = Math.max(...meses.map((m) => m.valor), 0);
+    for (const m of meses) {
+      cajaMes.appendChild(filaBarra(m.rotulo, m.valor, m.valor > 0 ? pesosAR(m.valor) : "-", maxMes, "#8C7B6B"));
+    }
+
+    // --- por casa: el color es el mismo del calendario ---
+    const cajaCasa = el("statsPorCasa");
+    cajaCasa.innerHTML = "";
+    const casasOrd = [...resumen.porCasa].sort((a, b) => b.facturado - a.facturado);
+    const maxCasa = Math.max(...casasOrd.map((c) => c.facturado), 0);
+    for (const c of casasOrd) {
+      cajaCasa.appendChild(filaBarra(houseName(c.casa), c.facturado,
+        c.facturado > 0 ? pesosAR(c.facturado) : "-", maxCasa, houseColor(c.casa)));
+    }
+
+    // --- tabla ---
+    const cuerpo = el("statsTabla");
+    cuerpo.innerHTML = "";
+    for (const c of resumen.porCasa) {
+      const tr = document.createElement("tr");
+      tr.className = "border-t border-brand-beige/70";
+
+      const tdCasa = document.createElement("td");
+      tdCasa.className = "px-2 py-3 font-semibold whitespace-nowrap";
+      const punto = document.createElement("span");
+      punto.className = "inline-block w-3 h-3 rounded mr-2 align-middle";
+      punto.style.backgroundColor = houseColor(c.casa);
+      tdCasa.appendChild(punto);
+      tdCasa.appendChild(document.createTextNode(houseName(c.casa)));
+      tr.appendChild(tdCasa);
+
+      const celdas = [
+        String(c.estadias),
+        String(c.noches),
+        c.ocupacion === null ? "-" : `${Math.round(c.ocupacion * 100)}%`,
+        pesosAR(c.facturado),
+        pesosAR(c.saldo),
+        c.porNoche ? pesosAR(c.porNoche) : "-",
+      ];
+      for (const texto of celdas) {
+        const td = document.createElement("td");
+        // nowrap: sin esto el "$" y el número caen en renglones distintos y la
+        // tabla se estira hasta comerse las últimas columnas.
+        td.className = "px-2 py-3 text-right tabular-nums whitespace-nowrap";
+        td.textContent = texto;
+        tr.appendChild(td);
+      }
+      cuerpo.appendChild(tr);
+    }
+
+    const trTotal = document.createElement("tr");
+    trTotal.className = "border-t-2 border-brand-beige bg-brand-cream/40 font-bold";
+    for (const texto of ["Total", String(resumen.total.estadias), String(resumen.total.noches), "",
+                         pesosAR(resumen.total.facturado), pesosAR(resumen.total.saldo),
+                         resumen.total.porNoche ? pesosAR(resumen.total.porNoche) : "-"]) {
+      const td = document.createElement("td");
+      td.className = "px-2 py-3 tabular-nums whitespace-nowrap" + (texto === "Total" ? "" : " text-right");
+      td.textContent = texto;
+      trTotal.appendChild(td);
+    }
+    cuerpo.appendChild(trTotal);
+
+    const vacio = el("statsVacio");
+    const sinDatos = resumen.total.estadias === 0;
+    vacio.classList.toggle("hidden", !sinDatos);
+    if (sinDatos) vacio.textContent = "Todavía no hay reservas confirmadas en esta temporada.";
+  }
+
+  async function cargarStats() {
+    const out = await apiFetch(
+      `${EP_SEARCH_RESERVATIONS}?status=CONFIRMED&limit=500`,
+      { method: "GET", body: null }
+    );
+
+    statsFilas = (out.items || []).filter(
+      (r) => /^\d{4}-\d{2}-\d{2}$/.test(r.check_in) && /^\d{4}-\d{2}-\d{2}$/.test(r.check_out)
+    );
+
+    const selector = el("statsTemporada");
+    const previo = selector.value;
+    const temporadas = [...new Set(statsFilas.map((r) => temporadaDe(r.check_in)).filter(Boolean))]
+      .sort((a, b) => b - a);
+    if (!temporadas.length) temporadas.push(temporadaDe(new Date().toISOString().slice(0, 10)));
+
+    selector.innerHTML = "";
+    for (const t of temporadas) {
+      const op = document.createElement("option");
+      op.value = String(t);
+      op.textContent = nombreTemporada(t);
+      selector.appendChild(op);
+    }
+    if (previo && temporadas.includes(Number(previo))) selector.value = previo;
+
+    renderStats();
+    return statsFilas.length;
+  }
+
+  el("statsTemporada").onchange = renderStats;
 
   // init
   loadRememberedUser();

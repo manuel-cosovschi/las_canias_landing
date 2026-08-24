@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 const img = (path) => encodeURI(path);
 const vid = (path) => encodeURI(path);
@@ -301,10 +301,18 @@ export default function HousesSection() {
     setLightboxOpen(true);
   };
 
-  const close = () => setLightboxOpen(false);
+  // useCallback para que los efectos de abajo puedan declararlos como
+  // dependencia sin recrear los listeners en cada render.
+  const close = useCallback(() => setLightboxOpen(false), []);
 
-  const prev = () => setIdx((i) => (i - 1 + images.length) % images.length);
-  const next = () => setIdx((i) => (i + 1) % images.length);
+  const prev = useCallback(
+    () => setIdx((i) => (i - 1 + images.length) % images.length),
+    [images.length]
+  );
+  const next = useCallback(
+    () => setIdx((i) => (i + 1) % images.length),
+    [images.length]
+  );
 
   // Teclado: ESC / flechas
   useEffect(() => {
@@ -317,7 +325,7 @@ export default function HousesSection() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [lightboxOpen, images.length]);
+  }, [lightboxOpen, close, prev, next]);
 
   // Swipe mobile básico
   useEffect(() => {
@@ -348,7 +356,7 @@ export default function HousesSection() {
       window.removeEventListener("touchmove", onTouchMove);
       window.removeEventListener("touchend", onTouchEnd);
     };
-  }, [lightboxOpen, images.length]);
+  }, [lightboxOpen, prev, next]);
 
   return (
     <section id="casas" className="py-28 bg-brand-cream relative">
