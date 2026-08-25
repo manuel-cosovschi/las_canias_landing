@@ -397,11 +397,78 @@
             <p class="text-xs text-brand-accent mt-1">Reservas con seña pagada (CONFIRMED). Podés cancelar desde acá.</p>
           </div>
 
-          <div class="flex items-center gap-2">
+          <div class="flex flex-wrap items-center justify-end gap-2">
             <div class="px-3 py-2 rounded-2xl bg-white/70 border border-brand-beige text-xs">
               <span class="font-semibold">Confirmadas:</span>
               <span id="confirmedCount" class="text-brand-accent font-semibold">-</span>
             </div>
+            <button id="btnAbrirCarga"
+              class="px-4 py-2 rounded-full bg-brand-brown text-brand-cream text-xs font-semibold hover:opacity-90 transition">
+              + Cargar reserva
+            </button>
+          </div>
+        </div>
+
+        <!-- Carga a mano: la reserva que entró por teléfono o WhatsApp y nunca
+             pasó por la web. Es la fila que antes escribían en el Excel. -->
+        <div id="cargaManual" class="hidden mb-5 rounded-2xl border border-brand-beige bg-white p-4">
+          <div class="mb-3">
+            <h3 class="font-bold text-sm">Cargar una reserva a mano</h3>
+            <p class="text-xs text-brand-accent mt-0.5">
+              Para las que no entraron por la web. Queda confirmada y suma en Números.
+            </p>
+          </div>
+
+          <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            <label class="block">
+              <span class="block text-xs font-bold uppercase tracking-wider text-brand-accent mb-1">Casa</span>
+              <select id="cargaCasa" class="w-full rounded-xl border border-brand-beige px-3 py-2 text-sm bg-white"></select>
+            </label>
+            <label class="block">
+              <span class="block text-xs font-bold uppercase tracking-wider text-brand-accent mb-1">Entrada</span>
+              <input id="cargaCheckin" type="date" class="w-full rounded-xl border border-brand-beige px-3 py-2 text-sm">
+            </label>
+            <label class="block">
+              <span class="block text-xs font-bold uppercase tracking-wider text-brand-accent mb-1">Salida</span>
+              <input id="cargaCheckout" type="date" class="w-full rounded-xl border border-brand-beige px-3 py-2 text-sm">
+            </label>
+            <label class="block">
+              <span class="block text-xs font-bold uppercase tracking-wider text-brand-accent mb-1">Huésped</span>
+              <input id="cargaNombre" type="text" placeholder="Nombre y apellido"
+                class="w-full rounded-xl border border-brand-beige px-3 py-2 text-sm">
+            </label>
+            <label class="block">
+              <span class="block text-xs font-bold uppercase tracking-wider text-brand-accent mb-1">Teléfono</span>
+              <input id="cargaTelefono" type="text" class="w-full rounded-xl border border-brand-beige px-3 py-2 text-sm">
+            </label>
+            <label class="block">
+              <span class="block text-xs font-bold uppercase tracking-wider text-brand-accent mb-1">DNI</span>
+              <input id="cargaDni" type="text" class="w-full rounded-xl border border-brand-beige px-3 py-2 text-sm">
+            </label>
+            <label class="block">
+              <span class="block text-xs font-bold uppercase tracking-wider text-brand-accent mb-1">Importe total</span>
+              <input id="cargaImporte" type="number" min="0" step="1000" placeholder="0"
+                class="w-full rounded-xl border border-brand-beige px-3 py-2 text-sm tabular-nums">
+            </label>
+            <label class="block">
+              <span class="block text-xs font-bold uppercase tracking-wider text-brand-accent mb-1">Seña cobrada</span>
+              <input id="cargaAnticipo" type="number" min="0" step="1000" placeholder="0"
+                class="w-full rounded-xl border border-brand-beige px-3 py-2 text-sm tabular-nums">
+            </label>
+          </div>
+
+          <p id="cargaResumen" class="text-xs text-brand-accent mt-3">-</p>
+          <p id="cargaMsg" class="text-sm mt-2"></p>
+
+          <div class="mt-3 flex flex-wrap gap-2 justify-end">
+            <button id="btnCancelarCarga"
+              class="py-2 px-4 rounded-2xl bg-white/70 border border-brand-beige text-sm font-semibold hover:bg-white transition">
+              Cancelar
+            </button>
+            <button id="btnGuardarCarga"
+              class="py-2 px-4 rounded-2xl bg-brand-brown text-brand-cream text-sm font-semibold hover:opacity-90 transition">
+              Guardar reserva
+            </button>
           </div>
         </div>
 
@@ -1562,6 +1629,7 @@
   const EP_RESERVATION_DOCUMENT = "/.netlify/functions/reservation-document";
   const EP_SET_PAYMENT = "/.netlify/functions/set-reservation-payment";
   const EP_SET_DATES = "/.netlify/functions/set-reservation-dates";
+  const EP_CREAR_MANUAL = "/.netlify/functions/create-manual-reservation";
   const EP_OWNER_UNBLOCKS = "/.netlify/functions/owner-unblocks";
   const EP_PRICE_PERIODS = "/api/price-periods";
   const EP_SET_PRICE_PERIODS = "/.netlify/functions/set-price-periods";
@@ -3201,6 +3269,130 @@
   confirmedSearchInput?.addEventListener("input", () => renderConfirmed(confirmedRaw));
   confirmedFilterHouse?.addEventListener("change", () => renderConfirmed(confirmedRaw));
 
+  /* =====================
+     CARGAR UNA RESERVA A MANO
+  ===================== */
+
+  // La reserva que entró por teléfono o WhatsApp y nunca pasó por la web. Es
+  // la fila que antes escribían en el Excel: sin esto, esas reservas no
+  // existen para el panel y los números de la temporada salen cortos.
+
+  const cargaManual = el("cargaManual");
+  const cargaCasa = el("cargaCasa");
+  const cargaCheckin = el("cargaCheckin");
+  const cargaCheckout = el("cargaCheckout");
+  const cargaNombre = el("cargaNombre");
+  const cargaTelefono = el("cargaTelefono");
+  const cargaDni = el("cargaDni");
+  const cargaImporte = el("cargaImporte");
+  const cargaAnticipo = el("cargaAnticipo");
+  const cargaResumen = el("cargaResumen");
+  const cargaMsg = el("cargaMsg");
+
+  for (const code of HOUSE_CODES) {
+    const op = document.createElement("option");
+    op.value = code;
+    op.textContent = houseName(code);
+    cargaCasa.appendChild(op);
+  }
+
+  function limpiarCarga() {
+    for (const campo of [cargaCheckin, cargaCheckout, cargaNombre, cargaTelefono,
+                         cargaDni, cargaImporte, cargaAnticipo]) {
+      campo.value = "";
+    }
+    cargaCasa.selectedIndex = 0;
+    pintarMsg(cargaMsg, "", "info");
+    refrescarResumenCarga();
+  }
+
+  // Mostrar las noches y el saldo mientras se tipea evita el error más común:
+  // cargar el precio total donde va la seña, o al revés.
+  function refrescarResumenCarga() {
+    const n = nochesEntreYmd(cargaCheckin.value, cargaCheckout.value);
+    const total = Number(cargaImporte.value) || 0;
+    const sena = Number(cargaAnticipo.value) || 0;
+
+    const partes = [];
+    if (n && n > 0) partes.push(`${n} ${n === 1 ? "noche" : "noches"}`);
+    if (total > 0 && n && n > 0) partes.push(`${pesosAR(total / n)} la noche`);
+    if (total > 0) partes.push(`saldo ${pesosAR(total - sena)}`);
+
+    cargaResumen.textContent = partes.length ? partes.join(" · ") : "-";
+  }
+
+  for (const campo of [cargaCheckin, cargaCheckout, cargaImporte, cargaAnticipo]) {
+    campo.addEventListener("input", refrescarResumenCarga);
+  }
+
+  el("btnAbrirCarga").onclick = () => {
+    const abierto = !cargaManual.classList.contains("hidden");
+    if (abierto) {
+      cargaManual.classList.add("hidden");
+      return;
+    }
+    limpiarCarga();
+    cargaManual.classList.remove("hidden");
+    cargaCheckin.focus();
+  };
+
+  el("btnCancelarCarga").onclick = () => cargaManual.classList.add("hidden");
+
+  el("btnGuardarCarga").onclick = async () => {
+    const ci = cargaCheckin.value;
+    const co = cargaCheckout.value;
+    const n = nochesEntreYmd(ci, co);
+    const nombre = cargaNombre.value.trim();
+    const total = cargaImporte.value.trim();
+    const sena = cargaAnticipo.value.trim();
+
+    if (!ci || !co || !n || n <= 0) {
+      pintarMsg(cargaMsg, "La salida tiene que ser posterior a la entrada", "err");
+      return;
+    }
+    if (!nombre) {
+      pintarMsg(cargaMsg, "Falta el nombre del huésped", "err");
+      cargaNombre.focus();
+      return;
+    }
+    if (total !== "" && sena !== "" && Number(sena) > Number(total)) {
+      pintarMsg(cargaMsg, "La seña no puede ser mayor que el importe total", "err");
+      return;
+    }
+
+    const btn = el("btnGuardarCarga");
+    btn.disabled = true;
+    pintarMsg(cargaMsg, "Guardando...", "info");
+
+    try {
+      await apiFetch(EP_CREAR_MANUAL, {
+        method: "POST",
+        body: {
+          house_code: cargaCasa.value,
+          check_in: ci,
+          check_out: co,
+          guest_name: nombre,
+          phone: cargaTelefono.value.trim(),
+          dni: cargaDni.value.trim(),
+          importe: total,
+          anticipo: sena,
+        },
+      });
+
+      cargaManual.classList.add("hidden");
+      showToast(`Reserva cargada: ${houseName(cargaCasa.value)} ${ci} → ${co}`, "ok");
+      await loadConfirmedSafe();
+      // Los números salen de la planilla, así que hay que volver a pedirlos
+      // para que la reserva recién cargada aparezca ahí también.
+      if (statsFilas) await cargarStats();
+      await refreshCalendarIfReady();
+    } catch (e) {
+      pintarMsg(cargaMsg, e.message || "No se pudo cargar la reserva", "err");
+    } finally {
+      btn.disabled = false;
+    }
+  };
+
   // =====================
   // ACTION MODAL LOGIC
   // =====================
@@ -4247,7 +4439,12 @@
       op.textContent = nombreTemporada(t);
       selector.appendChild(op);
     }
+    // Abrir en la temporada que está corriendo hoy, no en la más nueva de la
+    // lista: la que viene arranca en diciembre y hasta entonces está casi
+    // vacía, así que el panel parecía roto al entrar.
+    const laDeHoy = temporadaDe(new Date().toISOString().slice(0, 10));
     if (previo && temporadas.includes(Number(previo))) selector.value = previo;
+    else if (temporadas.includes(laDeHoy)) selector.value = String(laDeHoy);
 
     renderStats();
     return statsFilas.length;
