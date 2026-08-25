@@ -44,7 +44,28 @@ def es_reserva(f):
         return False
     if mes_de(crudo) is None:             # Total, Fact, Objetivo, Promedio
         return False
-    return bool(f.get('fecha'))
+    # Una fila con plata es una estadía aunque le falte la fecha. Antes se
+    # exigía `fecha` y las que no la tenían desaparecían sin decir nada: así se
+    # perdieron cuatro estadías por $1.470.000 en la primera carga. Ahora
+    # entran, y si no se pueden ubicar salen listadas al final.
+    return bool(f.get('fecha') or num(f.get('importe')))
+
+
+def fecha_de_la_fila(f):
+    """Devuelve (texto de la fecha, si venía corrida de columna).
+
+    La fecha vive en `fecha`, pero en alguna fila se tipeó una columna más a la
+    derecha, encima del anticipo. Se reconoce porque tiene forma de rango de
+    días ("8 al 15") y no de importe.
+    """
+    if f.get('fecha'):
+        return str(f['fecha']), False
+
+    corrida = str(f.get('anticipo') or '')
+    if re.search(r'\d\s*al\s*\d', corrida, re.I):
+        return corrida, True
+
+    return '', False
 
 
 def num(v):
@@ -89,24 +110,36 @@ def fecha_de(anio_inicio, mes, dia):
         return None
 
 
-def convertir(filas, casa, anio_inicio, avisos):
+def convertir(filas, casa, anio_inicio, avisos, sin_ubicar=None):
     res = [f for f in filas if es_reserva(f)]
     salida = []
     i = 0
 
+    def afuera(f, motivo):
+        plata = num(f.get('importe')) or 0
+        quien = (f.get('inquilinos') or '').strip()
+        avisos.append(f"{casa} r{f['_fila']}: {motivo} — queda afuera")
+        if sin_ubicar is not None:
+            sin_ubicar.append({
+                'casa': casa, 'fila': f['_fila'], 'mes': f.get('mes'),
+                'dias': f.get('dias'), 'importe': plata,
+                'inquilino': quien, 'motivo': motivo,
+            })
+
     while i < len(res):
         f = res[i]
         mes = mes_de(f['mes'])
-        ini, fin = rango(f['fecha'])
+        texto_fecha, corrida = fecha_de_la_fila(f)
+        ini, fin = rango(texto_fecha)
 
         if ini is None:
-            avisos.append(f"{casa} r{f['_fila']}: fecha ilegible ({f.get('fecha')!r}) — queda afuera")
+            afuera(f, f'sin fecha legible ({f.get("fecha")!r})')
             i += 1
             continue
 
         check_in = fecha_de(anio_inicio, mes, ini)
         if not check_in:
-            avisos.append(f"{casa} r{f['_fila']}: el día {ini} no existe en ese mes — queda afuera")
+            afuera(f, f'el día {ini} no existe en ese mes')
             i += 1
             continue
 
@@ -116,7 +149,8 @@ def convertir(filas, casa, anio_inicio, avisos):
         while i + 1 < len(res):
             sig = res[i + 1]
             sig_mes = mes_de(sig['mes'])
-            sig_ini, _ = rango(sig['fecha'])
+            sig_texto, _ = fecha_de_la_fila(sig)
+            sig_ini, _ = rango(sig_texto)
             mes_previo = mes_de(grupo[-1]['mes'])
             esperado = 1 if mes_previo == 12 else mes_previo + 1
 
@@ -129,7 +163,8 @@ def convertir(filas, casa, anio_inicio, avisos):
         # El check-out sale de la última fila del grupo
         ultima = grupo[-1]
         mes_fin = mes_de(ultima['mes'])
-        ini_fin, dia_fin = rango(ultima['fecha'])
+        texto_fin, _ = fecha_de_la_fila(ultima)
+        ini_fin, dia_fin = rango(texto_fin)
 
         if dia_fin is not None:
             mes_salida = mes_fin
@@ -153,7 +188,7 @@ def convertir(filas, casa, anio_inicio, avisos):
         dias_excel = sum(int(num(g.get('dias')) or 0) for g in grupo)
         if dias_excel and dias_excel != noches:
             avisos.append(
-                f"{casa} r{f['_fila']} ({f['fecha']}): las fechas dan {noches} noches "
+                f"{casa} r{f['_fila']} ({texto_fecha}): las fechas dan {noches} noches "
                 f"y la columna días dice {dias_excel} — se usan las fechas"
             )
 
@@ -164,7 +199,11 @@ def convertir(filas, casa, anio_inicio, avisos):
             return ''
 
         importe = sum(num(g.get('importe')) or 0 for g in grupo)
-        anticipo = sum(num(g.get('anticipo')) or 0 for g in grupo)
+        # Si la fecha venía corrida sobre la columna del anticipo, ahí no hay
+        # plata sino texto: sumarlo daría 0, pero dejarlo explícito evita
+        # que alguien 'arregle' el num() más adelante y meta basura.
+        anticipo = sum(0 if fecha_de_la_fila(g)[1] else (num(g.get('anticipo')) or 0)
+                       for g in grupo)
 
         salida.append({
             'casa': casa,
@@ -202,15 +241,31 @@ def solapamientos(reservas):
     return choques
 
 
+def totales_del_excel(datos):
+    """Lo que el propio Excel calculaba por casa, para contrastar la carga.
+
+    Es el único control externo que hay: si la suma de lo importado no da lo
+    mismo que la fila `Total` de ellos, algo se está perdiendo.
+    """
+    salida = {}
+    for temporada, casas in datos.items():
+        for casa, filas in casas.items():
+            tot = next((f for f in filas if (f.get('mes') or '').strip() == 'Total'), None)
+            if tot:
+                salida[(temporada, casa)] = num(tot.get('importe')) or 0
+    return salida
+
+
 def main():
     datos = json.load(open('extraido.json'))
     avisos = []
+    sin_ubicar = []
     todo = []
 
     for temporada, casas in datos.items():
         anio_inicio = 2025 if '25-26' in temporada else 2026
         for casa, filas in casas.items():
-            for r in convertir(filas, casa, anio_inicio, avisos):
+            for r in convertir(filas, casa, anio_inicio, avisos, sin_ubicar):
                 r['temporada'] = temporada
                 todo.append(r)
 
@@ -232,6 +287,30 @@ def main():
     print(f'\navisos: {len(avisos)}')
     for a in avisos:
         print('  ⚠ ' + a)
+
+    # El control que faltaba en la primera carga: contrastar contra los totales
+    # que el propio Excel calculaba.
+    print('\ncontra los totales del Excel:')
+    esperados = totales_del_excel(datos)
+    cargado = {}
+    for r in todo:
+        k = (r['temporada'], r['casa'])
+        cargado[k] = cargado.get(k, 0) + (r['importe'] or 0)
+
+    falta_total = 0
+    for k in sorted(esperados):
+        d = esperados[k] - cargado.get(k, 0)
+        falta_total += d
+        estado = 'ok' if abs(d) < 1 else f'FALTAN $ {d:,.0f}'.replace(',', '.')
+        print(f'  {k[0]} {k[1]}: {estado}')
+    print(f'  --- diferencia total: $ {falta_total:,.0f} ---'.replace(',', '.'))
+
+    if sin_ubicar:
+        print(f'\nfilas con plata que no se pudieron ubicar: {len(sin_ubicar)}')
+        for s in sin_ubicar:
+            quien = s['inquilino'] or 'sin nombre'
+            print(f"  ⚠ {s['casa']} r{s['fila']} · {s['mes']} · {s['dias']} días · "
+                  f"$ {s['importe']:,.0f} · {quien} · {s['motivo']}".replace(',', '.'))
 
 
 if __name__ == '__main__':
