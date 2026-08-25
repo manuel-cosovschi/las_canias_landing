@@ -274,12 +274,6 @@
 
       <!-- CONTENIDO -->
       <div class="flex-1 min-w-0 w-full">
-      <div class="flex justify-end mb-4">
-        <button id="btnRefresh"
-          class="hidden px-4 py-2 rounded-full bg-brand-brown text-brand-cream text-xs font-semibold hover:opacity-90 transition">
-          Actualizar pendientes
-        </button>
-      </div>
 
       <!-- BLOQUEAR FECHAS -->
       <div id="viewBlock" class="bg-white/75 rounded-2xl shadow-sm border border-brand-beige p-6">
@@ -355,11 +349,18 @@
             <p class="text-xs text-brand-accent mt-1">Confirmá o cancelá. Esto dispara tus flujos en n8n.</p>
           </div>
 
-          <div class="flex items-center gap-2">
+          <div class="flex flex-wrap items-center justify-end gap-2">
             <div class="px-3 py-2 rounded-2xl bg-white/70 border border-brand-beige text-xs">
               <span class="font-semibold">Pendientes:</span>
               <span id="pendingCount" class="text-brand-accent font-semibold">-</span>
             </div>
+            <!-- Vive acá adentro y no arriba del panel: allá dejaba una fila
+                 vacía con margen que corría todas las secciones 16px hacia
+                 abajo y las desalineaba del menú lateral. -->
+            <button id="btnRefresh"
+              class="px-4 py-2 rounded-full bg-brand-brown text-brand-cream text-xs font-semibold hover:opacity-90 transition">
+              Actualizar pendientes
+            </button>
           </div>
         </div>
 
@@ -1743,10 +1744,9 @@
       else s.boton.removeAttribute("aria-current");
     }
 
-    // Refresh button solo para TRANSFERS (pendientes)
-    const isTransfers = which === "transfers";
-    btnRefresh.classList.toggle("hidden", !isTransfers);
-    if (!isTransfers) stopCountdownTicker();
+    // El botón de refrescar ya vive dentro del panel de transferencias, así que
+    // aparece y desaparece con él: no hay que esconderlo aparte.
+    if (which !== "transfers") stopCountdownTicker();
 
    // no auto refresh en confirmadas
   }
@@ -3518,9 +3518,6 @@
       // init pickers & data when logged
       loadAvailabilityAndUpdatePickers();
       refreshSecretBadge();
-
-      // Transfers refresh visible only when transfers tab
-      btnRefresh.classList.toggle("hidden", viewTransfers.classList.contains("hidden"));
 
       // Ask owner secret if missing (no hardcode)
       if (!getOwnerSecret()) {
