@@ -25,12 +25,41 @@ Tres cosas del Excel obligan a interpretar en vez de leer derecho:
    Se verificó caso por caso: en `LC1 r31` y `LC5 r191` (“15 al 17”, `dias`=3),
    `importe / prom` da exactamente 2, que son las noches que dicen las fechas.
 
-3. **Hay fechas mal tipeadas.** `"a al 10"` en vez de `"1 al 10"`, y filas con
-   un número suelto (`"31"`) que son el arranque de una estadía que termina el
-   mes siguiente.
+3. **Hay fechas mal tipeadas.** `"a al 10"` en vez de `"1 al 10"`, filas con un
+   número suelto (`"31"`) que son el arranque de una estadía que termina el mes
+   siguiente, y una (`LC3 r111`) donde la fecha se tipeó una columna más a la
+   derecha, encima del anticipo.
 
-Una fila quedó afuera a propósito: `LC5 r190` (junio) no tiene fecha alguna, así
-que no hay forma de ubicarla en el calendario.
+4. **Hay filas de estadía sin fecha.** Tienen importe, días y a veces hasta el
+   nombre del inquilino, pero la celda de la fecha quedó vacía.
+
+## El error que costó $1.470.000
+
+La primera carga exigía que la fila tuviera `fecha` para considerarla una
+estadía. Las que no la tenían **desaparecían sin decir nada**: cuatro estadías
+por $1.470.000 que nadie hubiera notado, porque el resumen final sólo contaba lo
+que sí había entrado.
+
+Dos cosas cambiaron para que no vuelva a pasar:
+
+- Una fila con plata es una estadía aunque le falte la fecha. Si no se puede
+  ubicar, sale listada al final con el importe y el nombre — ruidosa, no
+  silenciosa.
+- `convertir.py` contrasta lo cargado contra **la fila `Total` que el propio
+  Excel calculaba para cada casa**. Es el único control externo que hay: si no
+  da, algo se está perdiendo. La primera versión no lo hacía.
+
+De las cuatro, dos se recuperaron: `LC3 r111` (la fecha estaba corrida de
+columna) y `LC5 r190` (ubicada por las 3 noches de junio y el bloqueo de LC5 en
+esas mismas fechas). Con eso LC1, LC3 y LC5 cierran exacto contra el Excel.
+
+Las otras dos siguen sin ubicar, y no hay con qué: son de abril, sin fecha y sin
+nombre.
+
+| Casa | Fila | Mes | Días | Importe |
+|---|---|---|---|---|
+| LC2 | r62 | Abril | 3 | $400.000 |
+| LC4 | r145 | Abril | 2 | $300.000 |
 
 ## Los pasos
 
