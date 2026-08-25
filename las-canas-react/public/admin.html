@@ -711,10 +711,23 @@
                 30 de noviembre y se va el 3 de diciembre, entera va a la temporada anterior.
               </p>
               <p>
-                <strong>Facturado</strong> es el importe total de las estadías;
+                <strong>Importe</strong> es la plata total de las estadías;
                 <strong>cobrado</strong> es lo que ya entró como seña, y el
                 <strong>saldo</strong> es la resta. Si una reserva no tiene el importe cargado,
                 suma noches pero no suma plata: por eso conviene completarlo, aunque sea después.
+              </p>
+              <p>
+                <strong>Facturado</strong> es otra cosa: es la columna <em>Fac</em> del Excel, o
+                sea si se hizo la factura. La tarjeta muestra cuánta plata está facturada y sobre
+                cuántas estadías. Las que nunca se marcaron ni que sí ni que no salen aparte como
+                <em>sin marcar</em>: vacío no es lo mismo que “no facturada”, y el panel no las da
+                por una ni por otra.
+              </p>
+              <p>
+                <strong>En dólares</strong> convierte cada estadía con la cotización que quedó
+                guardada en esa reserva, no con la de hoy. Es como lo llevaba el Excel, y es lo
+                único que deja comparar una temporada con otra sin que la inflación las haga
+                parecer todas distintas. Si a alguna le falta la cotización, la tarjeta lo avisa.
               </p>
               <p>
                 <strong>La ocupación se mide contra los días de temporada que ya pasaron</strong>,
@@ -981,12 +994,12 @@
           </div>
         </div>
 
-        <div id="statsResumen" class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6"></div>
+        <div id="statsResumen" class="grid grid-cols-2 lg:grid-cols-3 gap-3 mb-6"></div>
 
         <div class="grid lg:grid-cols-2 gap-6">
           <figure class="m-0">
             <figcaption class="mb-3">
-              <h3 class="font-bold text-sm">Facturado por mes</h3>
+              <h3 class="font-bold text-sm">Importe por mes</h3>
               <p class="text-xs text-brand-accent">Las cinco casas juntas.</p>
             </figcaption>
             <div id="statsPorMes"></div>
@@ -994,7 +1007,7 @@
 
           <figure class="m-0">
             <figcaption class="mb-3">
-              <h3 class="font-bold text-sm">Facturado por casa</h3>
+              <h3 class="font-bold text-sm">Importe por casa</h3>
               <p class="text-xs text-brand-accent">Mismo color que en el calendario.</p>
             </figcaption>
             <div id="statsPorCasa"></div>
@@ -1005,18 +1018,24 @@
           <h3 class="font-bold text-sm mb-1">El detalle, casa por casa</h3>
           <p class="text-xs text-brand-accent mb-3">
             Ocupación = noches vendidas sobre los días de la temporada que ya pasaron.
+            <span class="whitespace-nowrap">US$ = a la cotización de cada reserva.</span>
+            Fac. = cuántas estadías tienen la factura hecha.
           </p>
+          <!-- text-xs también en escritorio: son nueve columnas de números y con
+               text-sm la tabla se pasa del ancho del panel (max-w-5xl). -->
           <div class="overflow-x-auto rounded-2xl border border-brand-beige bg-white">
-            <table class="w-full text-xs sm:text-sm border-collapse">
+            <table class="w-full text-xs border-collapse">
               <thead>
                 <tr class="text-left text-[10px] uppercase tracking-wide text-brand-accent bg-brand-cream/60">
                   <th class="px-2 py-3 font-bold">Casa</th>
                   <th class="px-2 py-3 font-bold text-right">Est.</th>
                   <th class="px-2 py-3 font-bold text-right">Noches</th>
                   <th class="px-2 py-3 font-bold text-right">Ocup.</th>
-                  <th class="px-2 py-3 font-bold text-right">Facturado</th>
+                  <th class="px-2 py-3 font-bold text-right">Importe</th>
                   <th class="px-2 py-3 font-bold text-right">Saldo</th>
                   <th class="px-2 py-3 font-bold text-right">$/noche</th>
+                  <th class="px-2 py-3 font-bold text-right">US$</th>
+                  <th class="px-2 py-3 font-bold text-right">Fac.</th>
                 </tr>
               </thead>
               <tbody id="statsTabla"></tbody>
@@ -3218,6 +3237,11 @@
     return Number.isFinite(v) ? "$ " + Math.round(v).toLocaleString("es-AR") : "-";
   }
 
+  function dolaresUS(n) {
+    const v = Number(n);
+    return Number.isFinite(v) ? "US$ " + Math.round(v).toLocaleString("es-AR") : "-";
+  }
+
   // El saldo no se guarda en ningún lado: siempre sale de importe - anticipo,
   // así no hay dos números que puedan quedar en desacuerdo.
   function refrescarSaldo() {
@@ -4252,7 +4276,10 @@
 
     const porCasa = {};
     for (const c of CASAS) {
-      porCasa[c] = { casa: c, estadias: 0, noches: 0, facturado: 0, cobrado: 0 };
+      porCasa[c] = {
+        casa: c, estadias: 0, noches: 0, importe: 0, cobrado: 0,
+        usd: 0, conCotizacion: 0, facturadas: 0, importeFacturado: 0, conFac: 0,
+      };
     }
     const porMes = {};
 
@@ -4260,13 +4287,31 @@
       const noches = nochesEntre(r.check_in, r.check_out);
       const importe = Number(r.importe) || 0;
       const anticipo = Number(r.anticipo) || 0;
+      const cotizacion = Number(r.cotizacion_usd) || 0;
+      const fac = String(r.facturado || "").trim().toLowerCase();
 
       const casa = porCasa[r.house_code];
       if (casa) {
         casa.estadias += 1;
         casa.noches += noches;
-        casa.facturado += importe;
+        casa.importe += importe;
         casa.cobrado += anticipo;
+
+        // A la cotización del día de la reserva, no a la de hoy. Es como lo
+        // llevaba el Excel, y es lo único que deja comparar una temporada con
+        // otra sin que la inflación las haga parecer todas distintas.
+        if (cotizacion > 0 && importe > 0) {
+          casa.usd += importe / cotizacion;
+          casa.conCotizacion += 1;
+        }
+
+        // Vacío no es "no": es que todavía nadie lo marcó. Se cuentan aparte
+        // para que el panel no dé por no facturado lo que sólo falta cargar.
+        if (fac === "si" || fac === "no") casa.conFac += 1;
+        if (fac === "si") {
+          casa.facturadas += 1;
+          casa.importeFacturado += importe;
+        }
       }
 
       const reparto = nochesPorMes(r.check_in, r.check_out);
@@ -4284,19 +4329,25 @@
 
     for (const c of Object.values(porCasa)) {
       c.ocupacion = transcurridos > 0 ? c.noches / transcurridos : null;
-      c.saldo = c.facturado - c.cobrado;
-      c.porNoche = c.noches > 0 ? c.facturado / c.noches : null;
+      c.saldo = c.importe - c.cobrado;
+      c.porNoche = c.noches > 0 ? c.importe / c.noches : null;
     }
 
+    const sumar = (campo) => Object.values(porCasa).reduce((s, c) => s + c[campo], 0);
     const total = {
       estadias: dentro.length,
-      noches: Object.values(porCasa).reduce((s, c) => s + c.noches, 0),
-      facturado: Object.values(porCasa).reduce((s, c) => s + c.facturado, 0),
-      cobrado: Object.values(porCasa).reduce((s, c) => s + c.cobrado, 0),
+      noches: sumar("noches"),
+      importe: sumar("importe"),
+      cobrado: sumar("cobrado"),
+      usd: sumar("usd"),
+      conCotizacion: sumar("conCotizacion"),
+      facturadas: sumar("facturadas"),
+      importeFacturado: sumar("importeFacturado"),
+      conFac: sumar("conFac"),
       transcurridos,
     };
-    total.saldo = total.facturado - total.cobrado;
-    total.porNoche = total.noches > 0 ? total.facturado / total.noches : null;
+    total.saldo = total.importe - total.cobrado;
+    total.porNoche = total.noches > 0 ? total.importe / total.noches : null;
 
     return { inicio, completa, porCasa: Object.values(porCasa), porMes, total };
   }
@@ -4379,16 +4430,31 @@
       const contra = nombreTemporada(inicio - 1).toLowerCase();
       return `${p >= 0 ? "+" : ""}${p}% vs ${contra}` + (resumen.completa ? "" : " a esta altura");
     };
-    cajas.appendChild(tarjeta("Facturado", pesosAR(resumen.total.facturado),
-      delta(resumen.total.facturado, anterior.total.facturado)));
+    cajas.appendChild(tarjeta("Importe", pesosAR(resumen.total.importe),
+      delta(resumen.total.importe, anterior.total.importe)));
     cajas.appendChild(tarjeta("Cobrado", pesosAR(resumen.total.cobrado),
-      resumen.total.facturado > 0
-        ? `${Math.round((resumen.total.cobrado / resumen.total.facturado) * 100)}% del total`
+      resumen.total.importe > 0
+        ? `${Math.round((resumen.total.cobrado / resumen.total.importe) * 100)}% del total`
         : ""));
     cajas.appendChild(tarjeta("Saldo por cobrar", pesosAR(resumen.total.saldo), ""));
     cajas.appendChild(tarjeta("Noches vendidas", String(resumen.total.noches),
       `${resumen.total.estadias} estadías`,
       resumen.total.porNoche ? `${pesosAR(resumen.total.porNoche)} la noche` : ""));
+
+    // En dólares, a la cotización de cada reserva: es la columna con la que en
+    // el Excel se comparaba una temporada contra otra.
+    const faltanCotiz = resumen.total.estadias - resumen.total.conCotizacion;
+    cajas.appendChild(tarjeta("En dólares", dolaresUS(resumen.total.usd),
+      anterior.total.usd
+        ? delta(resumen.total.usd, anterior.total.usd)
+        : "a la cotización de cada reserva",
+      faltanCotiz > 0 ? `${faltanCotiz} sin cotización cargada` : ""));
+
+    // "Facturado" acá es el Fac del Excel: si se hizo la factura, no la plata.
+    const sinFac = resumen.total.estadias - resumen.total.conFac;
+    cajas.appendChild(tarjeta("Facturado", pesosAR(resumen.total.importeFacturado),
+      `${resumen.total.facturadas} de ${resumen.total.estadias} estadías`,
+      sinFac > 0 ? `${sinFac} sin marcar` : ""));
 
     // --- por mes: diciembre primero, como corre la temporada ---
     const cajaMes = el("statsPorMes");
@@ -4408,11 +4474,11 @@
     // --- por casa: el color es el mismo del calendario ---
     const cajaCasa = el("statsPorCasa");
     cajaCasa.innerHTML = "";
-    const casasOrd = [...resumen.porCasa].sort((a, b) => b.facturado - a.facturado);
-    const maxCasa = Math.max(...casasOrd.map((c) => c.facturado), 0);
+    const casasOrd = [...resumen.porCasa].sort((a, b) => b.importe - a.importe);
+    const maxCasa = Math.max(...casasOrd.map((c) => c.importe), 0);
     for (const c of casasOrd) {
-      cajaCasa.appendChild(filaBarra(houseName(c.casa), c.facturado,
-        c.facturado > 0 ? pesosAR(c.facturado) : "-", maxCasa, houseColor(c.casa)));
+      cajaCasa.appendChild(filaBarra(houseName(c.casa), c.importe,
+        c.importe > 0 ? pesosAR(c.importe) : "-", maxCasa, houseColor(c.casa)));
     }
 
     // --- tabla ---
@@ -4435,9 +4501,13 @@
         String(c.estadias),
         String(c.noches),
         c.ocupacion === null ? "-" : `${Math.round(c.ocupacion * 100)}%`,
-        pesosAR(c.facturado),
+        pesosAR(c.importe),
         pesosAR(c.saldo),
         c.porNoche ? pesosAR(c.porNoche) : "-",
+        // Sin el "US$" adelante: ya está en el encabezado, y repetirlo en cada
+        // fila es lo que empujaba la tabla fuera del ancho del panel.
+        c.usd > 0 ? Math.round(c.usd).toLocaleString("es-AR") : "-",
+        c.estadias > 0 ? `${c.facturadas}/${c.estadias}` : "-",
       ];
       for (const texto of celdas) {
         const td = document.createElement("td");
@@ -4453,8 +4523,10 @@
     const trTotal = document.createElement("tr");
     trTotal.className = "border-t-2 border-brand-beige bg-brand-cream/40 font-bold";
     for (const texto of ["Total", String(resumen.total.estadias), String(resumen.total.noches), "",
-                         pesosAR(resumen.total.facturado), pesosAR(resumen.total.saldo),
-                         resumen.total.porNoche ? pesosAR(resumen.total.porNoche) : "-"]) {
+                         pesosAR(resumen.total.importe), pesosAR(resumen.total.saldo),
+                         resumen.total.porNoche ? pesosAR(resumen.total.porNoche) : "-",
+                         resumen.total.usd > 0 ? Math.round(resumen.total.usd).toLocaleString("es-AR") : "-",
+                         `${resumen.total.facturadas}/${resumen.total.estadias}`]) {
       const td = document.createElement("td");
       td.className = "px-2 py-3 tabular-nums whitespace-nowrap" + (texto === "Total" ? "" : " text-right");
       td.textContent = texto;
