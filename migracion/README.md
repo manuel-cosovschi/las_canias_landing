@@ -5,8 +5,8 @@ temporada. Estos scripts pasaron esa información a la planilla `reservas` que
 usa la web, para que el panel de admin sea el único lugar donde se maneja la
 ocupación.
 
-Se corrió una sola vez, el 24/08/2026, con las hojas **Temporada 25-26** y
-**Temporada 26-27**: 91 estadías, 511 noches, $75.173.799 facturados.
+Se corrió el 24/08/2026 con las hojas **Temporada 25-26** y **Temporada 26-27**,
+más una fila suelta el 25/08. En total: 92 estadías, 518 noches, $75.693.799.
 
 ## Cómo está armado el Excel (y por qué el conversor es más largo de lo esperable)
 
@@ -55,6 +55,33 @@ esas mismas fechas). Con eso LC1, LC3 y LC5 cierran exacto contra el Excel.
 
 Las otras dos siguen sin ubicar, y no hay con qué: son de abril, sin fecha y sin
 nombre.
+
+### El arreglo del conversor no alcanzaba: había que volver a cargar
+
+Lo de arriba es lo que produce `convertir.py` **hoy**. Pero la carga a la
+planilla se hizo *antes* de ese arreglo, así que `LC3 r111` quedó afuera igual:
+el conversor aprendió a leerla y nadie la volvió a mandar. Durante un día el
+README decía que LC3 cerraba exacto mientras en producción faltaban $520.000.
+
+Se descubrió comparando la fila `Total` de cada casa del Excel contra los
+números del panel:
+
+| Casa | Total del Excel | Estaba cargado | Diferencia |
+|---|---|---|---|
+| LC2 | $13.666.800 | $13.266.800 | $400.000 (r62, sin ubicar) |
+| LC3 | $13.870.999 | $13.350.999 | **$520.000 (r111)** |
+| LC4 | $14.379.000 | $14.079.000 | $300.000 (r145, sin ubicar) |
+
+La fila que faltaba se cargó el 25/08/2026 como
+`XL-2526-LC3-2026-08-08` (Gustavo Amarilla, 8 al 15 de agosto, $520.000). El
+`anticipo` quedó **vacío a propósito**: esa celda del Excel la pisó la fecha, así
+que el dato no existe. La columna `Restan` de esa fila dice $260.000, lo que
+sugiere que se había cobrado esa mitad, pero es una inferencia y no se cargó
+como si fuera un dato.
+
+**La moraleja para la próxima:** arreglar el conversor no arregla la planilla.
+El control que vale es comparar contra la fila `Total` del Excel **lo que quedó
+cargado en producción**, no lo que imprime el script.
 
 | Casa | Fila | Mes | Días | Importe |
 |---|---|---|---|---|
