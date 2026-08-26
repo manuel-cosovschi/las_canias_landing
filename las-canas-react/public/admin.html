@@ -94,6 +94,34 @@
     #calendar .fc-daygrid-event .fc-event-main { padding: 0 !important; }
     #calendar .fc-event { cursor: pointer; }
 
+    /* La barra de arriba: FullCalendar pega el grupo ‹ › contra "Hoy" sin
+       ningún aire. En el celular, además, el título se lleva casi todo el ancho
+       y los botones terminan amontonados en un rincón. */
+    #calendar .fc-toolbar.fc-header-toolbar { gap: .75rem; margin-bottom: 1rem; }
+    #calendar .fc-toolbar-chunk {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      flex-wrap: wrap;
+    }
+    #calendar .fc-button-group { gap: 2px; }
+    #calendar .fc-button { border-radius: 9999px; }
+    /* Dentro del grupo, las esquinas que se tocan quedan rectas: si no, con el
+       radio completo los dos botones parecen dos pastillas sueltas. */
+    #calendar .fc-button-group .fc-button:first-child {
+      border-top-right-radius: 4px; border-bottom-right-radius: 4px;
+    }
+    #calendar .fc-button-group .fc-button:last-child {
+      border-top-left-radius: 4px; border-bottom-left-radius: 4px;
+    }
+    /* En el celular "septiembre de 2026" parte en dos líneas y empuja los
+       botones a un renglón suelto. Achicándolo entra todo en una sola fila. */
+    @media (max-width: 640px) {
+      #calendar .fc-toolbar.fc-header-toolbar { gap: .5rem; }
+      #calendar .fc-toolbar-title { font-size: 1.05rem; white-space: nowrap; }
+      #calendar .fc-button { padding: .35em .7em; font-size: .85rem; }
+    }
+
     .lc-ev {
       display: flex;
       align-items: center;
@@ -4387,6 +4415,23 @@
         left: "prev,next today",
         center: "title",
         right: "",
+      },
+      // `locale: "es"` alcanza para los meses y los días, que FullCalendar saca
+      // de Intl. El texto de los botones, en cambio, vive en el paquete de
+      // idioma, que no se carga: sin esto el botón dice "today" en un panel que
+      // por lo demás está todo en castellano.
+      buttonText: {
+        today: "Hoy",
+        month: "Mes",
+        week: "Semana",
+        day: "Día",
+        list: "Lista",
+      },
+      // El lector de pantalla también los anunciaba en inglés.
+      buttonHints: {
+        prev: "Mes anterior",
+        next: "Mes siguiente",
+        today: "Ir al mes de hoy",
       },
       eventDisplay: "block",
 
