@@ -150,24 +150,34 @@
 
   <!-- Header -->
   <header class="sticky top-0 z-50 border-b border-brand-beige/60 bg-brand-cream/90 backdrop-blur">
-    <div class="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
-      <a href="index.html" class="flex items-center gap-3 group">
-        <img src="/logo.PNG" alt="Las Cañas" class="w-9 h-9 rounded-xl bg-white/70 p-1 logo-shadow" />
-        <div class="leading-tight">
-          <div class="serif text-lg font-bold tracking-tight">Las Cañas</div>
-          <div class="text-[10px] uppercase tracking-[0.3em] font-semibold text-brand-accent">Portal de propietarios</div>
+    <!-- En pantallas angostas el título con tracking-[0.3em] mide más de 200px y
+         empujaba "Cerrar sesión" fuera de la ventana. El body tiene
+         overflow-x-hidden, así que no aparecía una barra de scroll: el botón
+         simplemente quedaba cortado. Ahora el título puede achicarse (min-w-0 +
+         truncate) y el espaciado de letras cede primero. -->
+    <div class="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between gap-2">
+      <a href="index.html" class="flex items-center gap-2 sm:gap-3 group min-w-0">
+        <img src="/logo.PNG" alt="Las Cañas" class="w-9 h-9 shrink-0 rounded-xl bg-white/70 p-1 logo-shadow" />
+        <div class="leading-tight min-w-0">
+          <div class="serif text-lg font-bold tracking-tight whitespace-nowrap">Las Cañas</div>
+          <div class="text-[10px] uppercase tracking-[0.15em] sm:tracking-[0.3em] font-semibold text-brand-accent truncate">Portal de propietarios</div>
         </div>
       </a>
 
-      <div class="flex items-center gap-2">
+      <div class="flex items-center gap-2 shrink-0">
+        <!-- En el celular el texto largo de los dos botones no deja lugar para
+             la marca. Se acortan ahí y se escriben enteros de sm para arriba:
+             preferible eso a que "Las Cañas" se parta en dos renglones. -->
         <button id="btnSecret"
-          class="hidden px-4 py-2 rounded-full border border-brand-beige bg-white/70 text-xs font-semibold hover:bg-white transition">
-          Clave dueños
+          class="hidden px-3 sm:px-4 py-2 rounded-full border border-brand-beige bg-white/70 text-xs font-semibold hover:bg-white transition whitespace-nowrap">
+          <span class="sm:hidden">Clave</span>
+          <span class="hidden sm:inline">Clave dueños</span>
         </button>
 
         <button id="btnAuth"
-          class="hidden px-4 py-2 rounded-full bg-brand-brown text-brand-cream text-[10px] font-black uppercase tracking-[0.22em] shadow-lg hover:opacity-90 transition">
-          Cerrar sesión
+          class="hidden px-3 sm:px-4 py-2 rounded-full bg-brand-brown text-brand-cream text-[10px] font-black uppercase tracking-[0.1em] sm:tracking-[0.22em] shadow-lg hover:opacity-90 transition whitespace-nowrap">
+          <span class="sm:hidden">Salir</span>
+          <span class="hidden sm:inline">Cerrar sesión</span>
         </button>
       </div>
     </div>
@@ -4007,8 +4017,10 @@
 
     if (auth) {
       // show dashboard
+      // El texto viene del HTML, con las dos versiones (corta para el celular,
+      // larga para escritorio). Asignar textContent acá las borraba y el botón
+      // volvía a decir "Cerrar sesión" siempre, sin lugar para la marca.
       btnAuth.classList.remove("hidden");
-      btnAuth.textContent = "Cerrar sesión";
 
       btnSecret.classList.remove("hidden");
 
