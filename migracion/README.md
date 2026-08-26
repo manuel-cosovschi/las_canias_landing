@@ -83,6 +83,40 @@ como si fuera un dato.
 El control que vale es comparar contra la fila `Total` del Excel **lo que quedó
 cargado en producción**, no lo que imprime el script.
 
+## Las cinco temporadas que todavía no se cargaron
+
+El libro tiene 14 hojas y sólo se importaron dos. Las que faltan:
+
+| Temporada | Casas | Noches | Facturado |
+|---|---|---|---|
+| 21-22 | 3 | 404 | $3.314.500 |
+| 22-23 | 3 | 400 | $7.569.945 |
+| 23-24 | 4 | 506 | $25.637.767 |
+| 24-25 | 4 | 484 | $53.902.000 |
+
+(Más `Alquileres 2017` a `2020` y `Temporada 20-21`, con otra estructura.)
+
+El complejo fue creciendo: Las Cañas 4 aparece en la 23-24 y la 5 en la 25-26.
+Por eso `extraer.py` no sirve para éstas — tiene las filas de cada bloque
+hardcodeadas. `extraer_general.py` las encuentra por el encabezado `Mes`.
+
+Sin la 24-25 cargada, **la comparación “vs temporada anterior” de la sección
+Números nunca se muestra**: compara contra una temporada que no existe en la
+planilla.
+
+### Lo que falta para poder cargarlas
+
+Una prueba en seco de las cuatro da 321 estadías, 1728 noches y $88.604.880,
+que cierra contra los totales del Excel salvo $1.819.332 (2%). Queda:
+
+- **Un solape**: `LC2 r36` dice `del 23 al 17` con `días`=4. Se lee como 23 de
+  diciembre al 17 de enero (25 noches) y pisa la estadía siguiente. Los días
+  dicen que en realidad es del 23 al 27.
+- **$1.819.332 repartidos** en filas sueltas sin fecha, sobre todo en la 23-24.
+
+No se cargó nada de esto: son 321 filas que aparecerían en Confirmadas, Buscar
+y el calendario, así que es una decisión de los dueños, no del script.
+
 | Casa | Fila | Mes | Días | Importe |
 |---|---|---|---|---|
 | LC2 | r62 | Abril | 3 | $400.000 |
