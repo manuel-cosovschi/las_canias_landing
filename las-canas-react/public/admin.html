@@ -122,6 +122,34 @@
       #calendar .fc-button { padding: .35em .7em; font-size: .85rem; }
     }
 
+    /* Precios y Reglas: cada período / finde / mínimo es una ficha con sus
+       campos rotulados. En pantalla ancha los campos van en una fila, y las
+       columnas coinciden entre fichas porque todas usan la misma grilla; abajo
+       de 768px se apilan, que es la única forma de que entren sin cortarse. */
+    .ficha { display: grid; gap: .75rem; }
+    @media (min-width: 768px) {
+      .ficha { align-items: end; }
+      .ficha--finde   { grid-template-columns: 10rem 10rem minmax(0, 1fr) auto; }
+      .ficha--minimo  { grid-template-columns: 10rem 10rem 6rem minmax(0, 1fr) auto; }
+      .ficha--periodo { grid-template-columns: 10rem 10rem minmax(0, 1fr); }
+
+      /* La ficha de un período tiene dos bloques (las fechas arriba, los cinco
+         precios abajo) y el botón de borrar va con el primero. Apilado no:
+         ahí el botón se lee mejor al final de todo, así que va último en el
+         HTML y acá se lo sube a la fila de las fechas. */
+      .ficha-periodo {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        grid-template-areas: "cab del" "rot rot" "pre pre";
+        column-gap: .75rem;
+        align-items: end;
+      }
+      .ficha-periodo > .fp-cab     { grid-area: cab; }
+      .ficha-periodo > .fp-rotulo  { grid-area: rot; }
+      .ficha-periodo > .fp-precios { grid-area: pre; }
+      .ficha-periodo > .fp-borrar  { grid-area: del; }
+    }
+
     .lc-ev {
       display: flex;
       align-items: center;
@@ -1202,24 +1230,12 @@
           <strong>no se puede reservar</strong> desde la página.
         </div>
 
-        <div class="overflow-x-auto">
-          <table class="w-full text-xs sm:text-sm border-collapse">
-            <thead>
-              <tr class="border-b border-brand-beige text-left">
-                <th class="py-2 pr-2 font-semibold">Desde</th>
-                <th class="py-2 pr-2 font-semibold">Hasta</th>
-                <th class="py-2 pr-2 font-semibold">Nombre</th>
-                <th class="py-2 pr-2 font-semibold">LC1</th>
-                <th class="py-2 pr-2 font-semibold">LC2</th>
-                <th class="py-2 pr-2 font-semibold">LC3</th>
-                <th class="py-2 pr-2 font-semibold">LC4</th>
-                <th class="py-2 pr-2 font-semibold">LC5</th>
-                <th class="py-2 font-semibold"></th>
-              </tr>
-            </thead>
-            <tbody id="periodsBody"></tbody>
-          </table>
-        </div>
+        <!-- Antes era una tabla de nueve columnas. Ni siquiera en escritorio
+             entraba (pedía 1092px en una caja de 694), así que había que
+             scrollearla de costado con los cuadros pegados uno contra otro y
+             el último cortado por el borde. Ahora cada período es una ficha
+             que entra entera en cualquier pantalla. -->
+        <div id="periodsBody" class="space-y-4"></div>
 
         <div id="periodsWarning" class="hidden mt-3 p-3 rounded-2xl bg-red-50 border border-red-200 text-sm text-red-800"></div>
 
@@ -1292,19 +1308,7 @@
         <p class="text-xs text-brand-accent mb-2">
           Sólo se puede entrar el día de check-in y salir el de check-out, ni antes ni después.
         </p>
-        <div class="overflow-x-auto">
-          <table class="w-full text-xs sm:text-sm border-collapse">
-            <thead>
-              <tr class="border-b border-brand-beige text-left">
-                <th class="py-2 pr-2 font-semibold">Check-in</th>
-                <th class="py-2 pr-2 font-semibold">Check-out</th>
-                <th class="py-2 pr-2 font-semibold">Nombre</th>
-                <th class="py-2 font-semibold"></th>
-              </tr>
-            </thead>
-            <tbody id="windowsBody"></tbody>
-          </table>
-        </div>
+        <div id="windowsBody" class="space-y-3"></div>
         <button id="btnAddWindow"
           class="mt-3 mb-6 py-2 px-4 rounded-2xl bg-white/80 border border-brand-beige font-semibold hover:bg-brand-beige/30 transition">
           + Agregar finde fijo
@@ -1315,20 +1319,7 @@
         <p class="text-xs text-brand-accent mb-2">
           Para temporada alta o feriados largos. Alcanza con que la estadía toque el tramo.
         </p>
-        <div class="overflow-x-auto">
-          <table class="w-full text-xs sm:text-sm border-collapse">
-            <thead>
-              <tr class="border-b border-brand-beige text-left">
-                <th class="py-2 pr-2 font-semibold">Desde</th>
-                <th class="py-2 pr-2 font-semibold">Hasta</th>
-                <th class="py-2 pr-2 font-semibold">Noches</th>
-                <th class="py-2 pr-2 font-semibold">Nombre</th>
-                <th class="py-2 font-semibold"></th>
-              </tr>
-            </thead>
-            <tbody id="minRulesBody"></tbody>
-          </table>
-        </div>
+        <div id="minRulesBody" class="space-y-3"></div>
         <button id="btnAddMinRule"
           class="mt-3 py-2 px-4 rounded-2xl bg-white/80 border border-brand-beige font-semibold hover:bg-brand-beige/30 transition">
           + Agregar mínimo
@@ -2076,50 +2067,96 @@
      PERÍODOS DE PRECIO
   ===================== */
 
-  // Se arma con createElement y .value en vez de innerHTML: el nombre del
-  // período es texto libre y no queremos que se interprete como HTML.
-  function addPeriodRow(p = {}) {
-    const tr = document.createElement("tr");
-    tr.className = "border-b border-brand-beige/50";
+  // Un campo rotulado dentro de una ficha. Se arma con createElement y .value
+  // en vez de innerHTML: el nombre del período es texto libre y no queremos
+  // que se interprete como HTML.
+  function campoFicha(padre, campo, valor, alEditar) {
+    const lab = document.createElement("label");
+    lab.className = "block min-w-0";
 
-    const mk = (type, value, field, extraCls, placeholder) => {
-      const td = document.createElement("td");
-      td.className = "py-2 pr-2";
-      const inp = document.createElement("input");
-      inp.type = type;
-      inp.value = (value ?? "");
-      inp.dataset.field = field;
-      if (placeholder) inp.placeholder = placeholder;
-      inp.className = "w-full border border-brand-beige rounded-xl p-2 bg-white/80 " + (extraCls || "");
-      inp.addEventListener("input", validatePeriodsUI);
-      td.appendChild(inp);
-      tr.appendChild(td);
-      return inp;
-    };
+    const cap = document.createElement("span");
+    cap.className = "block text-xs text-brand-accent mb-1";
+    cap.textContent = campo.rotulo;
 
-    mk("date", p.from, "from", "min-w-[9rem]");
-    mk("date", p.to, "to", "min-w-[9rem]");
-    mk("text", p.label, "label", "min-w-[10rem]", "Ej: Temporada alta");
-    for (const c of CASAS) mk("number", p.prices?.[c], c, "min-w-[6.5rem]");
+    const inp = document.createElement("input");
+    inp.type = campo.type;
+    inp.value = valor ?? "";
+    inp.dataset.field = campo.field;
+    if (campo.placeholder) inp.placeholder = campo.placeholder;
+    for (const tope of ["min", "max", "step"]) if (campo[tope] != null) inp[tope] = String(campo[tope]);
+    inp.className = "w-full border border-brand-beige rounded-xl p-2 bg-white";
+    inp.addEventListener("input", alEditar);
 
-    const tdDel = document.createElement("td");
-    tdDel.className = "py-2";
+    lab.appendChild(cap);
+    lab.appendChild(inp);
+    padre.appendChild(lab);
+    return inp;
+  }
+
+  // El ✕ solo se entiende pegado a su fila. Cuando los campos se apilan en el
+  // celular el botón queda suelto abajo, así que ahí también dice qué borra.
+  function botonBorrarFicha(ficha, titulo, revalidar) {
     const btn = document.createElement("button");
     btn.type = "button";
-    btn.textContent = "✕";
-    btn.title = "Eliminar período";
-    btn.className = "px-3 py-2 rounded-xl border border-brand-beige hover:bg-red-50";
-    btn.onclick = () => { tr.remove(); validatePeriodsUI(); };
-    tdDel.appendChild(btn);
-    tr.appendChild(tdDel);
+    btn.title = titulo;
+    btn.className = "w-full md:w-auto px-3 py-2 rounded-xl border border-brand-beige bg-white font-semibold hover:bg-red-50 transition";
+    const cruz = document.createElement("span");
+    cruz.textContent = "✕";
+    const txt = document.createElement("span");
+    txt.className = "md:hidden";
+    txt.textContent = " " + titulo;
+    btn.appendChild(cruz);
+    btn.appendChild(txt);
+    btn.onclick = () => { ficha.remove(); revalidar(); };
+    return btn;
+  }
 
-    periodsBody.appendChild(tr);
-    return tr;
+  function nuevaFicha() {
+    const ficha = document.createElement("div");
+    ficha.className = "rounded-2xl border border-brand-beige bg-white/60 p-3 sm:p-4";
+    return ficha;
+  }
+
+  const CAMPOS_PERIODO = [
+    { type: "date", field: "from", rotulo: "Desde" },
+    { type: "date", field: "to", rotulo: "Hasta" },
+    { type: "text", field: "label", rotulo: "Nombre", placeholder: "Ej: Temporada alta" },
+  ];
+
+  function addPeriodRow(p = {}) {
+    const ficha = nuevaFicha();
+    ficha.classList.add("ficha-periodo");
+
+    const cabecera = document.createElement("div");
+    cabecera.className = "ficha ficha--periodo fp-cab";
+    for (const campo of CAMPOS_PERIODO) campoFicha(cabecera, campo, p[campo.field], validatePeriodsUI);
+    ficha.appendChild(cabecera);
+
+    const rotulo = document.createElement("p");
+    rotulo.className = "fp-rotulo text-xs font-semibold text-brand-accent mt-4 mb-2";
+    rotulo.textContent = "Precio por noche";
+    ficha.appendChild(rotulo);
+
+    const precios = document.createElement("div");
+    precios.className = "fp-precios grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3";
+    for (const c of CASAS) {
+      campoFicha(precios, { type: "number", field: c, rotulo: c }, p.prices?.[c], validatePeriodsUI);
+    }
+    ficha.appendChild(precios);
+
+    // Último en el HTML a propósito: apilado el botón cierra la ficha, y en
+    // escritorio el CSS lo sube a la fila de las fechas.
+    const borrar = botonBorrarFicha(ficha, "Eliminar período", validatePeriodsUI);
+    borrar.classList.add("fp-borrar", "mt-4", "md:mt-0");
+    ficha.appendChild(borrar);
+
+    periodsBody.appendChild(ficha);
+    return ficha;
   }
 
   function readPeriodsFromUI() {
-    return Array.from(periodsBody.querySelectorAll("tr")).map(tr => {
-      const get = (f) => tr.querySelector('[data-field="' + f + '"]')?.value ?? "";
+    return Array.from(periodsBody.children).map(ficha => {
+      const get = (f) => ficha.querySelector('[data-field="' + f + '"]')?.value ?? "";
       const prices = {};
       for (const c of CASAS) prices[c] = Number(get(c));
       return { from: get("from"), to: get("to"), label: String(get("label")).trim(), prices };
@@ -2239,62 +2276,41 @@
   ===================== */
   const ES_FECHA = /^\d{4}-\d{2}-\d{2}$/;
 
-  // Arma una fila de tabla a partir de una lista de campos
-  function addRuleRow(tbody, campos, valores, titleDel) {
-    const tr = document.createElement("tr");
-    tr.className = "border-b border-brand-beige/60";
+  // Arma una ficha a partir de una lista de campos
+  function addRuleRow(cont, campos, valores, titleDel, grilla) {
+    const ficha = nuevaFicha();
 
-    for (const campo of campos) {
-      const td = document.createElement("td");
-      td.className = "py-2 pr-2";
-      const inp = document.createElement("input");
-      inp.type = campo.type;
-      inp.value = valores?.[campo.field] ?? "";
-      inp.dataset.field = campo.field;
-      if (campo.placeholder) inp.placeholder = campo.placeholder;
-      if (campo.type === "number") { inp.min = "1"; inp.max = "30"; inp.step = "1"; }
-      inp.className = "w-full border border-brand-beige rounded-xl p-2 bg-white/80 " + (campo.cls || "");
-      inp.addEventListener("input", validateRulesUI);
-      td.appendChild(inp);
-      tr.appendChild(td);
-    }
+    const fila = document.createElement("div");
+    fila.className = "ficha " + grilla;
+    for (const campo of campos) campoFicha(fila, campo, valores?.[campo.field], validateRulesUI);
+    fila.appendChild(botonBorrarFicha(ficha, titleDel, validateRulesUI));
 
-    const tdDel = document.createElement("td");
-    tdDel.className = "py-2";
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.textContent = "✕";
-    btn.title = titleDel;
-    btn.className = "px-3 py-2 rounded-xl border border-brand-beige hover:bg-red-50";
-    btn.onclick = () => { tr.remove(); validateRulesUI(); };
-    tdDel.appendChild(btn);
-    tr.appendChild(tdDel);
-
-    tbody.appendChild(tr);
-    return tr;
+    ficha.appendChild(fila);
+    cont.appendChild(ficha);
+    return ficha;
   }
 
   const CAMPOS_FINDE = [
-    { type: "date", field: "checkin", cls: "min-w-[9rem]" },
-    { type: "date", field: "checkout", cls: "min-w-[9rem]" },
-    { type: "text", field: "label", cls: "min-w-[12rem]", placeholder: "Ej: Finde largo de octubre" },
+    { type: "date", field: "checkin", rotulo: "Check-in" },
+    { type: "date", field: "checkout", rotulo: "Check-out" },
+    { type: "text", field: "label", rotulo: "Nombre", placeholder: "Ej: Finde largo de octubre" },
   ];
 
   const CAMPOS_MINIMO = [
-    { type: "date", field: "from", cls: "min-w-[9rem]" },
-    { type: "date", field: "to", cls: "min-w-[9rem]" },
-    { type: "number", field: "nights", cls: "min-w-[5rem]" },
-    { type: "text", field: "label", cls: "min-w-[12rem]", placeholder: "Ej: Semana Santa" },
+    { type: "date", field: "from", rotulo: "Desde" },
+    { type: "date", field: "to", rotulo: "Hasta" },
+    { type: "number", field: "nights", rotulo: "Noches", min: 1, max: 30, step: 1 },
+    { type: "text", field: "label", rotulo: "Nombre", placeholder: "Ej: Semana Santa" },
   ];
 
-  const addWindowRow = (w) => addRuleRow(windowsBody, CAMPOS_FINDE, w, "Eliminar finde fijo");
-  const addMinRuleRow = (r) => addRuleRow(minRulesBody, CAMPOS_MINIMO, r, "Eliminar mínimo");
+  const addWindowRow = (w) => addRuleRow(windowsBody, CAMPOS_FINDE, w, "Eliminar finde fijo", "ficha--finde");
+  const addMinRuleRow = (r) => addRuleRow(minRulesBody, CAMPOS_MINIMO, r, "Eliminar mínimo", "ficha--minimo");
 
-  function readRowsFromUI(tbody, campos) {
-    return Array.from(tbody.querySelectorAll("tr")).map(tr => {
+  function readRowsFromUI(cont, campos) {
+    return Array.from(cont.children).map(ficha => {
       const fila = {};
       for (const campo of campos) {
-        const v = tr.querySelector('[data-field="' + campo.field + '"]')?.value ?? "";
+        const v = ficha.querySelector('[data-field="' + campo.field + '"]')?.value ?? "";
         fila[campo.field] = campo.type === "number" ? Number(v) : String(v).trim();
       }
       return fila;
