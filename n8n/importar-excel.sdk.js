@@ -16,6 +16,25 @@ const webhook = trigger({
   output: [{ body: { rows: [] }, headers: { 'x-lc-secret': 'xxx' } }],
 });
 
+// La lectura tiene que pasar ANTES de validar: sin ver lo que ya está cargado,
+// no hay forma de saber si una fila es nueva o es la misma de antes.
+const leerTodo = node({
+  type: 'n8n-nodes-base.googleSheets',
+  version: 4.7,
+  config: {
+    name: 'Leer la planilla',
+    position: [224, 48],
+    parameters: {
+      documentId: { __rl: true, mode: 'list', value: '1ae4bC9751PVRWJ5wQ0eNY19voNDnwB6A04v_ZXqFRBE', cachedResultName: 'Las Cañas - Reservas' },
+      sheetName: { __rl: true, mode: 'list', value: 'gid=0', cachedResultName: 'reservas' },
+      options: {},
+    },
+    alwaysOutputData: true,
+    credentials: { googleSheetsOAuth2Api: { id: 'txcnDFFyw26weWa8', name: 'Google Sheets account' } },
+  },
+  output: [{ id: 'XL-2526-LC1-2025-12-05', house_code: 'LC1', status: 'CONFIRMED' }],
+});
+
 const validar = node({
   type: 'n8n-nodes-base.code',
   version: 2,
@@ -33,7 +52,6 @@ const secret =
   headers["X-LC-SECRET"] ||
   "";
 
-// El valor real está en el nodo de n8n, no acá.
 if (secret !== "REEMPLAZAR_POR_EL_LC_OWNER_SECRET") {
   return [{ json: { ok: false, message: "Unauthorized (secret inválido)" } }];
 }
@@ -43,7 +61,6 @@ if (!rows.length) {
   return [{ json: { ok: false, message: "No vino ninguna fila" } }];
 }
 
-// Tope de seguridad: esto escribe en la planilla de reservas de producción.
 if (rows.length > 200) {
   return [{ json: { ok: false, message: "Demasiadas filas de una vez (máximo 200)" } }];
 }
@@ -53,6 +70,32 @@ const incompletas = rows.filter(
 );
 if (incompletas.length) {
   return [{ json: { ok: false, message: incompletas.length + " filas sin id, casa o fechas" } }];
+}
+
+// Este workflow agrega sin mirar lo que ya hay. Reenviar la misma fila —por un
+// reintento, o por creerla perdida cuando ya estaba— la duplicaba en silencio,
+// y el panel la contaba dos veces. Pasó con una estadía de $520.000.
+const yaEstan = new Set(
+  ($items("Leer la planilla") || [])
+    .map((i) => String(i?.json?.id || "").trim())
+    .filter(Boolean)
+);
+
+const repetidas = rows.map((r) => String(r.id).trim()).filter((id) => yaEstan.has(id));
+if (repetidas.length) {
+  return [{ json: {
+    ok: false,
+    message: "Estos ids ya están cargados: " + repetidas.slice(0, 5).join(", ") +
+             (repetidas.length > 5 ? " y " + (repetidas.length - 5) + " más" : "") +
+             ". No se escribió nada.",
+  } }];
+}
+
+// Tampoco puede venir el mismo id dos veces en el mismo pedido.
+const vistos = new Set();
+const dobles = rows.map((r) => String(r.id).trim()).filter((id) => vistos.has(id) || !vistos.add(id));
+if (dobles.length) {
+  return [{ json: { ok: false, message: "El pedido trae ids repetidos: " + [...new Set(dobles)].join(", ") } }];
 }
 
 return [{ json: { ok: true, total: rows.length } }];`,
@@ -222,5 +265,6 @@ const rechazar = node({
 
 export default workflow('lc-importar-excel', 'importar-excel')
   .add(webhook)
+  .to(leerTodo)
   .to(validar)
   .to(siEsValido.onTrue(expandir.to(escribir).to(resumen).to(responder)).onFalse(rechazar));

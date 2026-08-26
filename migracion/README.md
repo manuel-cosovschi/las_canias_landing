@@ -6,7 +6,8 @@ usa la web, para que el panel de admin sea el único lugar donde se maneja la
 ocupación.
 
 Se corrió el 24/08/2026 con las hojas **Temporada 25-26** y **Temporada 26-27**,
-más una fila suelta el 25/08. En total: 92 estadías, 518 noches, $75.693.799.
+más dos filas sueltas los días 25 y 26. En total: 92 estadías, 518 noches,
+$75.693.799 — con LC1, LC3 y LC5 cerrando exacto contra el Excel.
 
 ## Cómo está armado el Excel (y por qué el conversor es más largo de lo esperable)
 
@@ -56,6 +57,11 @@ esas mismas fechas). Con eso LC1, LC3 y LC5 cierran exacto contra el Excel.
 Las otras dos siguen sin ubicar, y no hay con qué: son de abril, sin fecha y sin
 nombre.
 
+| Casa | Fila | Mes | Días | Importe |
+|---|---|---|---|---|
+| LC2 | r62 | Abril | 3 | $400.000 |
+| LC4 | r145 | Abril | 2 | $300.000 |
+
 ### El arreglo del conversor no alcanzaba: había que volver a cargar
 
 Lo de arriba es lo que produce `convertir.py` **hoy**. Pero la carga a la
@@ -82,6 +88,34 @@ como si fuera un dato.
 **La moraleja para la próxima:** arreglar el conversor no arregla la planilla.
 El control que vale es comparar contra la fila `Total` del Excel **lo que quedó
 cargado en producción**, no lo que imprime el script.
+
+### Y la fila que faltaba terminó cargada dos veces
+
+La misma estadía de `LC3 r111` se mandó dos veces, con una hora y media de
+diferencia. La segunda vez fue porque el snapshot con el que se hizo el análisis
+era anterior a la primera carga: la estadía figuraba como faltante cuando ya
+estaba. `importar-excel` agregaba sin mirar lo que había, así que la escribió de
+nuevo sin decir nada, con el mismo `id`, y el panel la contó dos veces.
+
+Se descubrió igual que la anterior: contrastando LC3 contra el Excel, sólo que
+esta vez daba **de más**. La copia se dejó en `CANCELLED` en vez de borrarla, para
+que quede el rastro.
+
+El workflow ahora lee la planilla antes de validar y **rechaza el pedido entero
+si algún `id` ya está cargado**, sin escribir nada:
+
+```
+{"ok":false,"message":"Estos ids ya están cargados: XL-2526-LC3-2026-08-08. No se escribió nada."}
+```
+
+También rechaza que el mismo `id` venga dos veces en el mismo pedido.
+
+Vale la pena decirlo aparte, porque es la parte que no se arregla con código:
+**`importar-excel` es el único camino que escribe sin chequear solapes.** Todo lo
+demás (la carga manual, los bloqueos, el cambio de fechas) pasa por
+`create-manual-reservation`, que compara contra la planilla entera antes de
+escribir. Si hay que cargar una fila suelta, conviene hacerlo desde el panel y
+no por acá.
 
 ## Las cinco temporadas que todavía no se cargaron
 
@@ -116,11 +150,6 @@ que cierra contra los totales del Excel salvo $1.819.332 (2%). Queda:
 
 No se cargó nada de esto: son 321 filas que aparecerían en Confirmadas, Buscar
 y el calendario, así que es una decisión de los dueños, no del script.
-
-| Casa | Fila | Mes | Días | Importe |
-|---|---|---|---|---|
-| LC2 | r62 | Abril | 3 | $400.000 |
-| LC4 | r145 | Abril | 2 | $300.000 |
 
 ## Los pasos
 
