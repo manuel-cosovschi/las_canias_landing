@@ -656,8 +656,12 @@
               <p>
                 <strong>Desbloquear fechas</strong> borra los bloqueos manuales que toquen ese rango
                 en esa casa. Sólo toca bloqueos: <em>nunca</em> borra una reserva de un huésped.
-                Ojo: si al bloqueo le cargaste un huésped y un importe, desbloquear también se lleva
-                esos datos.
+              </p>
+              <p>
+                Si alguno de esos bloqueos tiene un huésped y un importe cargados, el panel te lo
+                dice antes y te los nombra: desbloquear borra la fila entera, así que se pierden
+                esos datos y esa plata deja de sumar en Números. Lo mismo si desbloqueás tocando el
+                bloqueo en el calendario.
               </p>
             </div>
           </details>
@@ -2603,6 +2607,47 @@
     }
   };
 
+  // Desbloquear borra la fila entera. Mientras un bloqueo era sólo un rango de
+  // fechas eso daba igual; ahora puede llevar el huésped y el importe de una
+  // reserva de WhatsApp, y borrarlo sin avisar se lleva plata de los números.
+  async function confirmarDesbloqueo(casa, ci, co) {
+    let enRiesgo = [];
+    try {
+      const out = await apiFetch(
+        `${EP_SEARCH_RESERVATIONS}?status=BLOCKED&limit=500`,
+        { method: "GET", body: null }
+      );
+      enRiesgo = (out.items || [])
+        .filter((b) => String(b.status || "").trim().toUpperCase() === "BLOCKED")
+        .filter((b) => String(b.house_code || "").trim().toUpperCase() === casa)
+        .filter((b) => b.check_in && b.check_out && b.check_in < co && ci < b.check_out)
+        .filter((b) => Number(b.importe) > 0 || String(b.guest_name || "").trim());
+    } catch {
+      // Si no se puede consultar, no se inventa un permiso: mejor preguntar.
+      return window.confirm(
+        "No se pudo revisar si alguno de esos bloqueos tiene datos cargados.\n\n" +
+        "¿Desbloquear igual? Si alguno era una reserva, se pierden el huésped y el importe."
+      );
+    }
+
+    // null = no hay nada en riesgo y no se preguntó nada. El que llama decide
+    // si igual quiere su propia confirmación, para no encadenar dos carteles.
+    if (!enRiesgo.length) return null;
+
+    const detalle = enRiesgo.map((b) => {
+      const quien = String(b.guest_name || "").trim() || "sin nombre";
+      const plata = Number(b.importe) > 0 ? ` · ${pesosAR(Number(b.importe))}` : "";
+      return `  • ${b.check_in} → ${b.check_out} · ${quien}${plata}`;
+    }).join("\n");
+
+    return window.confirm(
+      `Ojo: ${enRiesgo.length === 1 ? "hay un bloqueo" : `hay ${enRiesgo.length} bloqueos`} ` +
+      `con datos cargados en ese rango.\n\n${detalle}\n\n` +
+      "Desbloquear borra la fila entera: se pierden el huésped y el importe, y deja de sumar en Números.\n\n" +
+      "¿Desbloquear igual?"
+    );
+  }
+
   btnUnblock.onclick = async () => {
     try {
       const inD = parseDMY(el("checkin").value);
@@ -2610,6 +2655,10 @@
 
       if (!inD || !outD) return setStatus("Elegí check-in y check-out.");
       if (outD <= inD) return setStatus("Check-out debe ser posterior al check-in.");
+
+      if ((await confirmarDesbloqueo(el("house").value, toISO(inD), toISO(outD))) === false) {
+        return setStatus("Desbloqueo cancelado.");
+      }
 
       btnUnblock.disabled = true;
       setStatus("Desbloqueando...");
@@ -2633,6 +2682,9 @@
 
       await loadAvailabilityAndUpdatePickers();
       await refreshCalendarIfReady();
+      // Si el bloqueo tenía plata, dejó de sumar: hay que volver a pedir los
+      // números para que no queden mostrando un total que ya no existe.
+      if (statsFilas) await cargarStats();
     } catch (e) {
       setStatus(`❌ ${e.message}`);
       showToast(e.message || "Error", "err");
@@ -4218,6 +4270,19 @@
     // decimos antes: cancelar por error y que le llegue el aviso no se
     // deshace. Para mover una reserva de fechas está "Cambiar fechas", que no
     // notifica nada.
+    // Desbloquear desde acá borra la fila igual que desde "Bloquear fechas", así
+    // que pasa por el mismo aviso: si el bloqueo lleva un huésped y un importe,
+    // se pierden. Cuando ese aviso aparece ya dice todo lo que hay que saber,
+    // así que reemplaza al genérico en vez de encadenarse con él.
+    if (esBloqueo) {
+      const conDatos = await confirmarDesbloqueo(
+        String(calSeleccion.house_code || "").toUpperCase(),
+        calSeleccion.check_in, calSeleccion.check_out
+      );
+      if (conDatos === false) return;
+      if (conDatos === true) return quitarDelCalendario(esBloqueo);
+    }
+
     const que = esBloqueo
       ? `Desbloquear ${houseName(calSeleccion.house_code)} del ${calSeleccion.check_in} al ${calSeleccion.check_out}?`
       : [
@@ -4229,7 +4294,10 @@
         ].join("");
 
     if (!window.confirm(que)) return;
+    await quitarDelCalendario(esBloqueo);
+  };
 
+  async function quitarDelCalendario(esBloqueo) {
     btnCalQuitar.disabled = true;
     pintarMsg(calAccionMsg, esBloqueo ? "Desbloqueando..." : "Cancelando...", "info");
 
@@ -4255,12 +4323,14 @@
       closeCalendarModal();
       showToast(esBloqueo ? "Fechas liberadas" : "Reserva cancelada", "ok");
       await refreshCalendar();
+      // Un bloqueo con plata deja de sumar al borrarse, y una cancelada también.
+      if (statsFilas) await cargarStats();
     } catch (e) {
       pintarMsg(calAccionMsg, e.message || "No se pudo completar", "err");
     } finally {
       btnCalQuitar.disabled = false;
     }
-  };
+  }
 
   // La referencia se arma desde HOUSE_COLORS/HOUSE_NAMES para que no se
   // desincronice de lo que realmente se pinta en el calendario.
