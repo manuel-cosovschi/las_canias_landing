@@ -1073,6 +1073,11 @@
         </div>
         <p id="statsExcelMsg" class="text-xs mb-3"></p>
 
+        <!-- El endpoint corta en 500 filas y avisa con `truncated`. Ignorarlo
+             sería el mismo error que leer la planilla hasta la columna Z:
+             números cortos, sin nada roto a la vista. -->
+        <p id="statsTruncado" class="hidden text-sm font-semibold mb-3 rounded-2xl border border-brand-beige bg-brand-cream px-4 py-3"></p>
+
         <div id="statsResumen" class="grid grid-cols-2 lg:grid-cols-3 gap-3 mb-6"></div>
 
         <div class="grid lg:grid-cols-2 gap-6">
@@ -2535,15 +2540,22 @@
 
   // El mismo resumen que en la carga manual, por el mismo motivo: el error más
   // común es poner el total donde va la seña, y ahí se ve enseguida.
+  //
+  // Las fechas pueden estar vacías: cargar el importe antes de elegirlas es un
+  // orden perfectamente normal, y toISO() de una fecha nula revienta. Por eso
+  // el resumen se arma con lo que haya, en vez de asumir que ya están.
   function refrescarResumenBloqueo() {
-    const n = nochesEntreYmd(toISO(parseDMY(el("checkin").value)), toISO(parseDMY(el("checkout").value)));
+    const desde = parseDMY(el("checkin").value);
+    const hasta = parseDMY(el("checkout").value);
+    const n = desde && hasta ? nochesEntreYmd(toISO(desde), toISO(hasta)) : null;
     const total = Number(el("blockImporte").value) || 0;
     const sena = Number(el("blockAnticipo").value) || 0;
 
     const partes = [];
     if (n && n > 0) partes.push(`${n} ${n === 1 ? "noche" : "noches"}`);
     if (total > 0 && n && n > 0) partes.push(`${pesosAR(total / n)} la noche`);
-    if (total > 0) partes.push(`saldo ${pesosAR(total - sena)}`);
+    if (total > 0 && !(n > 0)) partes.push(`${pesosAR(total)} en total`);
+    if (total > 0 && n && n > 0) partes.push(`saldo ${pesosAR(total - sena)}`);
     if (total > 0) partes.push("suma en Números");
 
     el("blockResumen").textContent = partes.length ? partes.join(" · ") : "-";
@@ -4789,6 +4801,18 @@
       /^\d{4}-\d{2}-\d{2}$/.test(r.check_in) && /^\d{4}-\d{2}-\d{2}$/.test(r.check_out);
 
     statsFilas = (out.items || []).filter(fechasOk);
+
+    // El endpoint corta en 500 filas y lo dice. Si algún día la planilla pasa
+    // ese tamaño, los totales quedarían cortos y no habría forma de notarlo:
+    // mejor decirlo fuerte que mostrar un número que parece bien y no lo está.
+    const aviso = el("statsTruncado");
+    const cortado = out.truncated === true;
+    aviso.classList.toggle("hidden", !cortado);
+    if (cortado) {
+      aviso.textContent =
+        `⚠️ La planilla tiene ${out.total} reservas confirmadas y acá sólo entran ${out.count}. ` +
+        "Los totales de abajo están incompletos. Avisá para subir el tope.";
+    }
 
     // Los dueños cargan las reservas de WhatsApp como bloqueos. Un bloqueo con
     // importe es una reserva y tiene que contar igual que cualquier otra; uno

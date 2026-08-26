@@ -25,8 +25,17 @@ function normalizeRanges(out) {
   return {
     ok: true,
     house_code: out?.house_code,
-    ranges,     // <- lo que usa flatpickr
-    blocked,    // <- lo dejamos por si lo querés ver/debug
+    ranges,  // <- lo que usa flatpickr
+    // `blocked` lo siguen leyendo admin.html y reservar.html, así que queda,
+    // pero armado desde `ranges` y no reenviando lo que haya mandado n8n.
+    //
+    // Esto es público y sin login: cualquiera puede pedirlo. Reenviar el
+    // payload crudo "por si sirve para debug" significa que el día que ese
+    // workflow devuelva un campo de más —y desde que los bloqueos llevan
+    // nombre, teléfono y DNI del huésped hay mucho de más— se publica solo.
+    // Acá no hay nada que decidir: una fecha ocupada es pública, quién la
+    // ocupa no.
+    blocked: ranges.map((r) => ({ start: r.from, end: r.to })),
   };
 }
 
