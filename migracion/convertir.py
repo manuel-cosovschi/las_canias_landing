@@ -78,10 +78,16 @@ def num(v):
 
 
 def rango(fecha):
-    """'5 al 8' -> (5, 8). '31' -> (31, None). 'a al 10' -> (1, 10)."""
+    """'5 al 8' -> (5, 8). '31' -> (31, None). 'a al 10' -> (1, 10).
+
+    Las temporadas viejas escriben la misma fecha de varias formas: con "del"
+    adelante ('del 4 al 7'), con "a" en vez de "al" ('del 1 a 7') y con los
+    espacios donde caigan ('del15 al 22', '18 al25', 'del 8al 11'). Son 157
+    filas: exigir el formato prolijo las dejaba a todas afuera.
+    """
     s = str(fecha or '').strip()
 
-    m = re.match(r'^(\d{1,2})\s*al\s*(\d{1,2})$', s, re.I)
+    m = re.match(r'^(?:del\s*)?(\d{1,2})\s*a\s*l?\s*(\d{1,2})$', s, re.I)
     if m:
         return int(m.group(1)), int(m.group(2))
 
