@@ -32,6 +32,8 @@ Mezclarlos da 401 sin ninguna pista de por qué.
 | `N8N_SET_PRICE_PERIODS_PATH` | `set-price-periods` (opcional, tiene default) |
 | `N8N_GET_CALENDAR_CONFIG_PATH` | `calendar-config` (opcional, tiene default) |
 | `N8N_SET_CALENDAR_CONFIG_PATH` | `set-calendar-config` (opcional, tiene default) |
+| `N8N_GET_SEASON_GOALS_PATH` | `season-goals` (opcional, tiene default) |
+| `N8N_SET_SEASON_GOAL_PATH` | `set-season-goal` (opcional, tiene default) |
 | `N8N_OWNER_GET_PRICES_PATH` | `get-prices`, `public-prices` (tarifa base, ya sin uso) |
 | `N8N_OWNER_SET_PRICES_PATH` | `set-prices` (ya sin uso) |
 | `N8N_OWNER_LIST_PENDING_PATH` | `list-pending` |
