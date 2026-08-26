@@ -322,6 +322,60 @@
           </div>
         </div>
 
+        <!-- Los dueños cargan las reservas de WhatsApp como bloqueos. Si el
+             bloqueo no puede llevar el huésped y el importe, esa reserva no
+             existe para la sección Números: son las mismas columnas del Excel. -->
+        <details id="datosBloqueo" class="mt-4 rounded-2xl border border-brand-beige bg-white p-4">
+          <summary class="font-semibold text-sm cursor-pointer">
+            ¿Hay una reserva detrás? Cargá los datos y suma en Números
+          </summary>
+          <p class="text-xs text-brand-accent mt-2 mb-3">
+            Para las que entraron por WhatsApp o teléfono. Si es mantenimiento o uso de la familia,
+            dejá todo vacío. Podés completarlo después desde Confirmadas.
+          </p>
+
+          <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            <label class="block sm:col-span-2 lg:col-span-1">
+              <span class="block text-xs font-bold uppercase tracking-wider text-brand-accent mb-1">Huésped</span>
+              <input id="blockNombre" type="text" placeholder="Nombre y apellido"
+                class="w-full rounded-xl border border-brand-beige px-3 py-2 text-sm">
+            </label>
+            <label class="block">
+              <span class="block text-xs font-bold uppercase tracking-wider text-brand-accent mb-1">Teléfono</span>
+              <input id="blockTelefono" type="text" class="w-full rounded-xl border border-brand-beige px-3 py-2 text-sm">
+            </label>
+            <label class="block">
+              <span class="block text-xs font-bold uppercase tracking-wider text-brand-accent mb-1">DNI</span>
+              <input id="blockDni" type="text" class="w-full rounded-xl border border-brand-beige px-3 py-2 text-sm">
+            </label>
+            <label class="block">
+              <span class="block text-xs font-bold uppercase tracking-wider text-brand-accent mb-1">Importe total</span>
+              <input id="blockImporte" type="number" min="0" step="1000" placeholder="0"
+                class="w-full rounded-xl border border-brand-beige px-3 py-2 text-sm tabular-nums">
+            </label>
+            <label class="block">
+              <span class="block text-xs font-bold uppercase tracking-wider text-brand-accent mb-1">Seña cobrada</span>
+              <input id="blockAnticipo" type="number" min="0" step="1000" placeholder="0"
+                class="w-full rounded-xl border border-brand-beige px-3 py-2 text-sm tabular-nums">
+            </label>
+            <label class="block">
+              <span class="block text-xs font-bold uppercase tracking-wider text-brand-accent mb-1">Cotización del dólar</span>
+              <input id="blockDolar" type="number" min="0" step="10" placeholder="0"
+                class="w-full rounded-xl border border-brand-beige px-3 py-2 text-sm tabular-nums">
+            </label>
+            <label class="block">
+              <span class="block text-xs font-bold uppercase tracking-wider text-brand-accent mb-1">¿Facturada?</span>
+              <select id="blockFacturado" class="w-full rounded-xl border border-brand-beige px-3 py-2 text-sm bg-white">
+                <option value="">Sin marcar</option>
+                <option value="si">Sí</option>
+                <option value="no">No</option>
+              </select>
+            </label>
+          </div>
+
+          <p id="blockResumen" class="text-xs text-brand-accent mt-3">-</p>
+        </details>
+
         <button id="btnBlock"
           class="mt-5 w-full py-3 rounded-2xl bg-brand-brown text-brand-cream font-semibold hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed">
           Bloquear fechas
@@ -575,11 +629,16 @@
               </p>
               <div class="rounded-xl bg-brand-cream border border-brand-beige p-3">
                 <p class="font-semibold mb-1">¿Y si alguien reservó por WhatsApp o por teléfono?</p>
+                <p class="mb-2">
+                  Bloqueá las fechas como siempre, y abrí
+                  <strong>“¿Hay una reserva detrás?”</strong> para cargar el huésped, el teléfono,
+                  el DNI, el importe y la seña. Son las mismas columnas del Excel, y con eso el
+                  bloqueo <strong>suma en Números y sale en la descarga</strong>.
+                </p>
                 <p>
-                  Esa no la bloquees: cargala desde <strong>Confirmadas → + Cargar reserva</strong>.
-                  Ocupa las fechas igual que un bloqueo, pero además guarda el nombre y el importe,
-                  <strong>así suma en Números</strong>. Un bloqueo no tiene dónde guardar la plata,
-                  y esa reserva quedaría afuera de los totales de la temporada.
+                  Si dejás esos campos vacíos, el bloqueo saca las fechas de la venta y nada más:
+                  es lo que corresponde para mantenimiento o uso de la familia. Los que quedaron
+                  sin importe te los lista Números, por si alguno era una reserva.
                 </p>
               </div>
               <p>
@@ -597,6 +656,8 @@
               <p>
                 <strong>Desbloquear fechas</strong> borra los bloqueos manuales que toquen ese rango
                 en esa casa. Sólo toca bloqueos: <em>nunca</em> borra una reserva de un huésped.
+                Ojo: si al bloqueo le cargaste un huésped y un importe, desbloquear también se lleva
+                esos datos.
               </p>
             </div>
           </details>
@@ -1061,12 +1122,12 @@
              no está en ningún total y no hay forma de notarlo mirando: por eso
              el aviso, que es lo único que hace visible el agujero. -->
         <div id="statsBloqueos" class="hidden mt-5 rounded-2xl border border-brand-beige bg-brand-cream p-4">
-          <h4 class="font-bold text-sm mb-1">Fechas bloqueadas en esta temporada</h4>
+          <h4 class="font-bold text-sm mb-1">Bloqueos sin importe en esta temporada</h4>
           <p id="statsBloqueosTexto" class="text-sm text-brand-brown/90"></p>
           <p class="text-xs text-brand-accent mt-2">
-            Un bloqueo no guarda importe, así que no suma acá. Si alguno es en realidad una reserva
-            (de las de WhatsApp o teléfono), cargala desde <strong>Confirmadas → + Cargar reserva</strong>
-            y va a empezar a contar.
+            Estos no suman acá porque no tienen plata cargada. Si son mantenimiento o uso de la
+            familia, está bien así. Si alguno es en realidad una reserva, abrile
+            <strong>Importes</strong> desde Buscar y cargale el monto: ahí empieza a contar.
           </p>
           <ul id="statsBloqueosLista" class="text-xs text-brand-accent mt-2 space-y-0.5"></ul>
         </div>
@@ -2457,6 +2518,36 @@
   // BLOQUEAR
   const btnBlock = el("btnBlock");
   const btnUnblock = el("btnUnblock");
+
+  const CAMPOS_BLOQUEO = ["blockNombre", "blockTelefono", "blockDni",
+                          "blockImporte", "blockAnticipo", "blockDolar"];
+
+  function limpiarDatosBloqueo() {
+    for (const id of CAMPOS_BLOQUEO) el(id).value = "";
+    el("blockFacturado").value = "";
+    el("datosBloqueo").open = false;
+    refrescarResumenBloqueo();
+  }
+
+  // El mismo resumen que en la carga manual, por el mismo motivo: el error más
+  // común es poner el total donde va la seña, y ahí se ve enseguida.
+  function refrescarResumenBloqueo() {
+    const n = nochesEntreYmd(toISO(parseDMY(el("checkin").value)), toISO(parseDMY(el("checkout").value)));
+    const total = Number(el("blockImporte").value) || 0;
+    const sena = Number(el("blockAnticipo").value) || 0;
+
+    const partes = [];
+    if (n && n > 0) partes.push(`${n} ${n === 1 ? "noche" : "noches"}`);
+    if (total > 0 && n && n > 0) partes.push(`${pesosAR(total / n)} la noche`);
+    if (total > 0) partes.push(`saldo ${pesosAR(total - sena)}`);
+    if (total > 0) partes.push("suma en Números");
+
+    el("blockResumen").textContent = partes.length ? partes.join(" · ") : "-";
+  }
+
+  for (const id of ["blockImporte", "blockAnticipo"]) {
+    el(id).addEventListener("input", refrescarResumenBloqueo);
+  }
   btnBlock.onclick = async () => {
     try {
       const inD = parseDMY(el("checkin").value);
@@ -2468,6 +2559,12 @@
       btnBlock.disabled = true;
       setStatus("Bloqueando...");
 
+      const importe = el("blockImporte").value.trim();
+      const anticipo = el("blockAnticipo").value.trim();
+      if (importe !== "" && anticipo !== "" && Number(anticipo) > Number(importe)) {
+        return setStatus("La seña no puede ser mayor que el importe total.");
+      }
+
       const out = await apiFetch(EP_OWNER_BLOCKS, {
         method: "POST",
         body: {
@@ -2475,17 +2572,29 @@
           checkin: toISO(inD),
           checkout: toISO(outD),
           note: el("note").value || "",
+          // Van vacíos cuando el bloqueo no tiene una reserva detrás.
+          guest_name: el("blockNombre").value.trim(),
+          phone: el("blockTelefono").value.trim(),
+          dni: el("blockDni").value.trim(),
+          importe,
+          anticipo,
+          cotizacion_usd: el("blockDolar").value.trim(),
+          facturado: el("blockFacturado").value,
         }
       });
 
       setStatus(`✅ Bloqueado (${out.id || "OK"})`);
-      showToast("Bloqueo creado ✅", "ok");
+      showToast(importe ? "Bloqueo creado, y suma en Números ✅" : "Bloqueo creado ✅", "ok");
 
       el("note").value = "";
+      limpiarDatosBloqueo();
       fpIn && fpIn.clear();
       fpOut && fpOut.clear();
       await loadAvailabilityAndUpdatePickers();
       await refreshCalendarIfReady();
+      // Los números salen de la planilla: si el bloqueo traía plata, hay que
+      // volver a pedirlos para que aparezca ahí también.
+      if (statsFilas && importe) await cargarStats();
     } catch (e) {
       setStatus(`❌ ${e.message}`);
       showToast(e.message || "Error", "err");
@@ -4611,17 +4720,26 @@
 
     statsFilas = (out.items || []).filter(fechasOk);
 
-    // Los bloqueos no suman plata, pero sí tapan noches. Se piden aparte nada
-    // más que para poder avisar: si uno esconde una reserva real, ese importe
-    // no está en ningún total y mirando los números no hay forma de notarlo.
+    // Los dueños cargan las reservas de WhatsApp como bloqueos. Un bloqueo con
+    // importe es una reserva y tiene que contar igual que cualquier otra; uno
+    // sin importe son fechas fuera de venta y sólo sirve para el aviso, porque
+    // si esconde una reserva real ese dinero no está en ningún total.
     try {
       const bloq = await apiFetch(
         `${EP_SEARCH_RESERVATIONS}?status=BLOCKED&limit=500`,
         { method: "GET", body: null }
       );
-      statsBloqueos = (bloq.items || []).filter(fechasOk);
+      // Se filtra por estado además de pedirlo en la query: confiar sólo en el
+      // parámetro hace que, si el endpoint devuelve de más, las confirmadas se
+      // cuenten dos veces y todos los totales salgan al doble.
+      const todos = (bloq.items || [])
+        .filter(fechasOk)
+        .filter((b) => String(b.status || "").trim().toUpperCase() === "BLOCKED");
+      statsFilas = statsFilas.concat(todos.filter((b) => Number(b.importe) > 0));
+      statsBloqueos = todos.filter((b) => !(Number(b.importe) > 0));
     } catch {
-      // Si falla, Números sigue sirviendo: el aviso es un extra, no el plato.
+      // Si falla, Números sigue sirviendo con las confirmadas: el aviso es un
+      // extra, no el plato.
       statsBloqueos = [];
     }
 
