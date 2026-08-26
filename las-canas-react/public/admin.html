@@ -325,46 +325,46 @@
         <!-- Los dueños cargan las reservas de WhatsApp como bloqueos. Si el
              bloqueo no puede llevar el huésped y el importe, esa reserva no
              existe para la sección Números: son las mismas columnas del Excel. -->
-        <details id="datosBloqueo" class="mt-4 rounded-2xl border border-brand-beige bg-white p-4">
-          <summary class="font-semibold text-sm cursor-pointer">
-            ¿Hay una reserva detrás? Cargá los datos y suma en Números
-          </summary>
-          <p class="text-xs text-brand-accent mt-2 mb-3">
-            Para las que entraron por WhatsApp o teléfono. Si es mantenimiento o uso de la familia,
-            dejá todo vacío. Podés completarlo después desde Confirmadas.
+        <div id="datosBloqueo" class="mt-4 rounded-2xl border border-brand-beige bg-white p-4">
+          <h3 class="font-semibold text-sm">
+            ¿Hay una reserva detrás? <span class="text-brand-accent font-normal">(opcional)</span>
+          </h3>
+          <p class="text-xs text-brand-accent mt-1 mb-3">
+            Para las que entraron por WhatsApp o teléfono: con el importe cargado, el bloqueo
+            suma en Números. Si es mantenimiento o uso de la familia, dejá todo vacío.
           </p>
 
           <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
             <label class="block sm:col-span-2 lg:col-span-1">
-              <span class="block text-xs font-bold uppercase tracking-wider text-brand-accent mb-1">Huésped</span>
+              <span class="block text-xs font-bold uppercase tracking-wider text-brand-accent mb-1">Huésped <span class="normal-case tracking-normal font-normal text-brand-accent/80">(opcional)</span></span>
               <input id="blockNombre" type="text" placeholder="Nombre y apellido"
                 class="w-full rounded-xl border border-brand-beige px-3 py-2 text-sm">
             </label>
             <label class="block">
-              <span class="block text-xs font-bold uppercase tracking-wider text-brand-accent mb-1">Teléfono</span>
+              <span class="block text-xs font-bold uppercase tracking-wider text-brand-accent mb-1">Teléfono <span class="normal-case tracking-normal font-normal text-brand-accent/80">(opcional)</span></span>
               <input id="blockTelefono" type="text" class="w-full rounded-xl border border-brand-beige px-3 py-2 text-sm">
             </label>
             <label class="block">
-              <span class="block text-xs font-bold uppercase tracking-wider text-brand-accent mb-1">DNI</span>
+              <span class="block text-xs font-bold uppercase tracking-wider text-brand-accent mb-1">DNI <span class="normal-case tracking-normal font-normal text-brand-accent/80">(opcional)</span></span>
               <input id="blockDni" type="text" class="w-full rounded-xl border border-brand-beige px-3 py-2 text-sm">
             </label>
             <label class="block">
-              <span class="block text-xs font-bold uppercase tracking-wider text-brand-accent mb-1">Importe total</span>
+              <span class="block text-xs font-bold uppercase tracking-wider text-brand-accent mb-1">Importe total <span class="normal-case tracking-normal font-normal text-brand-accent/80">(opcional)</span></span>
               <input id="blockImporte" type="number" min="0" step="1000" placeholder="0"
                 class="w-full rounded-xl border border-brand-beige px-3 py-2 text-sm tabular-nums">
             </label>
             <label class="block">
-              <span class="block text-xs font-bold uppercase tracking-wider text-brand-accent mb-1">Seña cobrada</span>
+              <span class="block text-xs font-bold uppercase tracking-wider text-brand-accent mb-1">Seña cobrada <span class="normal-case tracking-normal font-normal text-brand-accent/80">(opcional)</span></span>
               <input id="blockAnticipo" type="number" min="0" step="1000" placeholder="0"
                 class="w-full rounded-xl border border-brand-beige px-3 py-2 text-sm tabular-nums">
             </label>
             <label class="block">
-              <span class="block text-xs font-bold uppercase tracking-wider text-brand-accent mb-1">Cotización del dólar</span>
+              <span class="block text-xs font-bold uppercase tracking-wider text-brand-accent mb-1">Cotización del dólar <span class="normal-case tracking-normal font-normal text-brand-accent/80">(opcional)</span></span>
               <input id="blockDolar" type="number" min="0" step="10" placeholder="0"
                 class="w-full rounded-xl border border-brand-beige px-3 py-2 text-sm tabular-nums">
             </label>
             <label class="block">
-              <span class="block text-xs font-bold uppercase tracking-wider text-brand-accent mb-1">¿Facturada?</span>
+              <span class="block text-xs font-bold uppercase tracking-wider text-brand-accent mb-1">¿Facturada? <span class="normal-case tracking-normal font-normal text-brand-accent/80">(opcional)</span></span>
               <select id="blockFacturado" class="w-full rounded-xl border border-brand-beige px-3 py-2 text-sm bg-white">
                 <option value="">Sin marcar</option>
                 <option value="si">Sí</option>
@@ -374,7 +374,7 @@
           </div>
 
           <p id="blockResumen" class="text-xs text-brand-accent mt-3">-</p>
-        </details>
+        </div>
 
         <button id="btnBlock"
           class="mt-5 w-full py-3 rounded-2xl bg-brand-brown text-brand-cream font-semibold hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed">
@@ -630,9 +630,8 @@
               <div class="rounded-xl bg-brand-cream border border-brand-beige p-3">
                 <p class="font-semibold mb-1">¿Y si alguien reservó por WhatsApp o por teléfono?</p>
                 <p class="mb-2">
-                  Bloqueá las fechas como siempre, y abrí
-                  <strong>“¿Hay una reserva detrás?”</strong> para cargar el huésped, el teléfono,
-                  el DNI, el importe y la seña. Son las mismas columnas del Excel, y con eso el
+                  Bloqueá las fechas como siempre, y completá abajo el huésped, el teléfono, el
+                  DNI, el importe y la seña. Son las mismas columnas del Excel, y con eso el
                   bloqueo <strong>suma en Números y sale en la descarga</strong>.
                 </p>
                 <p>
@@ -2531,10 +2530,12 @@
   const CAMPOS_BLOQUEO = ["blockNombre", "blockTelefono", "blockDni",
                           "blockImporte", "blockAnticipo", "blockDolar"];
 
+  // Los campos quedan a la vista, no plegados: escondidos detrás de un click
+  // nadie los llenaba, y un bloqueo sin importe es una reserva que no suma en
+  // ningún lado. El primero que apareció decía "alquilada" y no tenía monto.
   function limpiarDatosBloqueo() {
     for (const id of CAMPOS_BLOQUEO) el(id).value = "";
     el("blockFacturado").value = "";
-    el("datosBloqueo").open = false;
     refrescarResumenBloqueo();
   }
 
