@@ -440,6 +440,12 @@
           </div>
 
           <p id="blockResumen" class="text-xs text-brand-accent mt-3">-</p>
+
+          <!-- El primer bloqueo que apareció sin importe decía "alquilada": una
+               reserva real que no sumaba en ningún total y que nadie podía notar
+               mirando. Si el motivo suena a alquiler y no hay monto, se avisa. -->
+          <p id="blockAvisoImporte"
+            class="hidden text-sm mt-3 rounded-xl border border-amber-300 bg-amber-50 text-amber-900 px-3 py-2"></p>
         </div>
 
         <button id="btnBlock"
@@ -505,6 +511,13 @@
             </select>
           </div>
         </div>
+
+        <!-- Cada tarjeta ya traía su reloj, pero había que recorrerlas una por
+             una para saber cuál se vencía primero. Este cartel dice de una
+             cuántas están en la hora final, y la lista viene ordenada por
+             urgencia para que sean las de arriba. -->
+        <p id="pendingUrgente"
+          class="hidden text-sm font-semibold mb-4 rounded-2xl border border-amber-300 bg-amber-50 text-amber-900 px-4 py-3"></p>
 
         <div id="pendingList" class="space-y-3 text-sm"></div>
       </div>
@@ -1145,6 +1158,38 @@
 
         <div id="statsResumen" class="grid grid-cols-2 lg:grid-cols-3 gap-3 mb-6"></div>
 
+        <!-- El objetivo se guarda por temporada en n8n, no en el navegador: si
+             viviera en localStorage cada dueño vería el suyo y ninguno el del
+             complejo. -->
+        <div class="mb-6 rounded-2xl border border-brand-beige bg-white p-4">
+          <!-- min-w-0 en las dos mitades: sin eso, el input de ancho fijo no
+               cede y empuja el botón fuera de la pantalla en el celular. -->
+          <div class="flex flex-wrap items-end justify-between gap-3">
+            <div class="min-w-0">
+              <h3 class="font-bold text-sm">Objetivo de la temporada</h3>
+              <p id="objetivoEstado" class="text-xs text-brand-accent mt-1">-</p>
+            </div>
+            <div class="flex items-end gap-2 min-w-0 grow sm:grow-0">
+              <label class="block min-w-0 grow sm:grow-0">
+                <span class="block text-xs text-brand-accent mb-1">Cuánto quieren facturar</span>
+                <input id="objetivoMonto" type="number" min="0" step="100000" placeholder="Sin objetivo"
+                  class="w-full sm:w-44 rounded-xl border border-brand-beige px-3 py-2 text-sm tabular-nums bg-white" />
+              </label>
+              <button id="btnGuardarObjetivo"
+                class="shrink-0 px-4 py-2 rounded-xl bg-brand-brown text-brand-cream text-xs font-semibold hover:opacity-90 transition disabled:opacity-40">
+                Guardar
+              </button>
+            </div>
+          </div>
+
+          <div id="objetivoBarra" class="hidden mt-3">
+            <div class="h-3 rounded-full bg-brand-beige/60 overflow-hidden">
+              <div id="objetivoRelleno" class="h-full rounded-full transition-[width] duration-500" style="width:0%"></div>
+            </div>
+            <p id="objetivoDetalle" class="text-xs text-brand-accent mt-2"></p>
+          </div>
+        </div>
+
         <div class="grid lg:grid-cols-2 gap-6">
           <figure class="m-0">
             <figcaption class="mb-3">
@@ -1204,6 +1249,46 @@
             <strong>Importes</strong> desde Buscar y cargale el monto: ahí empieza a contar.
           </p>
           <ul id="statsBloqueosLista" class="text-xs text-brand-accent mt-2 space-y-0.5"></ul>
+        </div>
+
+        <!-- Los totales dicen cuánta plata falta cobrar, pero no a quién hay
+             que reclamarle. Estas dos listas son el paso que faltaba entre
+             mirar el número y levantar el teléfono. -->
+        <div class="mt-7">
+          <div class="flex flex-wrap items-end justify-between gap-3 mb-3">
+            <div>
+              <h3 class="font-bold text-sm">A quién reclamarle</h3>
+              <p class="text-xs text-brand-accent mt-1">
+                De la temporada elegida, ordenado por el monto más grande primero.
+              </p>
+            </div>
+            <div class="flex gap-2" role="group" aria-label="Qué lista mirar">
+              <button id="btnDeuda" type="button" data-lista="deuda"
+                class="filtroLista px-4 py-2 rounded-full border text-xs font-semibold transition">
+                Deben plata
+              </button>
+              <button id="btnSinFacturar" type="button" data-lista="factura"
+                class="filtroLista px-4 py-2 rounded-full border text-xs font-semibold transition">
+                Falta facturar
+              </button>
+            </div>
+          </div>
+
+          <div class="overflow-x-auto rounded-2xl border border-brand-beige bg-white">
+            <table class="w-full text-xs border-collapse">
+              <thead>
+                <tr class="text-left text-[10px] uppercase tracking-wide text-brand-accent bg-brand-cream/60">
+                  <th class="px-2 py-3 font-bold">Huésped</th>
+                  <th class="px-2 py-3 font-bold">Casa</th>
+                  <th class="px-2 py-3 font-bold">Fechas</th>
+                  <th class="px-2 py-3 font-bold text-right">Importe</th>
+                  <th id="pendientesUltima" class="px-2 py-3 font-bold text-right">Debe</th>
+                </tr>
+              </thead>
+              <tbody id="statsPendientes"></tbody>
+            </table>
+          </div>
+          <p id="pendientesResumen" class="text-xs text-brand-accent mt-2"></p>
         </div>
 
         <p id="statsVacio" class="hidden text-sm text-brand-accent mt-4"></p>
@@ -1831,6 +1916,8 @@
   const EP_PRICE_PERIODS = "/api/price-periods";
   const EP_SET_PRICE_PERIODS = "/.netlify/functions/set-price-periods";
   const EP_CALENDAR_CONFIG = "/api/calendar-config";
+  const EP_SEASON_GOALS = "/.netlify/functions/season-goals";
+  const EP_SET_SEASON_GOAL = "/.netlify/functions/set-season-goal";
   const EP_SET_CALENDAR_CONFIG = "/.netlify/functions/set-calendar-config";
   const EP_SEARCH_RESERVATIONS = "/.netlify/functions/search-reservations";
   const EP_PROOF_FILE = "/.netlify/functions/proof-file";
@@ -2614,10 +2701,49 @@
     if (total > 0) partes.push("suma en Números");
 
     el("blockResumen").textContent = partes.length ? partes.join(" · ") : "-";
+    refrescarAvisoImporte();
+  }
+
+  // Un bloqueo de mantenimiento no lleva plata y está perfecto así. El problema
+  // es el otro: el motivo dice que atrás hay una reserva y el importe quedó
+  // vacío, así que esa estadía no existe para Números. Pasó de verdad — LC4,
+  // 16 al 18 de octubre, motivo "alquilada", sin monto — y no había forma de
+  // darse cuenta salvo revisando bloqueo por bloqueo.
+  const PALABRAS_DE_ALQUILER = /alquil|reserv|hu[eé]sped|inquilin|renta|se[ñn]a|alquilada/i;
+
+  function pareceAlquiler(motivo) {
+    return PALABRAS_DE_ALQUILER.test(String(motivo || ""));
+  }
+
+  // Cuenta como cargado cualquier dato de la reserva, no sólo el importe: si
+  // pusieron el nombre del huésped, atrás hay alguien aunque el monto todavía
+  // no esté. Se avisa igual, pero el aviso dice qué falta.
+  function faltaLaPlataDelBloqueo() {
+    return !(Number(el("blockImporte").value) > 0);
+  }
+
+  function refrescarAvisoImporte() {
+    const aviso = el("blockAvisoImporte");
+    const motivo = el("note").value;
+    const hayGuiño = pareceAlquiler(motivo) || String(el("blockNombre").value || "").trim();
+    const mostrar = Boolean(hayGuiño) && faltaLaPlataDelBloqueo();
+
+    aviso.classList.toggle("hidden", !mostrar);
+    if (mostrar) {
+      aviso.textContent = pareceAlquiler(motivo)
+        ? `El motivo dice “${String(motivo).trim().slice(0, 40)}” pero no cargaste el importe: ` +
+          "estas fechas van a quedar ocupadas sin sumar un peso en Números."
+        : "Cargaste el huésped pero no el importe: estas fechas van a quedar ocupadas " +
+          "sin sumar un peso en Números.";
+    }
+    return mostrar;
   }
 
   for (const id of ["blockImporte", "blockAnticipo"]) {
     el(id).addEventListener("input", refrescarResumenBloqueo);
+  }
+  for (const id of ["note", "blockNombre"]) {
+    el(id).addEventListener("input", refrescarAvisoImporte);
   }
   btnBlock.onclick = async () => {
     try {
@@ -2626,6 +2752,16 @@
 
       if (!inD || !outD) return setStatus("Elegí check-in y check-out.");
       if (outD <= inD) return setStatus("Check-out debe ser posterior al check-in.");
+
+      // Preguntar antes de escribir, no después: una vez guardado el bloqueo
+      // sin importe queda ahí, ocupando la casa y sin aparecer en ningún total.
+      if (refrescarAvisoImporte()) {
+        const seguir = window.confirm(
+          `${el("blockAvisoImporte").textContent}\n\n` +
+          "¿Bloquear igual? Si atrás hay una reserva, cargale el importe ahora y suma en Números."
+        );
+        if (!seguir) return setStatus("Bloqueo cancelado: cargá el importe.");
+      }
 
       btnBlock.disabled = true;
       setStatus("Bloqueando...");
@@ -2837,6 +2973,9 @@
   function updateCountdowns(){
     const nodes = document.querySelectorAll(".countdown[data-expires]");
     const now = Date.now();
+    let porVencer = 0;
+    let vencidas = 0;
+    let proxima = Infinity;
 
     nodes.forEach(node => {
       const raw = node.getAttribute("data-expires") || "";
@@ -2851,6 +2990,7 @@
 
       // si ya venció
       if (left <= 0){
+        vencidas += 1;
         node.classList.remove("hidden");
         node.textContent = "EXPIRADA";
         node.className = "countdown px-2 py-1 rounded-full border text-[10px] font-semibold bg-red-50 text-red-800 border-red-200";
@@ -2860,13 +3000,31 @@
       // mostrar countdown
       node.classList.remove("hidden");
       node.textContent = formatCountdown(left);
+      if (left < proxima) proxima = left;
 
       if (isExpiringSoon(left)){
+        porVencer += 1;
         node.className = "countdown px-2 py-1 rounded-full border text-[10px] font-semibold bg-yellow-50 text-yellow-900 border-yellow-200";
       } else {
         node.className = "countdown px-2 py-1 rounded-full border text-[10px] font-semibold bg-white/70 text-brand-brown border-brand-beige";
       }
     });
+
+    // El cartel se recalcula en cada tic junto con los relojes: si se armara
+    // sólo al dibujar la lista, una que entra en la hora final mientras el
+    // panel está abierto no aparecería hasta recargar.
+    const cartel = el("pendingUrgente");
+    if (!cartel) return;
+    const partes = [];
+    if (vencidas) partes.push(`${vencidas} ya ${vencidas === 1 ? "venció" : "vencieron"}`);
+    if (porVencer) {
+      partes.push(`${porVencer} ${porVencer === 1 ? "vence" : "vencen"} en menos de una hora` +
+        (Number.isFinite(proxima) ? ` (la primera en ${formatCountdown(proxima)})` : ""));
+    }
+    cartel.classList.toggle("hidden", partes.length === 0);
+    if (partes.length) {
+      cartel.textContent = "⏰ " + partes.join(" · ") + ". Están primeras en la lista.";
+    }
   }
 
   function startCountdownTicker(){
@@ -2883,17 +3041,36 @@
 
     const filtered = (items || []).filter(it => itemMatchesSearch(it, q) && itemMatchesHouse(it, h));
 
+    // La que vence primero va primero. Antes venían en el orden de la planilla,
+    // que no tiene nada que ver con cuál hay que atender ya. Las que no traen
+    // fecha de vencimiento van al final en vez de colarse arriba.
+    const cuantoFalta = (r) => {
+      const ms = parseExpiresMs(r.expires_at);
+      return Number.isFinite(ms) ? ms : Infinity;
+    };
+    filtered.sort((a, b) => cuantoFalta(a) - cuantoFalta(b));
+
     if (pendingCount) pendingCount.textContent = String(filtered.length);
 
     if (!filtered.length) {
       pendingList.innerHTML = `<div class="p-4 bg-white/70 border border-brand-beige rounded-2xl">No hay pendientes con esos filtros.</div>`;
+      el("pendingUrgente").classList.add("hidden");
       stopCountdownTicker();
       return;
     }
 
     filtered.forEach(r => {
       const div = document.createElement("div");
-      div.className = "p-4 border border-brand-beige rounded-2xl bg-white/80";
+      // La tarjeta entera se tiñe cuando queda menos de una hora: el reloj solo
+      // es un chip chico y en una lista larga se pasa de largo.
+      const falta = cuantoFalta(r) - Date.now();
+      const urgente = isExpiringSoon(falta);
+      const vencida = Number.isFinite(cuantoFalta(r)) && falta <= 0;
+      div.className = "p-4 border rounded-2xl " + (
+        vencida ? "border-red-200 bg-red-50"
+        : urgente ? "border-amber-300 bg-amber-50"
+        : "border-brand-beige bg-white/80"
+      );
 
       const fila = document.createElement("div");
       fila.className = "flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3";
@@ -4560,6 +4737,9 @@
 
   let statsFilas = null;
   let statsBloqueos = null;
+  // { "2025": 80000000 } — lo que los dueños se propusieron facturar en cada
+  // temporada. Vive en n8n para que sea el mismo número para todos.
+  let statsObjetivos = {};
 
   // `tope` corta la temporada a los primeros N días. Sirve para comparar contra
   // la temporada anterior en el mismo punto: si no, una que recién arranca
@@ -4869,11 +5049,195 @@
     }
     cuerpo.appendChild(trTotal);
 
+    renderObjetivo(inicio, resumen);
+    renderPendientes(inicio);
+
     const vacio = el("statsVacio");
     const sinDatos = resumen.total.estadias === 0;
     vacio.classList.toggle("hidden", !sinDatos);
     if (sinDatos) vacio.textContent = "Todavía no hay reservas confirmadas en esta temporada.";
   }
+
+  /* ---- objetivo de la temporada ---- */
+
+  // Verde cuando ya se llegó, marrón mientras falta. Sin rojo a propósito: no
+  // llegar todavía a mitad de temporada es lo normal, no una alarma.
+  const colorObjetivo = (parte) => (parte >= 1 ? "#15803d" : "#4A3728");
+
+  function renderObjetivo(inicio, resumen) {
+    const objetivo = Number(statsObjetivos[String(inicio)]) || 0;
+    const logrado = resumen.total.importe;
+
+    el("objetivoMonto").value = objetivo > 0 ? String(objetivo) : "";
+
+    const barra = el("objetivoBarra");
+    barra.classList.toggle("hidden", objetivo <= 0);
+
+    if (objetivo <= 0) {
+      el("objetivoEstado").textContent =
+        `${nombreTemporada(inicio)}: todavía sin objetivo. Poné uno y se ve cuánto falta.`;
+      return;
+    }
+
+    const parte = logrado / objetivo;
+    el("objetivoRelleno").style.width = `${Math.min(100, Math.round(parte * 100))}%`;
+    el("objetivoRelleno").style.backgroundColor = colorObjetivo(parte);
+
+    el("objetivoEstado").textContent =
+      `${nombreTemporada(inicio)}: ${Math.round(parte * 100)}% de ${pesosAR(objetivo)}.`;
+
+    const falta = objetivo - logrado;
+    const partes = [`${pesosAR(logrado)} facturados`];
+    partes.push(falta > 0 ? `faltan ${pesosAR(falta)}` : `${pesosAR(-falta)} por encima del objetivo 🎉`);
+
+    // Con la temporada empezada, el ritmo dice más que el porcentaje: "vas a
+    // 60 millones" es lo que deja decidir si hay que salir a vender.
+    const dias = resumen.total.transcurridos;
+    if (!resumen.completa && dias >= 30 && logrado > 0) {
+      const proyectado = (logrado / dias) * 365;
+      partes.push(`a este ritmo cerrás en ${pesosAR(proyectado)}`);
+    }
+
+    el("objetivoDetalle").textContent = partes.join(" · ");
+  }
+
+  /* ---- a quién reclamarle: deuda y facturas pendientes ---- */
+
+  let listaPendientes = "deuda";
+
+  // Una estadía debe plata cuando el importe está cargado y el anticipo no lo
+  // cubre. Sin importe no se puede afirmar nada: no es que no deba, es que no
+  // sabemos, y meterla en la lista sería mandar a reclamar a ciegas.
+  const debePlata = (r) => (Number(r.importe) || 0) > 0 &&
+    (Number(r.importe) || 0) - (Number(r.anticipo) || 0) > 0;
+
+  // Vacío no es "no": es que nadie lo marcó todavía. Las dos cosas van a la
+  // lista porque en las dos falta hacer algo, pero se distinguen en la fila.
+  const faltaFacturar = (r) => (Number(r.importe) || 0) > 0 &&
+    String(r.facturado || "").trim().toLowerCase() !== "si";
+
+  function renderPendientes(inicio) {
+    const desde = `${inicio}-12-01`;
+    const hasta = `${inicio + 1}-12-01`;
+    const dePlata = listaPendientes === "deuda";
+
+    const filas = (statsFilas || [])
+      .filter((r) => r.check_in >= desde && r.check_in < hasta)
+      .filter(dePlata ? debePlata : faltaFacturar)
+      .map((r) => ({
+        fila: r,
+        monto: dePlata
+          ? (Number(r.importe) || 0) - (Number(r.anticipo) || 0)
+          : (Number(r.importe) || 0),
+      }))
+      .sort((a, b) => b.monto - a.monto);
+
+    for (const boton of document.querySelectorAll(".filtroLista")) {
+      const activo = boton.dataset.lista === listaPendientes;
+      boton.className = "filtroLista px-4 py-2 rounded-full border text-xs font-semibold transition " +
+        (activo
+          ? "bg-brand-brown text-brand-cream border-brand-brown"
+          : "bg-white/70 border-brand-beige hover:bg-brand-beige/30");
+      boton.setAttribute("aria-pressed", activo ? "true" : "false");
+    }
+    el("pendientesUltima").textContent = dePlata ? "Debe" : "Estado";
+
+    const cuerpo = el("statsPendientes");
+    cuerpo.innerHTML = "";
+
+    if (!filas.length) {
+      const tr = document.createElement("tr");
+      const td = document.createElement("td");
+      td.colSpan = 5;
+      td.className = "px-2 py-4 text-brand-accent";
+      td.textContent = dePlata
+        ? "Nadie debe plata en esta temporada 🎉"
+        : "Está todo facturado en esta temporada 🎉";
+      tr.appendChild(td);
+      cuerpo.appendChild(tr);
+      el("pendientesResumen").textContent = "";
+      return;
+    }
+
+    for (const { fila, monto } of filas.slice(0, 30)) {
+      const tr = document.createElement("tr");
+      tr.className = "border-t border-brand-beige/70";
+
+      const marca = String(fila.facturado || "").trim().toLowerCase();
+      const celdas = [
+        String(fila.guest_name || "").trim() || "(sin nombre)",
+        houseName(fila.house_code),
+        `${fila.check_in} → ${fila.check_out}`,
+        pesosAR(Number(fila.importe) || 0),
+        dePlata ? pesosAR(monto) : (marca === "no" ? "Sin facturar" : "Sin marcar"),
+      ];
+
+      celdas.forEach((texto, i) => {
+        const td = document.createElement("td");
+        const alDerecha = i >= 3;
+        td.className = "px-2 py-3 whitespace-nowrap" +
+          (alDerecha ? " text-right tabular-nums" : "") +
+          (i === 4 && dePlata ? " font-semibold" : "");
+        td.textContent = texto;
+        tr.appendChild(td);
+      });
+      cuerpo.appendChild(tr);
+    }
+
+    const totalMonto = filas.reduce((s, f) => s + f.monto, 0);
+    const cuantas = `${filas.length} ${filas.length === 1 ? "estadía" : "estadías"}`;
+    el("pendientesResumen").textContent = dePlata
+      ? `${cuantas} · ${pesosAR(totalMonto)} por cobrar` + (filas.length > 30 ? " · se muestran las 30 más grandes" : "")
+      : `${cuantas} · ${pesosAR(totalMonto)} sin factura` + (filas.length > 30 ? " · se muestran las 30 más grandes" : "");
+  }
+
+  for (const boton of document.querySelectorAll(".filtroLista")) {
+    boton.onclick = () => {
+      listaPendientes = boton.dataset.lista;
+      renderPendientes(Number(el("statsTemporada").value));
+    };
+  }
+
+  async function cargarObjetivos() {
+    try {
+      const out = await apiFetch(EP_SEASON_GOALS, { method: "GET", body: null });
+      statsObjetivos = (out && out.goals) || {};
+    } catch {
+      // Que no se puedan leer los objetivos no tiene por qué tumbar Números:
+      // el resto de la sección sale igual y la barra simplemente no aparece.
+      statsObjetivos = {};
+    }
+  }
+
+  el("btnGuardarObjetivo").onclick = async () => {
+    const inicio = String(Number(el("statsTemporada").value) || "");
+    if (!/^\d{4}$/.test(inicio)) return setStatus("Elegí una temporada primero.");
+
+    const crudo = el("objetivoMonto").value.trim();
+    const objetivo = crudo === "" ? 0 : Number(crudo);
+    if (!Number.isFinite(objetivo) || objetivo < 0) {
+      return setStatus("El objetivo tiene que ser un número.");
+    }
+
+    el("btnGuardarObjetivo").disabled = true;
+    try {
+      setStatus("Guardando el objetivo...");
+      await apiFetch(EP_SET_SEASON_GOAL, { method: "POST", body: { temporada: inicio, objetivo } });
+
+      // Vacío = 0 = sin objetivo. Se saca del mapa para que la barra se vaya.
+      if (objetivo > 0) statsObjetivos[inicio] = objetivo;
+      else delete statsObjetivos[inicio];
+
+      renderStats();
+      setStatus(objetivo > 0 ? `✅ Objetivo guardado: ${pesosAR(objetivo)}.` : "✅ Objetivo borrado.");
+      showToast(objetivo > 0 ? "Objetivo guardado ✅" : "Objetivo borrado ✅", "ok");
+    } catch (e) {
+      setStatus(`❌ ${e.message}`);
+      showToast(e.message || "Error", "err");
+    } finally {
+      el("btnGuardarObjetivo").disabled = false;
+    }
+  };
 
   async function cargarStats() {
     const out = await apiFetch(
@@ -4920,6 +5284,8 @@
       // extra, no el plato.
       statsBloqueos = [];
     }
+
+    await cargarObjetivos();
 
     const selector = el("statsTemporada");
     const previo = selector.value;
