@@ -3462,14 +3462,18 @@
 
   let pagoReserva = null;
 
+  // El espacio entre el signo y el número es "duro" ( ): así el importe no
+  // se puede partir en dos renglones, y el texto que lo rodea sí puede cortar
+  // donde haga falta. Antes se conseguía lo mismo prohibiendo el salto en toda
+  // la línea, y las frases largas se salían de la tarjeta.
   function pesosAR(n) {
     const v = Number(n);
-    return Number.isFinite(v) ? "$ " + Math.round(v).toLocaleString("es-AR") : "-";
+    return Number.isFinite(v) ? "$ " + Math.round(v).toLocaleString("es-AR") : "-";
   }
 
   function dolaresUS(n) {
     const v = Number(n);
-    return Number.isFinite(v) ? "US$ " + Math.round(v).toLocaleString("es-AR") : "-";
+    return Number.isFinite(v) ? "US$ " + Math.round(v).toLocaleString("es-AR") : "-";
   }
 
   // El saldo no se guarda en ningún lado: siempre sale de importe - anticipo,
@@ -4626,17 +4630,23 @@
     r.className = "text-[10px] uppercase tracking-[0.18em] text-brand-accent font-bold";
     r.textContent = rotulo;
 
+    // El número nunca corta —un importe partido en dos renglones no se lee—,
+    // así que en pantalla angosta el que se achica es el tipo de letra:
+    // "$ 70.513.799" en text-2xl no entra en media pantalla de 360px.
     const v = document.createElement("div");
-    v.className = "serif text-2xl font-bold mt-1 tabular-nums whitespace-nowrap";
+    v.className = "serif text-xl sm:text-2xl font-bold mt-1 tabular-nums whitespace-nowrap";
     v.textContent = valor;
 
     caja.appendChild(r);
     caja.appendChild(v);
 
+    // Los pies son frases, no números: tienen que poder cortar. "a la cotización
+    // de cada reserva" no entra en una tarjeta de celular, y con nowrap se salía
+    // por el costado en vez de pasar al renglón de abajo.
     for (const linea of [pie, ...extras]) {
       if (!linea) continue;
       const p = document.createElement("div");
-      p.className = "text-xs text-brand-accent mt-0.5 whitespace-nowrap";
+      p.className = "text-xs text-brand-accent mt-0.5 break-words";
       p.textContent = linea;
       caja.appendChild(p);
     }
