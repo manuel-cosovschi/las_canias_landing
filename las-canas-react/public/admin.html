@@ -996,12 +996,17 @@
               Sale de las reservas confirmadas. La temporada va de diciembre a noviembre.
             </p>
           </div>
-          <div class="flex items-center gap-2">
+          <div class="flex flex-wrap items-center justify-end gap-2">
             <label for="statsTemporada" class="text-xs font-semibold">Temporada</label>
             <select id="statsTemporada"
               class="text-sm font-semibold rounded-xl border border-brand-beige bg-white px-3 py-2"></select>
+            <button id="btnStatsExcel"
+              class="px-4 py-2 rounded-full bg-brand-brown text-brand-cream text-xs font-semibold hover:opacity-90 transition disabled:opacity-50">
+              Descargar Excel
+            </button>
           </div>
         </div>
+        <p id="statsExcelMsg" class="text-xs mb-3"></p>
 
         <div id="statsResumen" class="grid grid-cols-2 lg:grid-cols-3 gap-3 mb-6"></div>
 
@@ -4645,6 +4650,318 @@
   }
 
   el("statsTemporada").onchange = renderStats;
+
+  /* =====================
+     DESCARGAR LA TEMPORADA COMO EXCEL
+  ===================== */
+
+  // Reproduce la hoja que los dueños llevaban a mano: un bloque por casa, con
+  // los calendarios de los doce meses pintados arriba y la tabla de estadías al
+  // costado. No es un export genérico — es *esa* planilla, para que puedan
+  // seguir usando lo que ya saben leer.
+  //
+  // Se genera en el navegador porque acá ya están todos los datos cargados, y
+  // ExcelJS se baja recién al apretar el botón: pesa casi un mega y la mayoría
+  // de las visitas al panel nunca lo usan.
+
+  const EXCELJS_CDN = "https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js";
+
+  const XL_NARANJA = "FFFFC000";   // noche ocupada
+  const XL_AMARILLO = "FFFFFF00";  // día de cambio: entra o sale alguien
+  const XL_MESES = ["Diciem.", "Enero", "Febrero", "Marzo", "Abril", "Mayo",
+                    "Junio", "Julio", "Agosto", "Sept", "Octubre", "Noviem"];
+  const XL_MESES_LARGOS = ["Diciembre", "Enero", "Febrero", "Marzo", "Abril", "Mayo",
+                           "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre"];
+  const XL_DIAS = ["Lu", "Ma", "Mi", "Ju", "Vi", "Sá", "Do"];
+  const XL_ENCABEZADOS = ["Mes", "Importe", "Dias", "Prom.", "Fecha", "Anticipo",
+                          "Restan", "Inquilinos", "Teléfono", "DNI/CUIL", "Fac",
+                          "Dólar", "Dolares"];
+
+  function cargarExcelJS() {
+    if (window.ExcelJS) return Promise.resolve(window.ExcelJS);
+    return new Promise((listo, error) => {
+      const s = document.createElement("script");
+      s.src = EXCELJS_CDN;
+      s.onload = () => (window.ExcelJS ? listo(window.ExcelJS) : error(new Error("ExcelJS no quedó disponible")));
+      s.onerror = () => error(new Error("No se pudo bajar el generador de Excel"));
+      document.head.appendChild(s);
+    });
+  }
+
+  // Las estadías que cruzan de mes van partidas en dos filas, como en el Excel:
+  // así la facturación queda imputada al mes que le corresponde y los totales
+  // por mes siguen dando. Es exactamente lo que el conversor deshace al importar.
+  function partirPorMes(r) {
+    const noches = nochesEntreYmd(r.check_in, r.check_out) || 0;
+    if (noches <= 0) return [];
+
+    const importe = Number(r.importe) || 0;
+    const anticipo = Number(r.anticipo) || 0;
+    const reparto = Object.entries(nochesPorMes(r.check_in, r.check_out)).sort();
+
+    const partes = reparto.map(([clave, n], i) => {
+      const [anio, mes] = clave.split("-").map(Number);
+      const ultimo = new Date(Date.UTC(anio, mes, 0)).getUTCDate();
+      const primerDia = i === 0 ? Number(r.check_in.slice(8, 10)) : 1;
+      const ultimoDia = i === reparto.length - 1 ? Number(r.check_out.slice(8, 10)) : ultimo;
+
+      // El último tramo reparte lo que sobró, para que la suma de las partes dé
+      // el importe exacto y no un peso menos por redondeo.
+      const proporcional = (total) =>
+        i === reparto.length - 1
+          ? total - reparto.slice(0, -1).reduce((s, [, m]) => s + Math.round((total * m) / noches), 0)
+          : Math.round((total * n) / noches);
+
+      return {
+        anio, mes, noches: n,
+        importe: importe ? proporcional(importe) : "",
+        anticipo: "",
+        fecha: `${primerDia} al ${ultimoDia}`,
+        guest_name: i === 0 ? (r.guest_name || "") : "",
+        phone: i === 0 ? (r.phone || "") : "",
+        dni: i === 0 ? (r.dni || "") : "",
+        facturado: i === 0 ? (r.facturado || "") : "",
+        cotizacion_usd: i === 0 ? (Number(r.cotizacion_usd) || "") : "",
+      };
+    });
+
+    // La seña llena los meses en orden, hasta el importe de cada uno. Es lo que
+    // hace la hoja de los dueños, y es lo único que da bien: partirla a prorrata
+    // no reproduce sus filas, y pegársela entera al primer mes deja un "Restan"
+    // negativo en la mitad de las estadías que cruzan de mes.
+    let resto = anticipo;
+    for (const p of partes) {
+      const aplica = Math.min(resto, Number(p.importe) || 0);
+      p.anticipo = aplica || "";
+      resto -= aplica;
+    }
+    // Si cobraron más que el importe (no debería, pero la planilla es de ellos),
+    // lo que sobra va al último tramo para que el total siga cerrando.
+    if (resto > 0 && partes.length) {
+      const ultima = partes[partes.length - 1];
+      ultima.anticipo = (Number(ultima.anticipo) || 0) + resto;
+    }
+
+    return partes;
+  }
+
+  // Amarillo el día que hay movimiento (entra o sale alguien), naranja la noche
+  // ocupada sin movimiento. Es la convención de la hoja original.
+  function pintarDias(filas, anio, mes) {
+    const ultimo = new Date(Date.UTC(anio, mes, 0)).getUTCDate();
+    const estado = {};
+    for (let d = 1; d <= ultimo; d++) {
+      const ymd = `${anio}-${String(mes).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+      const ocupa = filas.some((r) => r.check_in <= ymd && ymd < r.check_out);
+      const cambio = filas.some((r) => r.check_in === ymd || r.check_out === ymd);
+      estado[d] = cambio ? XL_AMARILLO : (ocupa ? XL_NARANJA : null);
+    }
+    return estado;
+  }
+
+  function dibujarMes(ws, filaTope, colTope, anio, mes, estado) {
+    ws.getCell(filaTope, colTope).value = XL_MESES_LARGOS[mes === 12 ? 0 : mes];
+    ws.getCell(filaTope, colTope).font = { bold: true };
+
+    for (let i = 0; i < 7; i++) {
+      const c = ws.getCell(filaTope + 1, colTope + i);
+      c.value = XL_DIAS[i];
+      c.font = { bold: true, size: 9 };
+      c.alignment = { horizontal: "center" };
+      c.fill = { type: "pattern", pattern: "solid", fgColor: { argb: XL_NARANJA } };
+    }
+
+    // La semana arranca el lunes, como en la hoja original.
+    const primero = new Date(Date.UTC(anio, mes - 1, 1)).getUTCDay();
+    const arranque = (primero + 6) % 7;
+    const ultimo = new Date(Date.UTC(anio, mes, 0)).getUTCDate();
+
+    for (let d = 1; d <= ultimo; d++) {
+      const pos = arranque + d - 1;
+      const c = ws.getCell(filaTope + 2 + Math.floor(pos / 7), colTope + (pos % 7));
+      c.value = d;
+      c.alignment = { horizontal: "center" };
+      c.font = { size: 9 };
+      c.border = {
+        top: { style: "thin", color: { argb: "FFD0D0D0" } },
+        left: { style: "thin", color: { argb: "FFD0D0D0" } },
+        bottom: { style: "thin", color: { argb: "FFD0D0D0" } },
+        right: { style: "thin", color: { argb: "FFD0D0D0" } },
+      };
+      if (estado[d]) c.fill = { type: "pattern", pattern: "solid", fgColor: { argb: estado[d] } };
+    }
+  }
+
+  async function construirLibro(inicio) {
+    const ExcelJS = await cargarExcelJS();
+    const wb = new ExcelJS.Workbook();
+    wb.creator = "Panel de Dueños — Las Cañas";
+    wb.created = new Date();
+
+    const ws = wb.addWorksheet(nombreTemporada(inicio), {
+      views: [{ showGridLines: false }],
+    });
+
+    const desde = `${inicio}-12-01`;
+    const hasta = `${inicio + 1}-12-01`;
+    const dentro = (statsFilas || []).filter((r) => r.check_in >= desde && r.check_in < hasta);
+    const bloqueosTemporada = (statsBloqueos || []).filter((b) => b.check_in >= desde && b.check_in < hasta);
+
+    // Los doce meses de la temporada, de diciembre a noviembre.
+    const mesesTemporada = [];
+    for (let i = 0; i < 12; i++) {
+      const m = ((11 + i) % 12) + 1;
+      mesesTemporada.push({ mes: m, anio: m === 12 ? inicio : inicio + 1 });
+    }
+
+    const COL_TABLA = 34;   // AH, igual que en la hoja original
+    const COL_MESES = [2, 10, 18, 26];  // B, J, R, Z
+    let fila = 2;
+
+    for (const casa of CASAS) {
+      const dela = dentro.filter((r) => r.house_code === casa)
+        .sort((a, b) => a.check_in.localeCompare(b.check_in));
+      const inicioBloque = fila;
+
+      // --- título ---
+      for (const col of [3, 27]) {
+        const t = ws.getCell(fila, col);
+        t.value = houseName(casa).toUpperCase();
+        t.font = { bold: true, size: 12 };
+        t.fill = { type: "pattern", pattern: "solid", fgColor: { argb: XL_NARANJA } };
+      }
+      fila += 1;
+
+      // --- calendarios: tres bandas de cuatro meses ---
+      // Se pintan también los bloqueos: son fechas fuera de venta igual que una
+      // reserva, y si no aparecieran, una semana bloqueada se vería libre en el
+      // calendario aunque no lo esté. No van a la tabla porque no tienen plata.
+      const ocupanCasa = dela.concat(bloqueosTemporada.filter((b) => b.house_code === casa));
+      let filaBanda = fila;
+      for (let banda = 0; banda < 3; banda++) {
+        for (let i = 0; i < 4; i++) {
+          const { mes, anio } = mesesTemporada[banda * 4 + i];
+          dibujarMes(ws, filaBanda, COL_MESES[i], anio, mes, pintarDias(ocupanCasa, anio, mes));
+        }
+        filaBanda += 12;
+      }
+
+      // --- tabla, al costado y arrancando a la altura de los días de semana ---
+      let filaTabla = fila + 1;
+      XL_ENCABEZADOS.forEach((texto, i) => {
+        const c = ws.getCell(filaTabla, COL_TABLA + i);
+        c.value = texto;
+        c.font = { bold: true, size: 10 };
+        c.fill = { type: "pattern", pattern: "solid", fgColor: { argb: XL_NARANJA } };
+        c.border = { bottom: { style: "thin" } };
+      });
+      filaTabla += 1;
+
+      const total = { importe: 0, noches: 0, anticipo: 0, restan: 0, usd: 0 };
+
+      for (const { mes, anio } of mesesTemporada) {
+        const delMes = dela.flatMap(partirPorMes)
+          .filter((t) => t.mes === mes && t.anio === anio);
+
+        // Los meses sin estadías igual llevan su renglón: en la hoja original
+        // están todos, y así el que la lee ve que el mes existe y estuvo vacío.
+        const aEscribir = delMes.length ? delMes : [null];
+
+        for (const t of aEscribir) {
+          const c = (i) => ws.getCell(filaTabla, COL_TABLA + i);
+          c(0).value = XL_MESES[mes === 12 ? 0 : mes];
+
+          if (t) {
+            const importe = Number(t.importe) || 0;
+            const anticipo = Number(t.anticipo) || 0;
+            const restan = importe ? importe - anticipo : "";
+            const cot = Number(t.cotizacion_usd) || 0;
+
+            c(1).value = t.importe === "" ? "" : importe;
+            c(2).value = t.noches;
+            c(3).value = t.noches && importe ? Math.round(importe / t.noches) : "";
+            c(4).value = t.fecha;
+            c(5).value = t.anticipo === "" ? "" : anticipo;
+            c(6).value = restan;
+            c(7).value = t.guest_name;
+            c(8).value = t.phone;
+            c(9).value = t.dni;
+            c(10).value = t.facturado;
+            c(11).value = cot || "";
+            c(12).value = cot && importe ? Math.round(importe / cot) : "";
+
+            for (const i of [1, 3, 5, 6, 11]) c(i).numFmt = '"$" #,##0';
+            total.importe += importe;
+            total.noches += t.noches;
+            total.anticipo += anticipo;
+            total.restan += Number(restan) || 0;
+            total.usd += cot && importe ? importe / cot : 0;
+          }
+          filaTabla += 1;
+        }
+      }
+
+      // --- fila de Total ---
+      const t = (i) => ws.getCell(filaTabla, COL_TABLA + i);
+      t(0).value = "Total";
+      t(1).value = total.importe;
+      t(2).value = total.noches;
+      t(3).value = total.noches ? Math.round(total.importe / total.noches) : "";
+      t(5).value = total.anticipo;
+      t(6).value = total.restan;
+      t(12).value = Math.round(total.usd);
+      for (let i = 0; i < 13; i++) {
+        t(i).font = { bold: true };
+        t(i).border = { top: { style: "double" } };
+      }
+      for (const i of [1, 3, 5, 6]) t(i).numFmt = '"$" #,##0';
+
+      // El bloque termina donde termine lo más largo: los calendarios o la tabla.
+      fila = Math.max(filaBanda, filaTabla + 1) + 2;
+      void inicioBloque;
+    }
+
+    // Anchos: los días del calendario angostos, la tabla legible.
+    for (let c = 2; c <= 33; c++) ws.getColumn(c).width = 3.5;
+    const anchos = [9, 12, 6, 11, 10, 12, 12, 24, 15, 14, 5, 8, 9];
+    anchos.forEach((w, i) => (ws.getColumn(COL_TABLA + i).width = w));
+
+    return wb;
+  }
+
+  el("btnStatsExcel").onclick = async () => {
+    const btn = el("btnStatsExcel");
+    const msg = el("statsExcelMsg");
+    const inicio = Number(el("statsTemporada").value);
+
+    if (!statsFilas || !statsFilas.length) {
+      pintarMsg(msg, "Todavía no hay datos para exportar", "err");
+      return;
+    }
+
+    btn.disabled = true;
+    pintarMsg(msg, "Armando el Excel...", "info");
+    try {
+      const wb = await construirLibro(inicio);
+      const buf = await wb.xlsx.writeBuffer();
+      const url = URL.createObjectURL(
+        new Blob([buf], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" })
+      );
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `Las Cañas - ${nombreTemporada(inicio)}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      // Sin esto el blob queda en memoria hasta que se cierre la pestaña.
+      setTimeout(() => URL.revokeObjectURL(url), 30000);
+      pintarMsg(msg, `Listo: ${nombreTemporada(inicio)}`, "ok");
+    } catch (e) {
+      pintarMsg(msg, e.message || "No se pudo generar el Excel", "err");
+    } finally {
+      btn.disabled = false;
+    }
+  };
 
   // init
   loadRememberedUser();
