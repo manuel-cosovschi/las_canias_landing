@@ -2,7 +2,7 @@
 // Devuelve eventos para calendario: CONFIRMED / HOLD_TRANSFER / BLOCKED
 // Requiere Basic Auth + x-lc-secret, y lee la sheet "reservas" (tu estructura actual).
 
-const { google } = require("googleapis");
+const { readAllRows } = require("./_sheet");
 
 function json(statusCode, body) {
   return {
@@ -110,42 +110,12 @@ function houseName(code) {
   return HOUSE_NAMES[key] || String(code || "").trim();
 }
 
-async function getSheetsClient() {
-  const raw = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
-  if (!raw) throw new Error("Falta GOOGLE_SERVICE_ACCOUNT_JSON en env.");
-  const creds = JSON.parse(raw);
-
-  const jwt = new google.auth.JWT({
-    email: creds.client_email,
-    key: creds.private_key,
-    scopes: ["https://www.googleapis.com/auth/spreadsheets.readonly"],
-  });
-
-  await jwt.authorize();
-
-  return google.sheets({ version: "v4", auth: jwt });
-}
-
-async function readAllRows() {
-  const spreadsheetId = process.env.LC_SHEET_ID;
-  const tab = process.env.LC_SHEET_TAB || "reservas";
-  if (!spreadsheetId) throw new Error("Falta LC_SHEET_ID en env.");
-
-  const sheets = await getSheetsClient();
-  const range = `${tab}!A:Z`;
-
-  const res = await sheets.spreadsheets.values.get({ spreadsheetId, range });
-  const values = res.data.values || [];
-  if (values.length < 2) return [];
-
-  const headers = values[0].map(h => String(h || "").trim());
-  const rows = values.slice(1).map((arr) => {
-    const obj = {};
-    for (let i = 0; i < headers.length; i++) obj[headers[i]] = arr[i];
-    return normalizeRow(obj);
-  });
-
-  return rows;
+// La lectura sale de _sheet.js, no de una copia acá. Esta función tenía su
+// propio `A:Z` y sobrevivió al arreglo del otro: dos copias del mismo código
+// terminan leyendo columnas distintas, que es justo lo que el comentario de
+// _sheet.js decía querer evitar.
+async function leerFilas() {
+  return (await readAllRows()).map(normalizeRow);
 }
 
 exports.handler = async (event) => {
@@ -168,7 +138,7 @@ exports.handler = async (event) => {
     if (!verifyAdminAuth(event.headers)) return json(401, { message: "No autorizado (Basic inválido)." });
     if (!verifyOwnerSecret(event.headers)) return json(403, { message: "Forbidden: falta x-lc-secret" });
 
-    const rows = await readAllRows();
+    const rows = await leerFilas();
 
     // Solo los estados que querés ver sí o sí en calendario
     const allowed = new Set(["CONFIRMED", "HOLD_TRANSFER", "BLOCKED"]);
