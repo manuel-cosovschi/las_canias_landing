@@ -3,11 +3,18 @@
 // de Google. Es el mismo camino que ya usaba list-calendar: n8n queda para
 // escribir, y para leer de a muchas filas vamos derecho a Sheets.
 //
-// Tener el rango y el nombre de la pestaña en un solo lugar evita que dos
-// funciones lean columnas distintas cuando la planilla cambia.
+// Tener el nombre de la pestaña en un solo lugar evita que dos funciones lean
+// columnas distintas cuando la planilla cambia.
+//
+// Se pide la pestaña entera, sin acotar columnas. Antes decía "A:Z", que corta
+// en la 26: las cuatro columnas de plata (importe, anticipo, facturado,
+// cotizacion_usd) viven en AA..AD y nunca llegaban. La sección Números salía
+// con todo en cero y no había forma de notarlo desde acá, porque las fechas y
+// los nombres —que sí entran en A:Z— se veían perfectos.
+//
+// Sin tope de columnas, lo que promete el comentario de readAllRows es cierto:
+// una columna nueva aparece sola.
 const { google } = require("googleapis");
-
-const SHEET_RANGE = "A:Z";
 
 function decodeBasic(authHeader) {
   try {
@@ -69,7 +76,7 @@ async function readAllRows() {
   const sheets = await getSheetsClient();
   const res = await sheets.spreadsheets.values.get({
     spreadsheetId,
-    range: `${tab}!${SHEET_RANGE}`,
+    range: tab,
   });
 
   const values = res.data.values || [];
