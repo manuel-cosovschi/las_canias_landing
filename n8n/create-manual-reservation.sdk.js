@@ -1,7 +1,12 @@
 // Workflow `create-manual-reservation` de n8n (copia versionada).
 //
-// Carga una reserva a mano desde el panel: la que entró por teléfono o
-// WhatsApp y nunca pasó por la web. Es la fila que antes escribían en el Excel.
+// Escribe una fila de ocupación en la planilla, en dos sabores:
+//
+//   status CONFIRMED -> la reserva que entró por teléfono o WhatsApp y nunca
+//                       pasó por la web. Es la fila que antes iba al Excel.
+//   status BLOCKED   -> fechas sacadas de la venta. Pueden venir con huésped e
+//                       importe (los dueños cargan así las de WhatsApp) o sin
+//                       nada (mantenimiento, uso de la familia).
 //
 // No confundir con create-reservation, que es el alta pública: aquella nace
 // PENDING y con vencimiento, ésta nace CONFIRMED porque el dueño ya sabe que
@@ -49,9 +54,16 @@ if (secret !== "REEMPLAZAR_POR_EL_LC_OWNER_SECRET") {
 }
 
 const casa = String(body.house_code || "").trim().toUpperCase();
-const ci = String(body.check_in || "").slice(0, 10);
-const co = String(body.check_out || "").slice(0, 10);
+const ci = String(body.check_in || body.checkin || "").slice(0, 10);
+const co = String(body.check_out || body.checkout || "").slice(0, 10);
 const nombre = String(body.guest_name || "").trim();
+
+// BLOCKED es la fecha sacada de la venta; CONFIRMED la reserva cerrada. Las dos
+// escriben la misma fila: la diferencia es si tiene un huésped detrás.
+const estado = String(body.status || "CONFIRMED").trim().toUpperCase();
+if (estado !== "CONFIRMED" && estado !== "BLOCKED") {
+  return [{ json: { ok: false, message: "Estado inválido" } }];
+}
 
 const CASAS = ["LC1", "LC2", "LC3", "LC4", "LC5"];
 if (!CASAS.includes(casa)) {
@@ -65,11 +77,12 @@ if (!formato.test(ci) || !formato.test(co)) {
 if (co <= ci) {
   return [{ json: { ok: false, message: "La salida tiene que ser posterior a la entrada" } }];
 }
-if (!nombre) {
+// Un bloqueo puede no tener huésped: mantenimiento o uso de la familia.
+if (estado === "CONFIRMED" && !nombre) {
   return [{ json: { ok: false, message: "Falta el nombre del huésped" } }];
 }
 
-// Vacío queda vacío: una reserva puede cargarse sin el importe todavía.
+// Vacío queda vacío: una fila puede cargarse sin el importe todavía.
 const plata = (v) => {
   if (v === undefined || v === null || String(v).trim() === "") return "";
   const n = Number(String(v).replace(/[^\\d.-]/g, ""));
@@ -78,14 +91,19 @@ const plata = (v) => {
 
 const importe = plata(body.importe);
 const anticipo = plata(body.anticipo);
+const cotizacion = plata(body.cotizacion_usd);
 if (importe === null) return [{ json: { ok: false, message: "Importe inválido" } }];
 if (anticipo === null) return [{ json: { ok: false, message: "Seña inválida" } }];
+if (cotizacion === null) return [{ json: { ok: false, message: "Cotización inválida" } }];
 if (importe !== "" && anticipo !== "" && anticipo > importe) {
   return [{ json: { ok: false, message: "La seña no puede ser mayor que el importe total" } }];
 }
 
+const fac = String(body.facturado || "").trim().toLowerCase();
+
 return [{ json: {
   ok: true,
+  status: estado,
   house_code: casa,
   check_in: ci,
   check_out: co,
@@ -95,6 +113,9 @@ return [{ json: {
   email: String(body.email || "").trim(),
   importe: importe,
   anticipo: anticipo,
+  facturado: fac === "si" || fac === "no" ? fac : "",
+  cotizacion_usd: cotizacion,
+  note: String(body.note || body.notes || "").slice(0, 200),
 } }];`,
     },
   },
@@ -168,19 +189,23 @@ if (choque) {
 }
 
 // Id propio, distinto del XL- de la migración y del de la web, para que se
-// sepa de dónde salió cada reserva.
-const base = "MAN-" + pedido.house_code + "-" + pedido.check_in;
+// sepa de dónde salió cada fila. BLQ- para las fechas sacadas de la venta.
+const prefijo = pedido.status === "BLOCKED" ? "BLQ-" : "MAN-";
+const base = prefijo + pedido.house_code + "-" + pedido.check_in;
 let id = base;
 let n = 2;
 const usados = new Set(filas.map(r => String(r.id || "").trim()));
 while (usados.has(id)) { id = base + "-" + n; n++; }
 
 const ahora = new Date().toISOString();
+const porDefecto = pedido.status === "BLOCKED"
+  ? "Bloqueo cargado desde el panel"
+  : "Cargada a mano desde el panel";
 
 return [{ json: {
   ok: true,
   id,
-  status: "CONFIRMED",
+  status: pedido.status,
   source: "manual",
   house_code: pedido.house_code,
   check_in: pedido.check_in,
@@ -191,9 +216,11 @@ return [{ json: {
   email: pedido.email,
   importe: pedido.importe,
   anticipo: pedido.anticipo,
-  notes: "Cargada a mano desde el panel",
+  facturado: pedido.facturado,
+  cotizacion_usd: pedido.cotizacion_usd,
+  notes: pedido.note || porDefecto,
   created_at: ahora,
-  approved_at: ahora,
+  approved_at: pedido.status === "CONFIRMED" ? ahora : "",
 } }];`,
     },
   },
