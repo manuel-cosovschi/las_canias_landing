@@ -160,6 +160,17 @@ export default function Navbar() {
             </div>
           </li>
 
+          {/* La tienda va antes de Reservar y en beige: se tiene que ver, pero
+              reservar sigue siendo lo que paga las cuentas. */}
+          <li className="flex items-center">
+            <a
+              href="#tienda"
+              className="bg-brand-beige hover:bg-brand-accent hover:text-brand-cream text-brand-brown px-8 py-4 rounded-full text-[10px] font-black uppercase tracking-[0.24em] transition-all shadow-xl"
+            >
+              Tienda
+            </a>
+          </li>
+
           <li className="flex items-center">
             <a
               href="/reservar.html"
@@ -253,6 +264,14 @@ export default function Navbar() {
                     {l.name}
                   </a>
                 ))}
+
+                <a
+                  href="#tienda"
+                  className="mt-2 inline-flex items-center justify-center bg-brand-beige hover:bg-brand-accent hover:text-brand-cream text-brand-brown px-10 py-5 rounded-full text-[10px] font-black uppercase tracking-[0.24em] transition-all shadow-xl"
+                  onClick={closeAll}
+                >
+                  Tienda de playa
+                </a>
 
                 <a
                   href="/reservar.html"
