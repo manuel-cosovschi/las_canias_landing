@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { hayTienda } from "../data/tienda.js";
 
 export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -160,6 +161,20 @@ export default function Navbar() {
             </div>
           </li>
 
+          {/* La tienda va antes de Reservar y en beige: se tiene que ver, pero
+              reservar sigue siendo lo que paga las cuentas. Sin productos
+              cargados no aparece. */}
+          {hayTienda && (
+            <li className="flex items-center">
+              <a
+                href="#tienda"
+                className="bg-brand-beige hover:bg-brand-accent hover:text-brand-cream text-brand-brown px-8 py-4 rounded-full text-[10px] font-black uppercase tracking-[0.24em] transition-all shadow-xl"
+              >
+                Tienda
+              </a>
+            </li>
+          )}
+
           <li className="flex items-center">
             <a
               href="/reservar.html"
@@ -253,6 +268,16 @@ export default function Navbar() {
                     {l.name}
                   </a>
                 ))}
+
+                {hayTienda && (
+                  <a
+                    href="#tienda"
+                    className="mt-2 inline-flex items-center justify-center bg-brand-beige hover:bg-brand-accent hover:text-brand-cream text-brand-brown px-10 py-5 rounded-full text-[10px] font-black uppercase tracking-[0.24em] transition-all shadow-xl"
+                    onClick={closeAll}
+                  >
+                    Tienda de playa
+                  </a>
+                )}
 
                 <a
                   href="/reservar.html"
