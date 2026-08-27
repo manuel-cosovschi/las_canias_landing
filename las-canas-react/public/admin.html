@@ -126,6 +126,33 @@
        campos rotulados. En pantalla ancha los campos van en una fila, y las
        columnas coinciden entre fichas porque todas usan la misma grilla; abajo
        de 768px se apilan, que es la única forma de que entren sin cortarse. */
+    /* Safari de iPhone dibuja <input type="date"> a su manera: centra el valor,
+       le pone un margen propio y, vacío, lo achica. Al lado de un campo de
+       texto —que va pegado a la izquierda— se ven como dos cajas distintas, y
+       eso es lo que se notaba en Reglas y en Precios desde el celular.
+       Acá se lo empareja con el resto: mismo alineado, mismo alto. */
+    input[type="date"] {
+      -webkit-appearance: none;
+      appearance: none;
+      text-align: left;
+    }
+    input[type="date"]::-webkit-date-and-time-value {
+      text-align: left;
+      margin: 0;
+    }
+    /* El editor interno trae su propio interlineado y su propio padding, y por
+       eso el campo salía más alto que uno de texto al lado. Hereda los del
+       input en vez de fijarle una altura, que en el celular recortaría el
+       valor y volvería a romperse con otro tamaño de letra. */
+    input[type="date"]::-webkit-datetime-edit,
+    input[type="date"]::-webkit-datetime-edit-fields-wrapper {
+      text-align: left;
+      padding: 0;
+      line-height: inherit;
+    }
+    /* El ícono del calendario queda contra el borde derecho, no flotando. */
+    input[type="date"]::-webkit-calendar-picker-indicator { margin-inline-start: auto; }
+
     .ficha { display: grid; gap: .75rem; }
     @media (min-width: 768px) {
       .ficha { align-items: end; }
@@ -1260,6 +1287,7 @@
               <h3 class="font-bold text-sm">A quién reclamarle</h3>
               <p class="text-xs text-brand-accent mt-1">
                 De la temporada elegida, ordenado por el monto más grande primero.
+                <span class="whitespace-nowrap">Tocá una fila para corregirla.</span>
               </p>
             </div>
             <div class="flex gap-2" role="group" aria-label="Qué lista mirar">
@@ -3758,6 +3786,10 @@
       showToast("Importes guardados ✅", "ok");
       closePagoModal();
       await loadConfirmed();
+      // Si el modal se abrió desde Números (las listas de deuda y facturación),
+      // hay que rehacer las cuentas: si no, el que acaba de pagar sigue
+      // figurando como deudor hasta que alguien recargue la página.
+      if (statsFilas) await cargarStats();
     } catch (e) {
       pagoMsg.textContent = e.message || "No se pudo guardar";
       pagoMsg.className = "mt-3 text-sm text-red-700";
@@ -5161,7 +5193,16 @@
 
     for (const { fila, monto } of filas.slice(0, 30)) {
       const tr = document.createElement("tr");
-      tr.className = "border-t border-brand-beige/70";
+      // La fila entera abre los importes: acá es donde el dueño se entera de
+      // que alguien debe, así que es donde tiene que poder marcar que ya pagó
+      // sin ir a buscar la reserva a otra pestaña.
+      tr.className = "border-t border-brand-beige/70 cursor-pointer hover:bg-brand-cream/60 transition";
+      tr.tabIndex = 0;
+      tr.setAttribute("role", "button");
+      tr.title = "Tocá para corregir importes o marcar que ya pagó";
+      const abrir = () => openPagoModal(fila);
+      tr.onclick = abrir;
+      tr.onkeydown = (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); abrir(); } };
 
       const marca = String(fila.facturado || "").trim().toLowerCase();
       const celdas = [
@@ -5179,6 +5220,15 @@
           (alDerecha ? " text-right tabular-nums" : "") +
           (i === 4 && dePlata ? " font-semibold" : "");
         td.textContent = texto;
+        // El lápiz va con el nombre, que es lo primero que se mira, y así no
+        // hace falta una sexta columna que en el celular quedaría fuera.
+        if (i === 0) {
+          const lapiz = document.createElement("span");
+          lapiz.className = "ml-2 text-brand-accent";
+          lapiz.setAttribute("aria-hidden", "true");
+          lapiz.textContent = "✎";
+          td.appendChild(lapiz);
+        }
         tr.appendChild(td);
       });
       cuerpo.appendChild(tr);
