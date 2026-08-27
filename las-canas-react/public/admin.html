@@ -380,6 +380,36 @@
           </span>
         </div>
 
+        <!-- Bloquear y desbloquear no piden lo mismo: para liberar fechas no
+             hacen falta ni el motivo ni los datos del huésped. Mostrar todo
+             junto obligaba a leer un formulario entero para usar la mitad, así
+             que primero se elige qué se va a hacer. -->
+        <div id="modoBloqueo" class="grid sm:grid-cols-2 gap-3">
+          <button id="modoBloquear" type="button"
+            class="text-left p-4 rounded-2xl border border-brand-beige bg-white hover:bg-brand-beige/30 hover:border-brand-accent transition">
+            <span class="block font-semibold">Bloquear fechas</span>
+            <span class="block text-xs text-brand-accent mt-1">
+              Sacar días de venta, o cargar la reserva que entró por WhatsApp.
+            </span>
+          </button>
+          <button id="modoDesbloquear" type="button"
+            class="text-left p-4 rounded-2xl border border-brand-beige bg-white hover:bg-brand-beige/30 hover:border-brand-accent transition">
+            <span class="block font-semibold">Desbloquear fechas</span>
+            <span class="block text-xs text-brand-accent mt-1">
+              Volver a poner en venta días que habías bloqueado.
+            </span>
+          </button>
+        </div>
+
+        <div id="formBloqueo" class="hidden">
+          <div class="flex items-center justify-between gap-3 mb-4">
+            <p id="tituloModo" class="font-semibold text-sm">-</p>
+            <button id="btnVolverModo" type="button"
+              class="shrink-0 text-xs font-semibold px-3 py-1.5 rounded-full border border-brand-beige bg-white/70 hover:bg-white transition">
+              ← Cambiar
+            </button>
+          </div>
+
         <div class="grid sm:grid-cols-2 gap-4">
           <div>
             <label class="block text-sm font-semibold mb-1">Casa</label>
@@ -393,7 +423,10 @@
             </select>
           </div>
 
-          <div>
+          <!-- Al desbloquear, el motivo no se guarda en ningún lado: la función
+               lo recibe sólo por si algún día se quiere loguear. Pedirlo ahí es
+               pedir algo que no sirve para nada. -->
+          <div id="campoMotivo">
             <label class="block text-sm font-semibold mb-1">Motivo</label>
             <input id="note"
               class="w-full border border-brand-beige rounded-2xl p-3 bg-white/80 focus:outline-none focus:ring-2 focus:ring-brand-accent/40"
@@ -485,13 +518,14 @@
           Desbloquear fechas
         </button>
 
-        <p class="mt-3 text-xs text-brand-accent">
+        <p id="tipDesbloqueo" class="mt-3 text-xs text-brand-accent">
           Tip: “Desbloquear” elimina bloqueos manuales (BLOCKED) que solapen ese rango para esa casa.
         </p>
 
         <p class="mt-3 text-xs text-brand-accent">
           Tip: Check-out debe ser posterior al check-in.
         </p>
+        </div>
       </div>
 
       <!-- TRANSFERENCIAS -->
@@ -2131,7 +2165,10 @@
    // no auto refresh en confirmadas
   }
 
-  tabBlock.onclick = () => showTab("block");
+  // Vuelve a preguntar qué se va a hacer cada vez que se entra, no sólo la
+  // primera. mostrarModo() se declara más abajo; para cuando alguien pueda
+  // hacer click ya existe.
+  tabBlock.onclick = () => { showTab("block"); mostrarModo(null); };
 
   tabTransfers.onclick = async () => {
     showTab("transfers");
@@ -2698,6 +2735,46 @@
 
   const CAMPOS_BLOQUEO = ["blockNombre", "blockTelefono", "blockDni",
                           "blockImporte", "blockAnticipo", "blockDolar"];
+
+  /* ---- elegir primero qué se va a hacer ---- */
+
+  // null = todavía no eligió. Se arranca así cada vez que se entra a la
+  // sección: son dos acciones opuestas y una de ellas borra filas, así que
+  // conviene que sea una decisión y no lo que quedó de la vez anterior.
+  let modoBloqueo = null;
+
+  function mostrarModo(modo) {
+    modoBloqueo = modo;
+
+    const eligio = modo === "bloquear" || modo === "desbloquear";
+    el("modoBloqueo").classList.toggle("hidden", eligio);
+    el("formBloqueo").classList.toggle("hidden", !eligio);
+    if (!eligio) return;
+
+    const bloquea = modo === "bloquear";
+    el("tituloModo").textContent = bloquea
+      ? "Bloquear fechas"
+      : "Desbloquear fechas";
+
+    // Lo que sólo tiene sentido al bloquear
+    el("campoMotivo").classList.toggle("hidden", !bloquea);
+    el("datosBloqueo").classList.toggle("hidden", !bloquea);
+    el("btnBlock").classList.toggle("hidden", !bloquea);
+    // Y lo que sólo tiene sentido al desbloquear
+    el("btnUnblock").classList.toggle("hidden", bloquea);
+    el("tipDesbloqueo").classList.toggle("hidden", bloquea);
+
+    // El motivo y los datos de la reserva no viajan en el desbloqueo: se
+    // limpian para que no queden escritos sin que nadie los vea.
+    if (!bloquea) {
+      el("note").value = "";
+      limpiarDatosBloqueo();
+    }
+  }
+
+  el("modoBloquear").onclick = () => mostrarModo("bloquear");
+  el("modoDesbloquear").onclick = () => mostrarModo("desbloquear");
+  el("btnVolverModo").onclick = () => mostrarModo(null);
 
   // Los campos quedan a la vista, no plegados: escondidos detrás de un click
   // nadie los llenaba, y un bloqueo sin importe es una reserva que no suma en
