@@ -264,6 +264,33 @@ camino con media lista escrita.
 | `upload-store-photo` | sólo dueño | Sube la foto de un producto |
 | `store-photo` | público (con matices) | Sirve la foto de un producto |
 
+### Son `.mjs` y formato v2, y tiene que ser así
+
+Las otras 31 funciones son formato v1 (`exports.handler`). Estas cuatro son
+v2 (`export default`, entra un `Request` y sale una `Response`) porque
+**Netlify le inyecta `NETLIFY_BLOBS_CONTEXT` sólo a las v2**. En v1,
+`getStore()` tira `MissingBlobsEnvironmentError` y no hay tienda.
+
+No es una suposición: se midió en un deploy real, con la misma llamada a
+Blobs en los dos formatos, al mismo sitio y al mismo store.
+
+```
+v2 -> { "tieneContexto": true,  "blobs": "ok" }
+v1 -> { "motivo": "MissingBlobsEnvironmentError" }
+```
+
+**Esto vale también para `_proofs.js`**, que usa el mismo mecanismo desde
+`submit-proof` (v1). Ahí el error se traga a propósito —perder la copia del
+comprobante no puede cortarle la reserva a nadie— así que viene fallando en
+silencio. Si en algún momento se quieren las copias de comprobantes en el
+panel, hay que pasar `submit-proof` y `proof-file` a v2 igual que estas.
+
+De paso, v2 simplifica dos cosas: la foto sale como bytes en la `Response`
+(en v1 había que pasarla a base64 y avisar con una bandera), y el multipart
+lo lee `req.formData()` en vez de Busboy, que corta el archivo al llegar al
+límite en vez de fallar y obligaba a escuchar el evento `limit` para no
+guardar una imagen truncada.
+
 ### El "Próximamente" es de verdad
 
 Mientras la tienda no esté publicada, `store-catalog` **no devuelve ni un
