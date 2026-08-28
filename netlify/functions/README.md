@@ -279,11 +279,18 @@ v2 -> { "tieneContexto": true,  "blobs": "ok" }
 v1 -> { "motivo": "MissingBlobsEnvironmentError" }
 ```
 
-**Esto vale también para `_proofs.js`**, que usa el mismo mecanismo desde
-`submit-proof` (v1). Ahí el error se traga a propósito —perder la copia del
-comprobante no puede cortarle la reserva a nadie— así que viene fallando en
-silencio. Si en algún momento se quieren las copias de comprobantes en el
-panel, hay que pasar `submit-proof` y `proof-file` a v2 igual que estas.
+**Le pasaba lo mismo a los comprobantes**, que usan el mismo mecanismo desde
+`submit-proof`. Ahí el error se traga a propósito —perder la copia no puede
+cortarle la reserva a nadie— así que venía fallando en silencio desde el
+primer día: el panel mostraba "sin comprobante" para todas las reservas. Ya
+están migrados: `_proofs.mjs`, `submit-proof.mjs` y `proof-file.mjs`.
+
+La plomería que comparten las funciones v2 —leer el secret de un `Request`,
+armar una `Response`— vive en `_v2.mjs`. Ahí **no** va el Basic del panel:
+sale de `verifyAdminAuth` en `_sheet.js`, que carga `googleapis` al
+importarse, y metido en `_v2.mjs` se lo llevaría puesto el bundle de
+`store-catalog`, que es público, caliente y no toca Sheets. Lo importa
+`proof-file`, que es el único que lo necesita.
 
 De paso, v2 simplifica dos cosas: la foto sale como bytes en la `Response`
 (en v1 había que pasarla a base64 y avisar con una bandera), y el multipart

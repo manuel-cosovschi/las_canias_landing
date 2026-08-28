@@ -16,39 +16,11 @@
 // una columna nueva aparece sola.
 const { google } = require("googleapis");
 
-function decodeBasic(authHeader) {
-  try {
-    const [kind, token] = String(authHeader || "").split(" ");
-    if (kind !== "Basic" || !token) return null;
-    const raw = Buffer.from(token, "base64").toString("utf8");
-    const i = raw.indexOf(":");
-    if (i < 0) return null;
-    return { user: raw.slice(0, i), pass: raw.slice(i + 1), token };
-  } catch {
-    return null;
-  }
-}
-
-// El panel manda Basic + x-lc-secret. Esto valida el Basic; el secret de dueño
-// lo valida assertAuth de _utils.
-function verifyAdminAuth(headers) {
-  const parsed = decodeBasic(headers.authorization || headers.Authorization);
-  if (!parsed) return false;
-
-  const ENV_BASIC =
-    process.env.LC_ADMIN_BASIC ||
-    process.env.ADMIN_BASIC ||
-    process.env.ADMIN_AUTH_BASIC;
-
-  if (ENV_BASIC) return parsed.token === ENV_BASIC;
-
-  const ENV_USER = process.env.LC_ADMIN_USER || process.env.ADMIN_USER;
-  const ENV_PASS = process.env.LC_ADMIN_PASS || process.env.ADMIN_PASS;
-
-  if (ENV_USER && ENV_PASS) return parsed.user === ENV_USER && parsed.pass === ENV_PASS;
-
-  return false;
-}
+// El Basic del panel se mudó a _auth.js, que no depende de nada. Se reexporta
+// desde acá para que las funciones que ya lo piden a este módulo no cambien.
+// El motivo de la mudanza está en _auth.js: importarlo desde una función v2
+// arrastraba googleapis y la rompía.
+const { verifyAdminAuth } = require("./_auth");
 
 async function getSheetsClient() {
   const raw = process.env.GOOGLE_SERVICE_ACCOUNT_JSON;
