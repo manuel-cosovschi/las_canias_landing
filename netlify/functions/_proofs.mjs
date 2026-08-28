@@ -9,15 +9,16 @@
 // Todo el trato con el almacenamiento pasa por este archivo: si algún día hay
 // que mover los archivos a otro lado, se cambia acá y ni submit-proof ni
 // proof-file se enteran.
-const STORE = "proofs";
+//
+// Esto y sus dos funciones son formato v2, que es lo único que ve Netlify
+// Blobs. En v1 —como estaban— getStore() tiraba MissingBlobsEnvironmentError
+// y las copias no se guardaban nunca. Como acá el error se traga a propósito
+// (perder la copia no puede cortarle la reserva a nadie), venía fallando en
+// silencio: el panel mostraba "sin comprobante" para todos. El porqué del
+// formato, con la medición, está en _v2.mjs.
+import { getStore } from "@netlify/blobs";
 
-// El require va acá adentro y no arriba de todo: submit-proof está en el camino
-// de una reserva real, y si el módulo no estuviera instalado, un import suelto
-// tiraría abajo la función entera. Así, lo peor que pasa es quedarnos sin la
-// copia del panel.
-function getStore(name) {
-  return require("@netlify/blobs").getStore(name);
-}
+const STORE = "proofs";
 
 // El id va en la URL y en la key del blob: que no se cuele nada raro.
 function claveDe(id) {
@@ -108,4 +109,4 @@ async function whichHaveProof(ids) {
   return { ids: out, storageOk };
 }
 
-module.exports = { saveProof, readProof, whichHaveProof };
+export { saveProof, readProof, whichHaveProof };

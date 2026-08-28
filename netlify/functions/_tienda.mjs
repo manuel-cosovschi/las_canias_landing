@@ -1,18 +1,9 @@
 // netlify/functions/_tienda.js
 // Guarda el catálogo de la tienda y las fotos de los productos.
 //
-// Las cuatro funciones de la tienda están en formato v2 (export default) y no
-// en v1 (exports.handler) como el resto del repo. No es capricho: Netlify le
-// inyecta NETLIFY_BLOBS_CONTEXT sólo a las v2. En v1, getStore() tira
-// MissingBlobsEnvironmentError y no hay tienda. Se midió en un deploy real,
-// con la misma llamada en los dos formatos:
-//
-//   v2 -> { tieneContexto: true,  blobs: "ok" }
-//   v1 -> { motivo: "MissingBlobsEnvironmentError" }
-//
-// Por eso este archivo es ESM y trae también la plomería de v2 (leer el
-// secret de un Request, armar una Response), que _utils.js no puede dar
-// porque lo comparten las otras 31 funciones, todas v1.
+// Las cuatro funciones de la tienda están en formato v2 y no en v1 como buena
+// parte del repo: es lo único que ve Netlify Blobs. El porqué, con la medición
+// que lo respalda, está en _v2.mjs.
 //
 // Mismo mecanismo que los comprobantes (_proofs.js): Netlify Blobs. Se eligió
 // eso y no la planilla de reservas a propósito — la planilla lleva la
@@ -193,26 +184,10 @@ async function cualesTienenFoto(ids) {
   return conFoto;
 }
 
-/* ===================== plomería de las funciones v2 ===================== */
-
-// Mismo criterio que assertAuth de _utils.js, pero leyendo de un Request.
-// Headers.get() no distingue mayúsculas, así que alcanza con un nombre.
-export function esDueno(req) {
-  const esperado = process.env.LC_OWNER_SECRET || "";
-  return Boolean(esperado) && req.headers.get("x-lc-secret") === esperado;
-}
-
-export function respuestaJson(status, datos, cache) {
-  return new Response(JSON.stringify(datos), {
-    status,
-    headers: {
-      "Content-Type": "application/json",
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Headers": "Content-Type, x-lc-secret",
-      "Cache-Control": cache || "no-store",
-    },
-  });
-}
+// La plomería de v2 vive en _v2.mjs desde que también la usan los
+// comprobantes. Se reexporta para que las funciones de la tienda sigan
+// pidiéndole todo a este módulo, que es el que conocen.
+export { esDueno, respuestaJson } from "./_v2.mjs";
 
 export {
   idValido,
