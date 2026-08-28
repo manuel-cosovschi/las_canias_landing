@@ -75,7 +75,7 @@ export default function Hero() {
         {/* La tienda no compite con "Reservar": va abajo, más chica, pero en
             la primera pantalla. */}
         <a
-          href="#tienda"
+          href="/tienda"
           className="mt-8 inline-flex items-center gap-3 px-8 py-4 bg-brand-beige/90 hover:bg-brand-beige text-brand-brown rounded-full font-black text-[11px] uppercase tracking-[0.2em] transition-all shadow-lg"
         >
           <span aria-hidden="true">🏖️</span>

@@ -275,9 +275,26 @@ Esto importa porque la primera versión tenía el catálogo en `src/data/tienda.
 y ahí esconderlo era pintura: los nombres y precios viajaban igual en el
 javascript de la página y se leían con el inspector.
 
-Los dueños ven la vista previa desde la landing misma, con el botón **Soy
+Los dueños ven la vista previa desde la tienda misma, con el botón **Soy
 dueño**: valida contra `auth-login` (las mismas credenciales del panel) y con
 el secret que devuelve vuelve a pedir el catálogo, esta vez entero.
+
+### La tienda es una página aparte
+
+Vive en `public/tienda.html` y se sirve en **/tienda** (la URL linda sale de
+una regla en `_redirects`, que va antes del comodín de la SPA o se la come).
+
+Empezó siendo una sección de la home y estaba mal: una tienda es otra cosa que
+un alquiler, el botón del menú era un ancla que no llevaba a ninguna página, y
+el que entra a comprar una reposera tenía que pasar por las cinco casas antes.
+Además el catálogo viajaba en el javascript de la landing, que lo carga todo
+el mundo aunque no vaya a comprar nada.
+
+Es HTML plano con Tailwind por CDN, como `reservar.html` y `terminos.html`: la
+misma paleta y las mismas tipografías que el resto, sin React. Tiene portada,
+filtros por categoría, ficha del producto y un pedido con cantidades que sale
+en **un solo WhatsApp** con la lista y el total ya escritos — si el dueño tiene
+que preguntar "¿cuál querías?", se pierde la mitad de los pedidos.
 
 ### Guardar reemplaza todo
 

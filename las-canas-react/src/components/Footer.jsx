@@ -36,6 +36,7 @@ export default function Footer() {
               <li><a href="#about" className="hover:text-brand-beige transition-colors">Quiénes Somos</a></li>
               <li><a href="#casas" className="hover:text-brand-beige transition-colors">Nuestras Casas</a></li>
               <li><a href="#gallery" className="hover:text-brand-beige transition-colors">Galería</a></li>
+              <li><a href="/tienda" className="hover:text-brand-beige transition-colors">Tienda de playa</a></li>
             </ul>
           </div>
 
