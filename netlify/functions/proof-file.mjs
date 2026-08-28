@@ -12,14 +12,15 @@
 // archivo sale como bytes: en v1 había que pasarlo a base64.
 import { esDueno, respuestaJson, respuestaPreflight } from "./_v2.mjs";
 import { readProof, whichHaveProof } from "./_proofs.mjs";
-// El Basic del panel sale de _sheet.js y no de una copia: es una comprobación
+// El Basic del panel sale de _auth.js y no de una copia: es una comprobación
 // de acceso, y dos copias que se separan es el tipo de error que no se nota
-// hasta que ya pasó. Se importa acá y no en _v2.mjs porque _sheet.js carga
-// googleapis, y no tiene por qué terminar en el bundle de la tienda.
-import sheet from "./_sheet.js";
+// hasta que ya pasó. Va _auth.js y no _sheet.js porque ese carga googleapis,
+// que desde una función v2 el bundler deja sin resolver: la primera versión
+// de esto contestaba 502.
+import auth from "./_auth.js";
 
 const esAdmin = (req) =>
-  sheet.verifyAdminAuth({ authorization: req.headers.get("authorization") || "" });
+  auth.verifyAdminAuth({ authorization: req.headers.get("authorization") || "" });
 
 const MAX_IDS = 500;
 
