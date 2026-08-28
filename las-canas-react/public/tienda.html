@@ -190,6 +190,33 @@
       <!-- La grilla -->
       <div id="grilla" class="hidden grid gap-6 sm:grid-cols-2 lg:grid-cols-3"></div>
 
+      <!-- El dueño entró, pero todavía no hay nada cargado.
+           Esto no lo ve nunca un visitante: sólo aparece con la sesión de
+           dueño puesta. Si no estuviera, entrar con la clave y que te
+           devuelva el mismo cartel parece que la clave falló. -->
+      <div id="panelDueno" class="hidden max-w-xl mx-auto text-center py-8">
+        <p class="inline-block px-5 py-2 rounded-full bg-brand-brown text-brand-cream text-[10px] font-black uppercase tracking-[0.2em] mb-7">
+          Entraste como dueño
+        </p>
+        <h2 class="serif text-3xl md:text-4xl font-bold mb-4">La tienda está vacía</h2>
+        <p class="text-brand-accent leading-relaxed mb-9">
+          Todavía no cargaron ningún producto. Se cargan desde el panel, en la
+          sección <strong>Tienda</strong>: nombre, precio, foto y listo. Apenas
+          haya uno, lo vas a ver acá.
+        </p>
+
+        <div class="flex flex-wrap items-center justify-center gap-3">
+          <a href="/admin.html"
+            class="inline-flex items-center bg-brand-brown hover:bg-black text-brand-cream px-8 py-4 rounded-full text-[10px] font-black uppercase tracking-[0.22em] transition shadow-xl">
+            Cargar productos
+          </a>
+          <button id="btnSalirVacio" type="button"
+            class="inline-flex items-center px-8 py-4 rounded-full border border-brand-beige text-[10px] font-black uppercase tracking-[0.22em] hover:bg-brand-beige/40 transition">
+            Salir de la vista
+          </button>
+        </div>
+      </div>
+
       <!-- Próximamente: lo que ve el visitante mientras no esté publicada -->
       <div id="proximamente" class="hidden max-w-xl mx-auto text-center py-8">
         <p class="inline-block px-6 py-2 rounded-full bg-brand-beige text-brand-brown text-[11px] font-black uppercase tracking-[0.24em] mb-7">
@@ -414,13 +441,22 @@
     function pintar() {
       el("cargando").classList.add("hidden");
 
+      const esDueno = Boolean(secret);
+      const hayProductos = productos.length > 0;
+
       // Con secret y sin publicar, lo que se ve es una vista previa.
-      const espiando = Boolean(secret) && !publicada && productos.length > 0;
+      const espiando = esDueno && !publicada && hayProductos;
+      const hayQueMostrar = (publicada || espiando) && hayProductos;
+
+      // El dueño entró y no hay nada cargado. Tiene su propia pantalla: si le
+      // devolvemos el cartel del visitante, escribir la contraseña y volver al
+      // mismo lugar se lee como que la clave falló.
+      const vacioDeDueno = esDueno && !hayProductos;
+
       el("barraDueno").classList.toggle("hidden", !espiando);
-
-      const hayQueMostrar = (publicada || espiando) && productos.length > 0;
-
-      el("proximamente").classList.toggle("hidden", hayQueMostrar);
+      el("panelDueno").classList.toggle("hidden", !vacioDeDueno);
+      // El cartel es para el visitante: nunca para quien acaba de entrar.
+      el("proximamente").classList.toggle("hidden", hayQueMostrar || vacioDeDueno);
       el("grilla").classList.toggle("hidden", !hayQueMostrar);
       el("barraFiltros").classList.toggle("hidden", !hayQueMostrar);
 
@@ -838,11 +874,15 @@
       }
     };
 
-    el("btnSalirDueno").onclick = async () => {
+    // Se puede salir desde los dos lados: desde la vista previa con productos
+    // y desde la pantalla de tienda vacía.
+    const salirDeDueno = async () => {
       try { localStorage.removeItem(LLAVE); } catch (e) { /* nada que borrar */ }
       secret = null;
       await cargar();
     };
+    el("btnSalirDueno").onclick = salirDeDueno;
+    el("btnSalirVacio").onclick = salirDeDueno;
 
     /* ===================== arranque ===================== */
 
