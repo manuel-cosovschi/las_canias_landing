@@ -89,7 +89,13 @@ async function leerCatalogo() {
     console.error("leerCatalogo:", e?.message || e);
     // Que el almacenamiento falle no puede tumbar la landing entera: se
     // devuelve vacío y sin publicar, que es el estado seguro.
-    return { ...CATALOGO_VACIO, error: true };
+    //
+    // El nombre de la clase de error viaja en la respuesta a propósito. No es
+    // secreto —"MissingBlobsEnvironmentError" es una condición de
+    // configuración— y sin él, desde afuera, un almacenamiento mal
+    // configurado y uno caído se ven exactamente igual. El mensaje completo
+    // queda sólo en los logs, que sí puede traer rutas o tokens.
+    return { ...CATALOGO_VACIO, error: true, motivo: e?.name || "Error" };
   }
 }
 

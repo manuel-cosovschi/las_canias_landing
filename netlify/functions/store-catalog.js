@@ -20,7 +20,7 @@ exports.handler = async (event) => {
     const catalogo = await leerCatalogo();
 
     if (catalogo.error) {
-      return json(503, { ok: false, message: "No se pudo leer el catálogo" });
+      return json(503, { ok: false, message: "No se pudo leer el catálogo", motivo: catalogo.motivo });
     }
 
     if (!catalogo.publicada && !esDueno) {
