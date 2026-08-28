@@ -159,6 +159,7 @@
       .ficha--finde   { grid-template-columns: 10rem 10rem minmax(0, 1fr) auto; }
       .ficha--minimo  { grid-template-columns: 10rem 10rem 6rem minmax(0, 1fr) auto; }
       .ficha--periodo { grid-template-columns: 10rem 10rem minmax(0, 1fr); }
+      .ficha--producto { grid-template-columns: minmax(0, 1fr) 12rem 12rem; }
 
       /* La ficha de un período tiene dos bloques (las fechas arriba, los cinco
          precios abajo) y el botón de borrar va con el primero. Apilado no:
@@ -353,6 +354,9 @@
           </button>
           <button id="tabRules" class="navItem shrink-0 lg:w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold text-left transition">
             <span class="navPunto"></span><span class="whitespace-nowrap">Reglas</span>
+          </button>
+          <button id="tabShop" class="navItem shrink-0 lg:w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold text-left transition">
+            <span class="navPunto"></span><span class="whitespace-nowrap">Tienda</span>
           </button>
           <button id="tabGuide" class="navItem shrink-0 lg:w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold text-left transition">
             <span class="navPunto"></span><span class="whitespace-nowrap">Guía</span>
@@ -690,6 +694,69 @@
         <div id="confirmedList" class="space-y-3 text-sm"></div>
       </div>
       <!-- GUÍA -->
+      <!-- TIENDA -->
+      <div id="viewShop" class="bg-white/75 rounded-2xl shadow-sm border border-brand-beige p-6 hidden">
+        <div class="flex items-start justify-between gap-4 mb-4">
+          <div>
+            <h2 class="serif text-xl sm:text-2xl font-bold">Tienda de playa</h2>
+            <p class="text-xs text-brand-accent mt-1">
+              Los productos que se ven en la página. Los pedidos llegan por WhatsApp.
+            </p>
+          </div>
+          <span class="text-xs font-semibold px-3 py-1 rounded-full bg-brand-beige/50 border border-brand-beige/80">
+            Página
+          </span>
+        </div>
+
+        <!-- El interruptor va arriba de todo: es lo que decide si el visitante
+             ve la tienda o el cartel de "Próximamente". Sin publicar, el
+             catálogo ni siquiera sale del servidor. -->
+        <div id="shopEstado" class="rounded-2xl border border-brand-beige bg-white p-4 mb-5">
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <div class="min-w-0">
+              <p class="font-semibold text-sm">Estado de la tienda</p>
+              <p id="shopEstadoTexto" class="text-xs text-brand-accent mt-1">-</p>
+            </div>
+            <button id="btnPublicar" type="button"
+              class="shrink-0 px-5 py-2.5 rounded-full text-xs font-semibold transition">
+              -
+            </button>
+          </div>
+        </div>
+
+        <div class="p-3 rounded-2xl bg-brand-cream border border-brand-beige text-xs text-brand-brown/90 mb-5">
+          <strong>Cómo funciona:</strong> cargá los productos, subí la foto de cada uno y
+          apretá <strong>Guardar</strong>. Mientras la tienda esté en “Próximamente”, sólo
+          ustedes la ven. Un producto sin precio sale como <strong>“Consultar”</strong>, y
+          uno marcado <strong>sin stock</strong> se muestra pero no se puede pedir.
+        </div>
+
+        <div id="shopProductos" class="space-y-4"></div>
+
+        <div id="shopAviso" class="hidden mt-4 p-3 rounded-2xl bg-red-50 border border-red-200 text-sm text-red-800"></div>
+
+        <div class="mt-4 flex flex-wrap gap-3">
+          <button id="btnAddProducto"
+            class="py-2 px-4 rounded-2xl bg-white/80 border border-brand-beige font-semibold hover:bg-brand-beige/30 transition">
+            + Agregar producto
+          </button>
+          <button id="btnReloadShop"
+            class="py-2 px-4 rounded-2xl bg-white/80 border border-brand-beige font-semibold hover:bg-brand-beige/30 transition">
+            Descartar cambios
+          </button>
+        </div>
+
+        <button id="btnSaveShop"
+          class="mt-5 w-full py-3 rounded-2xl bg-brand-brown text-brand-cream font-semibold hover:opacity-90 transition disabled:opacity-40 disabled:cursor-not-allowed">
+          Guardar tienda
+        </button>
+
+        <p class="mt-3 text-xs text-brand-accent">
+          Al guardar se reemplaza la lista completa, y las fotos de los productos que
+          saques dejan de ocupar lugar. Las fotos se suben al toque, sin esperar a Guardar.
+        </p>
+      </div>
+
       <div id="viewGuide" class="bg-white/75 rounded-2xl shadow-sm border border-brand-beige p-6 hidden">
         <div class="flex items-start justify-between gap-4 mb-4">
           <div>
@@ -1801,6 +1868,8 @@
 
   const tabRules = el("tabRules");
   const viewRules = el("viewRules");
+  const tabShop = el("tabShop");
+  const viewShop = el("viewShop");
 
   const tabGuide = el("tabGuide");
   const viewGuide = el("viewGuide");
@@ -1980,6 +2049,10 @@
   const EP_CALENDAR_CONFIG = "/api/calendar-config";
   const EP_SEASON_GOALS = "/.netlify/functions/season-goals";
   const EP_SET_SEASON_GOAL = "/.netlify/functions/set-season-goal";
+  const EP_STORE_CATALOG = "/.netlify/functions/store-catalog";
+  const EP_SET_STORE_CATALOG = "/.netlify/functions/set-store-catalog";
+  const EP_UPLOAD_PHOTO = "/.netlify/functions/upload-store-photo";
+  const EP_STORE_PHOTO = "/.netlify/functions/store-photo";
   const EP_SET_CALENDAR_CONFIG = "/.netlify/functions/set-calendar-config";
   const EP_SEARCH_RESERVATIONS = "/.netlify/functions/search-reservations";
   const EP_PROOF_FILE = "/.netlify/functions/proof-file";
@@ -2144,6 +2217,7 @@
     { id: "stats",     boton: tabStats,     vista: viewStats },
     { id: "prices",    boton: tabPrices,    vista: viewPrices },
     { id: "rules",     boton: tabRules,     vista: viewRules },
+    { id: "shop",      boton: tabShop,      vista: viewShop },
     { id: "guide",     boton: tabGuide,     vista: viewGuide },
   ];
 
@@ -2619,6 +2693,260 @@
       showToast(e.message || "Error", "err");
     } finally {
       validateRulesUI();
+    }
+  };
+
+  /* =====================
+     TIENDA
+     Los productos que se ven en la página. El catálogo vive en el servidor,
+     no en el javascript: mientras la tienda esté en "Próximamente", el
+     visitante no recibe ni los nombres.
+  ===================== */
+
+  let tiendaPublicada = false;
+
+  // Un id nuevo por producto. Va en la URL de la foto, así que se limita a lo
+  // que _tienda.js acepta: minúsculas, números y guiones.
+  function nuevoIdProducto() {
+    return "p" + Date.now().toString(36) + Math.floor(Math.random() * 1e4).toString(36);
+  }
+
+  const CAMPOS_PRODUCTO = [
+    { type: "text", field: "nombre", rotulo: "Nombre", placeholder: "Ej: Reposera de lona" },
+    { type: "number", field: "precio", rotulo: "Precio (vacío = Consultar)", min: 0, step: 1000 },
+    { type: "text", field: "categoria", rotulo: "Categoría (opcional)", placeholder: "Ej: Reposeras" },
+  ];
+
+  function pintarEstadoTienda() {
+    el("shopEstadoTexto").textContent = tiendaPublicada
+      ? "Publicada: cualquiera que entre a la página ve los productos."
+      : "En “Próximamente”: sólo ustedes la ven. El visitante ve el cartel.";
+
+    const boton = el("btnPublicar");
+    boton.textContent = tiendaPublicada ? "Pasar a Próximamente" : "Publicar la tienda";
+    boton.className = "shrink-0 px-5 py-2.5 rounded-full text-xs font-semibold transition " +
+      (tiendaPublicada
+        ? "bg-white border border-brand-beige hover:bg-brand-beige/30"
+        : "bg-brand-brown text-brand-cream hover:opacity-90");
+  }
+
+  el("btnPublicar").onclick = () => {
+    tiendaPublicada = !tiendaPublicada;
+    pintarEstadoTienda();
+    // No se guarda solo: el dueño puede estar a mitad de cargar productos y
+    // publicar a medias sería peor que no publicar.
+    setStatus(tiendaPublicada
+      ? "Queda publicada al apretar Guardar."
+      : "Queda en Próximamente al apretar Guardar.");
+    validarTiendaUI();
+  };
+
+  function fichaProducto(p = {}) {
+    const ficha = nuevaFicha();
+    ficha.dataset.id = p.id || nuevoIdProducto();
+
+    const grilla = document.createElement("div");
+    grilla.className = "ficha ficha--producto";
+    for (const campo of CAMPOS_PRODUCTO) {
+      campoFicha(grilla, campo, p[campo.field], validarTiendaUI);
+    }
+    ficha.appendChild(grilla);
+
+    campoFicha(ficha, { type: "text", field: "descripcion", rotulo: "Descripción (opcional)",
+      placeholder: "Ej: Plegable, apoyabrazos de madera" }, p.descripcion, validarTiendaUI);
+
+    // --- foto ---
+    const zona = document.createElement("div");
+    zona.className = "mt-4 flex flex-wrap items-center gap-3";
+
+    const vista = document.createElement("img");
+    vista.className = "w-20 h-20 rounded-xl object-cover border border-brand-beige bg-brand-beige/40";
+    vista.alt = "";
+    const conFoto = (hay) => {
+      ficha.dataset.foto = hay ? "1" : "";
+      vista.classList.toggle("hidden", !hay);
+      sinFoto.classList.toggle("hidden", hay);
+      if (hay) vista.src = `${EP_STORE_PHOTO}?id=${encodeURIComponent(ficha.dataset.id)}&t=${Date.now()}`;
+    };
+
+    const sinFoto = document.createElement("div");
+    sinFoto.className = "w-20 h-20 rounded-xl border border-dashed border-brand-beige bg-brand-beige/20 flex items-center justify-center text-[10px] text-brand-accent text-center px-1";
+    sinFoto.textContent = "Sin foto";
+
+    const archivo = document.createElement("input");
+    archivo.type = "file";
+    archivo.accept = "image/jpeg,image/png,image/webp";
+    archivo.className = "text-xs";
+    archivo.onchange = async () => {
+      const f = archivo.files && archivo.files[0];
+      if (!f) return;
+      estado.textContent = "Subiendo...";
+      try {
+        const datos = new FormData();
+        datos.append("id", ficha.dataset.id);
+        datos.append("foto", f, f.name);
+        const res = await fetch(EP_UPLOAD_PHOTO, {
+          method: "POST",
+          headers: { "x-lc-secret": getOwnerSecret() || "" },
+          body: datos,
+        });
+        const out = await res.json().catch(() => ({}));
+        if (!res.ok || out.ok === false) throw new Error(out.message || "No se pudo subir");
+        conFoto(true);
+        estado.textContent = "Foto lista ✅";
+        showToast("Foto subida ✅", "ok");
+      } catch (e) {
+        estado.textContent = "";
+        showToast(e.message || "No se pudo subir la foto", "err");
+      } finally {
+        archivo.value = "";
+      }
+    };
+
+    const estado = document.createElement("span");
+    estado.className = "text-xs text-brand-accent";
+
+    zona.appendChild(vista);
+    zona.appendChild(sinFoto);
+    zona.appendChild(archivo);
+    zona.appendChild(estado);
+    ficha.appendChild(zona);
+    conFoto(Boolean(p.tieneFoto));
+
+    // --- sin stock + borrar ---
+    const pie = document.createElement("div");
+    pie.className = "mt-4 flex flex-wrap items-center justify-between gap-3";
+
+    const agotado = document.createElement("label");
+    agotado.className = "flex items-center gap-2 text-sm";
+    const tilde = document.createElement("input");
+    tilde.type = "checkbox";
+    tilde.dataset.field = "agotado";
+    tilde.checked = Boolean(p.agotado);
+    tilde.className = "w-4 h-4";
+    tilde.onchange = validarTiendaUI;
+    agotado.appendChild(tilde);
+    agotado.appendChild(document.createTextNode("Sin stock"));
+
+    pie.appendChild(agotado);
+    pie.appendChild(botonBorrarFicha(ficha, "Eliminar producto", validarTiendaUI));
+    ficha.appendChild(pie);
+
+    el("shopProductos").appendChild(ficha);
+    return ficha;
+  }
+
+  function leerTiendaUI() {
+    return Array.from(el("shopProductos").children).map((ficha) => {
+      const v = (f) => ficha.querySelector('[data-field="' + f + '"]')?.value ?? "";
+      const crudo = String(v("precio")).trim();
+      return {
+        id: ficha.dataset.id,
+        nombre: String(v("nombre")).trim(),
+        descripcion: String(v("descripcion")).trim(),
+        // Vacío es "Consultar", no cero: hay cosas que se cotizan.
+        precio: crudo === "" ? null : Number(crudo),
+        categoria: String(v("categoria")).trim(),
+        agotado: Boolean(ficha.querySelector('[data-field="agotado"]')?.checked),
+        tieneFoto: ficha.dataset.foto === "1",
+      };
+    });
+  }
+
+  // Mismas reglas que valida el servidor, para avisar acá primero.
+  function validarTienda(lista) {
+    for (let i = 0; i < lista.length; i++) {
+      const p = lista[i];
+      const n = i + 1;
+      if (!p.nombre) return `Producto ${n}: falta el nombre.`;
+      if (p.precio !== null && (!Number.isFinite(p.precio) || p.precio < 0)) {
+        return `Producto ${n} (${p.nombre}): el precio tiene que ser un número.`;
+      }
+    }
+    // Publicar una tienda vacía deja al visitante mirando una sección sin nada.
+    if (tiendaPublicada && !lista.length) {
+      return "No se puede publicar la tienda sin productos.";
+    }
+    return null;
+  }
+
+  function validarTiendaUI() {
+    const err = validarTienda(leerTiendaUI());
+    const aviso = el("shopAviso");
+    if (err) {
+      aviso.textContent = err;
+      aviso.classList.remove("hidden");
+      el("btnSaveShop").disabled = true;
+    } else {
+      aviso.classList.add("hidden");
+      el("btnSaveShop").disabled = false;
+    }
+    return !err;
+  }
+
+  async function cargarTienda() {
+    const out = await apiFetch(EP_STORE_CATALOG, { method: "GET", body: null });
+    tiendaPublicada = Boolean(out.publicada);
+    pintarEstadoTienda();
+
+    el("shopProductos").innerHTML = "";
+    for (const p of out.productos || []) fichaProducto(p);
+
+    validarTiendaUI();
+    return (out.productos || []).length;
+  }
+
+  tabShop.onclick = async () => {
+    showTab("shop");
+    try {
+      setStatus("Cargando la tienda...");
+      const n = await cargarTienda();
+      setStatus(`✅ Tienda cargada (${n} ${n === 1 ? "producto" : "productos"}).`);
+    } catch (e) {
+      setStatus("❌ " + e.message);
+    }
+  };
+
+  el("btnAddProducto").onclick = () => { fichaProducto(); validarTiendaUI(); };
+
+  el("btnReloadShop").onclick = async () => {
+    try {
+      setStatus("Recargando la tienda...");
+      await cargarTienda();
+      setStatus("✅ Se descartaron los cambios.");
+    } catch (e) {
+      setStatus("❌ " + e.message);
+    }
+  };
+
+  el("btnSaveShop").onclick = async () => {
+    if (!validarTiendaUI()) return;
+
+    el("btnSaveShop").disabled = true;
+    try {
+      setStatus("Guardando la tienda...");
+      const productos = leerTiendaUI();
+      const out = await apiFetch(EP_SET_STORE_CATALOG, {
+        method: "POST",
+        body: { publicada: tiendaPublicada, productos },
+      });
+
+      // Si el servidor descartó alguno, hay que decirlo: guardar 10 y que
+      // entren 9 en silencio es cómo se pierde un producto sin enterarse.
+      if (out.guardados !== out.recibidos) {
+        showToast(`Se guardaron ${out.guardados} de ${out.recibidos}: revisá los nombres`, "err");
+      } else {
+        showToast(tiendaPublicada ? "Tienda guardada y publicada ✅" : "Tienda guardada ✅", "ok");
+      }
+      setStatus(`✅ ${out.guardados} ${out.guardados === 1 ? "producto" : "productos"}. ` +
+        (out.publicada ? "La tienda está publicada." : "La tienda está en Próximamente."));
+
+      await cargarTienda();
+    } catch (e) {
+      setStatus("❌ " + e.message);
+      showToast(e.message || "Error", "err");
+    } finally {
+      validarTiendaUI();
     }
   };
 

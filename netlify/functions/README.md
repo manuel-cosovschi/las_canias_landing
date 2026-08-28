@@ -243,3 +243,69 @@ estaban todas ocupadas): `importe`, `anticipo`, `facturado` y `cotizacion_usd`.
   tener dos números que pueden quedar en desacuerdo.
 - El documento de confirmación usa el importe guardado si existe, y si no cae
   al cálculo con tarifas de siempre.
+
+## La tienda
+
+Los dueños quieren vender reposeras y cosas de playa al lado del alquiler. El
+catálogo lo cargan ellos desde el panel (sección **Tienda**) y vive en
+**Netlify Blobs**, no en la planilla: la planilla lleva la ocupación y la plata
+de los alquileres, y ya nos mordió una vez leyendo hasta la columna Z. Meterle
+stock encima era pedirlo de nuevo.
+
+Todo el trato con el almacenamiento pasa por `_tienda.js`. El catálogo entero
+va en una sola clave (`catalogo`) como un JSON, y cada foto en `foto/<id>`.
+Son decenas de productos, no miles: guardarlo junto evita quedarse a mitad de
+camino con media lista escrita.
+
+| Función | Quién entra | Qué hace |
+| --- | --- | --- |
+| `store-catalog` | público (con matices) | Devuelve el catálogo |
+| `set-store-catalog` | sólo dueño | Reemplaza la lista completa |
+| `upload-store-photo` | sólo dueño | Sube la foto de un producto |
+| `store-photo` | público (con matices) | Sirve la foto de un producto |
+
+### El "Próximamente" es de verdad
+
+Mientras la tienda no esté publicada, `store-catalog` **no devuelve ni un
+nombre** a quien pida sin `x-lc-secret`: contesta `{ publicada: false,
+productos: [] }`. `store-photo` hace lo mismo — si no, las fotos serían la
+rendija por donde se ve el catálogo que el cartel tapa.
+
+Esto importa porque la primera versión tenía el catálogo en `src/data/tienda.js`
+y ahí esconderlo era pintura: los nombres y precios viajaban igual en el
+javascript de la página y se leían con el inspector.
+
+Los dueños ven la vista previa desde la landing misma, con el botón **Soy
+dueño**: valida contra `auth-login` (las mismas credenciales del panel) y con
+el secret que devuelve vuelve a pedir el catálogo, esta vez entero.
+
+### Guardar reemplaza todo
+
+`set-store-catalog` recibe la lista completa, igual que los precios y las
+reglas: así el orden que ve el dueño en el panel es el que sale publicado, sin
+inventar un campo de orden que después nadie mantiene.
+
+- Un producto guardado nunca es lo que llegó del navegador: se arma campo por
+  campo, así una clave de más en el pedido no termina en el almacenamiento.
+- Los productos inválidos (sin nombre, id con mayúsculas, precio negativo, id
+  repetido) se descartan, y la respuesta trae `guardados` y `recibidos` para
+  que el panel avise. Mandar 10 y que entren 9 en silencio es cómo se pierde
+  un producto sin enterarse.
+- Los que salen de la lista se llevan su foto: `fotosBorradas` cuenta las que
+  existían de verdad, no los productos sacados (`productosSacados`).
+- `precio: null` (o vacío) es **"Consultar"**, que es un estado válido: hay
+  cosas que se cotizan. Cero no es lo mismo.
+
+### Las fotos
+
+`upload-store-photo` recibe un `multipart/form-data` con `id` y `foto`. Acepta
+JPG, PNG y WEBP hasta 3 MB — las fotos las mira todo el que entra a la tienda,
+y una de 8 MB hace lenta la página en el celular, que es donde se mira. Busboy
+corta el archivo al llegar al límite en vez de fallar, así que la function
+escucha el evento `limit` y responde 413: sin eso guardaría una imagen truncada,
+que es peor que no guardar nada.
+
+Se suben al toque, sin esperar a **Guardar**: el panel las manda apenas se
+elige el archivo, y la ficha muestra la miniatura. `tieneFoto` no se le cree al
+navegador — `store-catalog` le pregunta al almacenamiento cuáles existen, para
+que nadie pueda escribir una URL a mano ni quede un `<img>` roto.
