@@ -1,24 +1,37 @@
-// /netlify/functions/set-store-catalog.js
+// /netlify/functions/set-store-catalog.mjs
 // Acción de dueño: reemplaza el catálogo completo y el estado de publicación.
 //
 // Se manda la lista entera, como en los precios y las reglas: así el orden que
 // ve el dueño en el panel es el que sale publicado, y no hay que inventar un
 // campo de orden que después nadie mantiene.
-const { assertAuth, json } = require("./_utils");
-const { leerCatalogo, guardarCatalogo, borrarFoto, cualesTienenFoto } = require("./_tienda");
+//
+// Formato v2 — ver el encabezado de _tienda.mjs.
+import {
+  leerCatalogo,
+  guardarCatalogo,
+  borrarFoto,
+  cualesTienenFoto,
+  esDueno,
+  respuestaJson,
+} from "./_tienda.mjs";
 
-exports.handler = async (event) => {
-  if (!assertAuth(event)) return json(401, { ok: false, message: "No autorizado" });
-  if (event.httpMethod !== "POST") return json(405, { ok: false, message: "Method not allowed" });
+export default async (req) => {
+  if (!esDueno(req)) return respuestaJson(401, { ok: false, message: "No autorizado" });
+  if (req.method !== "POST") return respuestaJson(405, { ok: false, message: "Method not allowed" });
+
+  let body;
+  try {
+    body = await req.json();
+  } catch {
+    return respuestaJson(400, { ok: false, message: "Body inválido" });
+  }
 
   try {
-    const body = JSON.parse(event.body || "{}");
-
-    if (!Array.isArray(body.productos)) {
-      return json(400, { ok: false, message: "Falta la lista de productos" });
+    if (!Array.isArray(body?.productos)) {
+      return respuestaJson(400, { ok: false, message: "Falta la lista de productos" });
     }
     if (body.productos.length > 200) {
-      return json(400, { ok: false, message: "Demasiados productos (máximo 200)" });
+      return respuestaJson(400, { ok: false, message: "Demasiados productos (máximo 200)" });
     }
 
     // Lo que quedó afuera de la lista nueva ya no existe: sus fotos tampoco,
@@ -36,7 +49,7 @@ exports.handler = async (event) => {
 
     // Se avisa cuántos entraron: si el dueño mandó 10 y volvieron 9, alguno
     // se descartó por id o nombre inválido y tiene que enterarse.
-    return json(200, {
+    return respuestaJson(200, {
       ok: true,
       publicada: guardado.publicada,
       guardados: guardado.productos.length,
@@ -45,6 +58,6 @@ exports.handler = async (event) => {
       fotosBorradas: conFoto.size,
     });
   } catch (e) {
-    return json(500, { ok: false, message: e.message || "Error" });
+    return respuestaJson(500, { ok: false, message: e?.message || "Error" });
   }
 };

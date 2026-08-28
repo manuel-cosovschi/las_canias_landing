@@ -264,6 +264,33 @@ camino con media lista escrita.
 | `upload-store-photo` | sólo dueño | Sube la foto de un producto |
 | `store-photo` | público (con matices) | Sirve la foto de un producto |
 
+### Son `.mjs` y formato v2, y tiene que ser así
+
+Las otras 31 funciones son formato v1 (`exports.handler`). Estas cuatro son
+v2 (`export default`, entra un `Request` y sale una `Response`) porque
+**Netlify le inyecta `NETLIFY_BLOBS_CONTEXT` sólo a las v2**. En v1,
+`getStore()` tira `MissingBlobsEnvironmentError` y no hay tienda.
+
+No es una suposición: se midió en un deploy real, con la misma llamada a
+Blobs en los dos formatos, al mismo sitio y al mismo store.
+
+```
+v2 -> { "tieneContexto": true,  "blobs": "ok" }
+v1 -> { "motivo": "MissingBlobsEnvironmentError" }
+```
+
+**Esto vale también para `_proofs.js`**, que usa el mismo mecanismo desde
+`submit-proof` (v1). Ahí el error se traga a propósito —perder la copia del
+comprobante no puede cortarle la reserva a nadie— así que viene fallando en
+silencio. Si en algún momento se quieren las copias de comprobantes en el
+panel, hay que pasar `submit-proof` y `proof-file` a v2 igual que estas.
+
+De paso, v2 simplifica dos cosas: la foto sale como bytes en la `Response`
+(en v1 había que pasarla a base64 y avisar con una bandera), y el multipart
+lo lee `req.formData()` en vez de Busboy, que corta el archivo al llegar al
+límite en vez de fallar y obligaba a escuchar el evento `limit` para no
+guardar una imagen truncada.
+
 ### El "Próximamente" es de verdad
 
 Mientras la tienda no esté publicada, `store-catalog` **no devuelve ni un
@@ -275,9 +302,26 @@ Esto importa porque la primera versión tenía el catálogo en `src/data/tienda.
 y ahí esconderlo era pintura: los nombres y precios viajaban igual en el
 javascript de la página y se leían con el inspector.
 
-Los dueños ven la vista previa desde la landing misma, con el botón **Soy
+Los dueños ven la vista previa desde la tienda misma, con el botón **Soy
 dueño**: valida contra `auth-login` (las mismas credenciales del panel) y con
 el secret que devuelve vuelve a pedir el catálogo, esta vez entero.
+
+### La tienda es una página aparte
+
+Vive en `public/tienda.html` y se sirve en **/tienda** (la URL linda sale de
+una regla en `_redirects`, que va antes del comodín de la SPA o se la come).
+
+Empezó siendo una sección de la home y estaba mal: una tienda es otra cosa que
+un alquiler, el botón del menú era un ancla que no llevaba a ninguna página, y
+el que entra a comprar una reposera tenía que pasar por las cinco casas antes.
+Además el catálogo viajaba en el javascript de la landing, que lo carga todo
+el mundo aunque no vaya a comprar nada.
+
+Es HTML plano con Tailwind por CDN, como `reservar.html` y `terminos.html`: la
+misma paleta y las mismas tipografías que el resto, sin React. Tiene portada,
+filtros por categoría, ficha del producto y un pedido con cantidades que sale
+en **un solo WhatsApp** con la lista y el total ya escritos — si el dueño tiene
+que preguntar "¿cuál querías?", se pierde la mitad de los pedidos.
 
 ### Guardar reemplaza todo
 

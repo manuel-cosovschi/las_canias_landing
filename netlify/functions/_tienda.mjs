@@ -1,6 +1,19 @@
 // netlify/functions/_tienda.js
 // Guarda el catálogo de la tienda y las fotos de los productos.
 //
+// Las cuatro funciones de la tienda están en formato v2 (export default) y no
+// en v1 (exports.handler) como el resto del repo. No es capricho: Netlify le
+// inyecta NETLIFY_BLOBS_CONTEXT sólo a las v2. En v1, getStore() tira
+// MissingBlobsEnvironmentError y no hay tienda. Se midió en un deploy real,
+// con la misma llamada en los dos formatos:
+//
+//   v2 -> { tieneContexto: true,  blobs: "ok" }
+//   v1 -> { motivo: "MissingBlobsEnvironmentError" }
+//
+// Por eso este archivo es ESM y trae también la plomería de v2 (leer el
+// secret de un Request, armar una Response), que _utils.js no puede dar
+// porque lo comparten las otras 31 funciones, todas v1.
+//
 // Mismo mecanismo que los comprobantes (_proofs.js): Netlify Blobs. Se eligió
 // eso y no la planilla de reservas a propósito — la planilla lleva la
 // ocupación y la plata de los alquileres, y ya nos mordió una vez leyendo
@@ -13,12 +26,10 @@
 //
 // Todo el trato con el almacenamiento pasa por acá: si algún día hay que
 // mover esto a otro lado, se cambia este archivo y ninguna función se entera.
+import { getStore } from "@netlify/blobs";
+
 const STORE = "tienda";
 const CLAVE_CATALOGO = "catalogo";
-
-function getStore(name) {
-  return require("@netlify/blobs").getStore(name);
-}
 
 function store() {
   return getStore(STORE);
@@ -89,7 +100,13 @@ async function leerCatalogo() {
     console.error("leerCatalogo:", e?.message || e);
     // Que el almacenamiento falle no puede tumbar la landing entera: se
     // devuelve vacío y sin publicar, que es el estado seguro.
-    return { ...CATALOGO_VACIO, error: true };
+    //
+    // El nombre de la clase de error viaja en la respuesta a propósito. No es
+    // secreto —"MissingBlobsEnvironmentError" es una condición de
+    // configuración— y sin él, desde afuera, un almacenamiento mal
+    // configurado y uno caído se ven exactamente igual. El mensaje completo
+    // queda sólo en los logs, que sí puede traer rutas o tokens.
+    return { ...CATALOGO_VACIO, error: true, motivo: e?.name || "Error" };
   }
 }
 
@@ -176,7 +193,28 @@ async function cualesTienenFoto(ids) {
   return conFoto;
 }
 
-module.exports = {
+/* ===================== plomería de las funciones v2 ===================== */
+
+// Mismo criterio que assertAuth de _utils.js, pero leyendo de un Request.
+// Headers.get() no distingue mayúsculas, así que alcanza con un nombre.
+export function esDueno(req) {
+  const esperado = process.env.LC_OWNER_SECRET || "";
+  return Boolean(esperado) && req.headers.get("x-lc-secret") === esperado;
+}
+
+export function respuestaJson(status, datos, cache) {
+  return new Response(JSON.stringify(datos), {
+    status,
+    headers: {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Headers": "Content-Type, x-lc-secret",
+      "Cache-Control": cache || "no-store",
+    },
+  });
+}
+
+export {
   idValido,
   normalizarCatalogo,
   leerCatalogo,

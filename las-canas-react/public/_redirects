@@ -3,4 +3,9 @@
 /api/admin/update-reservation  /.netlify/functions/admin-update-reservation     200
 /api/*                         /.netlify/functions/:splat                       200
 
+# La tienda es su propia página. La URL linda va antes del comodín de abajo,
+# que si no se la come y devuelve la home.
+/tienda                        /tienda.html                                     200
+/tienda/                       /tienda.html                                     200
+
 /*                            /index.html                                      200
