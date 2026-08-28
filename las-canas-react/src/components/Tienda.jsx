@@ -70,8 +70,16 @@ export default function Tienda() {
 
   // Con secret puesto, lo que se ve es una vista previa: el visitante común
   // sigue viendo el cartel hasta que la publiquen desde el panel.
-  const espiando = Boolean(secret) && !publicada;
-  const hayQueMostrar = (publicada || espiando) && productos.length > 0;
+  //
+  // Sin productos no hay vista previa que valga: va el cartel para todos, con
+  // dueño o sin dueño. Antes acá salía un aviso interno diciendo dónde
+  // cargarlos, y terminaba en la home de producción — el dueño abre la página
+  // en el celular, tiene la llave guardada del panel, y se come un mensaje
+  // para programadores en el medio del sitio. Eso se dice en el panel, que es
+  // donde se cargan.
+  const hayProductos = productos.length > 0;
+  const espiando = Boolean(secret) && !publicada && hayProductos;
+  const hayQueMostrar = (publicada || espiando) && hayProductos;
 
   return (
     <section id="tienda" className="py-20 md:py-28 bg-brand-brown text-brand-cream">
@@ -106,15 +114,11 @@ export default function Tienda() {
           </div>
         )}
 
-        {cargando ? (
-          <p className="text-center text-brand-beige/70">Cargando…</p>
-        ) : hayQueMostrar ? (
+        {/* Mientras se pregunta al servidor no va ningún texto: el título de
+            arriba ya ocupa la sección, y poner "Cargando…" es un parpadeo de
+            más antes del cartel. */}
+        {cargando ? null : hayQueMostrar ? (
           <Catalogo productos={productos} />
-        ) : espiando ? (
-          <p className="text-center text-brand-beige/80 max-w-lg mx-auto">
-            Todavía no hay productos cargados. Se cargan desde el panel, en la
-            sección <strong>Tienda</strong>.
-          </p>
         ) : (
           <Proximamente
             abriendo={abriendo}
