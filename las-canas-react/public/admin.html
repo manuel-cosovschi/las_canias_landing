@@ -1781,9 +1781,87 @@
         </div>
       </div>
 
+      <!-- Cargar los datos: para el bloqueo que se hizo apurado, sin poner
+           quién era ni cuánto. Aparece recién al apretar el botón, igual que
+           el cambio de fechas. -->
+      <div id="calDatos" class="hidden mt-4 bg-white border border-brand-beige rounded-2xl p-4">
+        <p class="text-xs text-brand-accent mb-3">
+          Lo que dejes vacío no se toca. Para borrar un dato que ya está
+          cargado, escribí un guión.
+        </p>
+
+        <div class="grid sm:grid-cols-2 gap-3">
+          <label class="block sm:col-span-2">
+            <span class="block text-xs font-bold uppercase tracking-wider text-brand-accent mb-1">Huésped</span>
+            <input id="calGuestName" type="text" placeholder="Nombre y apellido"
+              class="w-full rounded-xl border border-brand-beige px-3 py-2 text-sm">
+          </label>
+          <label class="block">
+            <span class="block text-xs font-bold uppercase tracking-wider text-brand-accent mb-1">Teléfono</span>
+            <input id="calGuestPhone" type="tel" inputmode="tel"
+              class="w-full rounded-xl border border-brand-beige px-3 py-2 text-sm">
+          </label>
+          <label class="block">
+            <span class="block text-xs font-bold uppercase tracking-wider text-brand-accent mb-1">DNI</span>
+            <input id="calGuestDni" type="text" inputmode="numeric"
+              class="w-full rounded-xl border border-brand-beige px-3 py-2 text-sm">
+          </label>
+          <label class="block sm:col-span-2">
+            <span class="block text-xs font-bold uppercase tracking-wider text-brand-accent mb-1">Email</span>
+            <input id="calGuestEmail" type="email" autocapitalize="off" autocorrect="off"
+              class="w-full rounded-xl border border-brand-beige px-3 py-2 text-sm">
+          </label>
+          <label class="block sm:col-span-2">
+            <span class="block text-xs font-bold uppercase tracking-wider text-brand-accent mb-1">Notas</span>
+            <input id="calGuestNotes" type="text" placeholder="Ej: llega tarde, viene con perro"
+              class="w-full rounded-xl border border-brand-beige px-3 py-2 text-sm">
+          </label>
+        </div>
+
+        <div class="mt-4 pt-4 border-t border-brand-beige grid sm:grid-cols-2 gap-3">
+          <label class="block">
+            <span class="block text-xs font-bold uppercase tracking-wider text-brand-accent mb-1">Importe total</span>
+            <input id="calImporte" type="number" min="0" step="1000"
+              class="w-full rounded-xl border border-brand-beige px-3 py-2 text-sm">
+          </label>
+          <label class="block">
+            <span class="block text-xs font-bold uppercase tracking-wider text-brand-accent mb-1">Cobrado (seña)</span>
+            <input id="calAnticipo" type="number" min="0" step="1000"
+              class="w-full rounded-xl border border-brand-beige px-3 py-2 text-sm">
+          </label>
+          <label class="block">
+            <span class="block text-xs font-bold uppercase tracking-wider text-brand-accent mb-1">Cotización USD</span>
+            <input id="calCotizacion" type="number" min="0" step="1"
+              class="w-full rounded-xl border border-brand-beige px-3 py-2 text-sm">
+          </label>
+          <label class="flex items-end gap-2 pb-2">
+            <input id="calFacturado" type="checkbox" class="w-4 h-4">
+            <span class="text-sm">Ya está facturada</span>
+          </label>
+        </div>
+
+        <p id="calSaldo" class="text-xs text-brand-accent mt-2"></p>
+        <p id="calDatosMsg" class="text-sm mt-2"></p>
+
+        <div class="mt-3 flex flex-wrap gap-2 justify-end">
+          <button id="btnCancelarDatos"
+            class="py-2 px-4 rounded-2xl bg-white/70 border border-brand-beige text-sm font-semibold hover:bg-white transition">
+            Volver
+          </button>
+          <button id="btnGuardarDatos"
+            class="py-2 px-4 rounded-2xl bg-brand-brown text-brand-cream text-sm font-semibold hover:opacity-90 transition">
+            Guardar datos
+          </button>
+        </div>
+      </div>
+
       <p id="calAccionMsg" class="text-sm mt-3"></p>
 
       <div class="mt-6 flex flex-wrap gap-2 justify-end">
+        <button id="btnCalCargarDatos"
+          class="hidden py-3 px-4 rounded-2xl bg-white/70 border border-brand-beige font-semibold hover:bg-white transition">
+          Cargar datos
+        </button>
         <button id="btnCalCambiarFechas"
           class="hidden py-3 px-4 rounded-2xl bg-white/70 border border-brand-beige font-semibold hover:bg-white transition">
           Cambiar fechas
@@ -2042,6 +2120,7 @@
   const EP_RESERVATION_DOCUMENT = "/.netlify/functions/reservation-document";
   const EP_SET_PAYMENT = "/.netlify/functions/set-reservation-payment";
   const EP_SET_DATES = "/.netlify/functions/set-reservation-dates";
+  const EP_SET_GUEST = "/.netlify/functions/set-reservation-guest";
   const EP_CREAR_MANUAL = "/.netlify/functions/create-manual-reservation";
   const EP_OWNER_UNBLOCKS = "/.netlify/functions/owner-unblocks";
   const EP_PRICE_PERIODS = "/api/price-periods";
@@ -4786,25 +4865,35 @@
     cal_dates.textContent = fmtDates(start, end);
     cal_id.textContent = row.id || ev.id || "-";
 
-    if (String(status).toUpperCase() === "BLOCKED") {
-      cal_guest.textContent = "-";
-      cal_contact.textContent = "-";
-      cal_payment.textContent = "-";
-      cal_notes.textContent = row.notes || "BLOCKED (sin datos de huésped)";
-      return;
-    }
+    // Antes esto cortaba en BLOCKED y mostraba "-" en todo. Estaba mal: al
+    // bloquear se puede cargar nombre, teléfono, DNI e importes, y el modal
+    // los escondía. Un bloqueo con datos se lee igual que una reserva; lo que
+    // cambia es que puede no tenerlos, y eso se dice.
+    const esBloqueo = String(status).toUpperCase() === "BLOCKED";
 
-    // CONFIRMED / HOLD_TRANSFER: mostramos toda la info posible
-    cal_guest.textContent = row.guest_name ? `${row.guest_name} (DNI: ${row.dni || "-"})` : "-";
+    cal_guest.textContent = row.guest_name
+      ? `${row.guest_name}${row.dni ? ` (DNI: ${row.dni})` : ""}`
+      : (esBloqueo ? "Sin cargar" : "-");
+
     cal_contact.textContent = [
       row.phone ? `Tel: ${row.phone}` : null,
       row.email ? `Email: ${row.email}` : null,
-    ].filter(Boolean).join(" · ") || "-";
+    ].filter(Boolean).join(" · ") || (esBloqueo ? "Sin cargar" : "-");
+
+    // La plata sale de las columnas nuevas (importe/anticipo). El método y la
+    // referencia son de las reservas que entraron por la web.
+    const importe = Number(row.importe) || 0;
+    const anticipo = Number(row.anticipo) || 0;
+    const facturado = String(row.facturado || "").trim().toLowerCase();
 
     cal_payment.textContent = [
+      importe ? `Total: ${pesosAR(importe)}` : null,
+      anticipo ? `Cobrado: ${pesosAR(anticipo)}` : null,
+      importe && importe - anticipo > 0 ? `Saldo: ${pesosAR(importe - anticipo)}` : null,
+      facturado === "si" ? "Facturada" : facturado === "no" ? "Sin facturar" : null,
       row.payment_method ? `Método: ${row.payment_method}` : null,
       row.payment_ref ? `Ref: ${row.payment_ref}` : null,
-    ].filter(Boolean).join(" · ") || "-";
+    ].filter(Boolean).join(" · ") || (esBloqueo ? "Sin cargar" : "-");
 
     cal_notes.textContent = row.notes || "-";
   }
@@ -4827,6 +4916,28 @@
   const btnCalQuitar = el("btnCalQuitar");
   const btnGuardarFechas = el("btnGuardarFechas");
   const btnCancelarCambioFechas = el("btnCancelarCambioFechas");
+
+  const calDatos = el("calDatos");
+  const calDatosMsg = el("calDatosMsg");
+  const calSaldo = el("calSaldo");
+  const btnCalCargarDatos = el("btnCalCargarDatos");
+  const btnGuardarDatos = el("btnGuardarDatos");
+  const btnCancelarDatos = el("btnCancelarDatos");
+
+  // Los campos del formulario, en un solo lugar: se usan para llenarlo, para
+  // leerlo y para saber cuáles van a cada endpoint.
+  const CAMPOS_HUESPED = {
+    guest_name: el("calGuestName"),
+    phone: el("calGuestPhone"),
+    email: el("calGuestEmail"),
+    dni: el("calGuestDni"),
+    notes: el("calGuestNotes"),
+  };
+  const CAMPOS_PLATA = {
+    importe: el("calImporte"),
+    anticipo: el("calAnticipo"),
+    cotizacion_usd: el("calCotizacion"),
+  };
 
   function nochesEntreYmd(ci, co) {
     const a = Date.parse(`${ci}T00:00:00Z`);
@@ -4867,11 +4978,16 @@
       check_out: String(ev.endStr || "").slice(0, 10),
       guest_name: row.guest_name || "",
       email: String(row.email || "").trim(),
+      // La fila entera, para poder llenar el formulario de datos con lo que
+      // ya está cargado en vez de pedirlo de nuevo al servidor.
+      row,
     };
 
     calFechas.classList.add("hidden");
+    calDatos.classList.add("hidden");
     pintarMsg(calAccionMsg, "", "info");
     pintarMsg(calFechasMsg, "", "info");
+    pintarMsg(calDatosMsg, "", "info");
 
     const esBloqueo = status === "BLOCKED";
     const esReserva = status === "CONFIRMED" || status === "HOLD_TRANSFER";
@@ -4882,7 +4998,143 @@
     // Mover un bloqueo es borrarlo y crearlo de nuevo; mover una reserva sin id
     // no se puede, porque la planilla se busca por id.
     btnCalCambiarFechas.classList.toggle("hidden", !(esBloqueo || (esReserva && calSeleccion.id)));
+
+    // Cargar datos también necesita el id: se escribe sobre la fila. Un bloqueo
+    // viejo del Excel puede no tenerlo, y ahí no hay nada que hacer.
+    btnCalCargarDatos.classList.toggle("hidden", !((esBloqueo || esReserva) && calSeleccion.id));
   }
+
+  /* ---- cargar los datos de una ocupación ya creada ---- */
+
+  // Un guión solo quiere decir "borrá esto". Sin esa convención no habría forma
+  // de vaciar un campo: dejarlo en blanco significa "no lo toques".
+  const leerCampo = (input) => {
+    const v = String(input.value || "").trim();
+    if (!v) return undefined;
+    return v === "-" ? "" : v;
+  };
+
+  const leerMonto = (input) => {
+    const v = String(input.value || "").trim();
+    if (!v) return undefined;
+    return v === "-" ? "" : v;
+  };
+
+  function refrescarSaldo() {
+    const importe = Number(CAMPOS_PLATA.importe.value) || 0;
+    const anticipo = Number(CAMPOS_PLATA.anticipo.value) || 0;
+    if (!importe && !anticipo) {
+      calSaldo.textContent = "";
+      return;
+    }
+    const saldo = importe - anticipo;
+    calSaldo.textContent = saldo > 0
+      ? `Falta cobrar ${pesosAR(saldo)}`
+      : saldo === 0 && importe
+        ? "Está todo cobrado"
+        : `Cobrado de más: ${pesosAR(Math.abs(saldo))}`;
+  }
+
+  for (const input of [CAMPOS_PLATA.importe, CAMPOS_PLATA.anticipo]) {
+    input.addEventListener("input", refrescarSaldo);
+  }
+
+  btnCalCargarDatos.onclick = () => {
+    if (!calSeleccion) return;
+    const row = calSeleccion.row || {};
+
+    for (const [campo, input] of Object.entries(CAMPOS_HUESPED)) {
+      input.value = row[campo] || "";
+    }
+    for (const [campo, input] of Object.entries(CAMPOS_PLATA)) {
+      const v = Number(row[campo]);
+      input.value = Number.isFinite(v) && v > 0 ? String(v) : "";
+    }
+    el("calFacturado").checked = String(row.facturado || "").trim().toLowerCase() === "si";
+
+    refrescarSaldo();
+    pintarMsg(calDatosMsg, "", "info");
+    calFechas.classList.add("hidden");
+    calDatos.classList.remove("hidden");
+    CAMPOS_HUESPED.guest_name.focus();
+  };
+
+  btnCancelarDatos.onclick = () => calDatos.classList.add("hidden");
+
+  btnGuardarDatos.onclick = async () => {
+    if (!calSeleccion?.id) return;
+
+    const huesped = {};
+    for (const [campo, input] of Object.entries(CAMPOS_HUESPED)) {
+      const v = leerCampo(input);
+      if (v !== undefined) huesped[campo] = v;
+    }
+
+    const plata = {};
+    for (const [campo, input] of Object.entries(CAMPOS_PLATA)) {
+      const v = leerMonto(input);
+      if (v !== undefined) plata[campo] = v;
+    }
+
+    // El tilde siempre viaja: destildarlo tiene que poder marcar como no
+    // facturada una que estaba en sí.
+    const facturado = el("calFacturado").checked;
+    const row = calSeleccion.row || {};
+    const facturadoAntes = String(row.facturado || "").trim().toLowerCase() === "si";
+    if (facturado !== facturadoAntes) plata.facturado = facturado;
+
+    if (!Object.keys(huesped).length && !Object.keys(plata).length) {
+      pintarMsg(calDatosMsg, "No cambiaste nada", "err");
+      return;
+    }
+
+    // El mismo chequeo que hace el servidor, para avisar antes de mandar.
+    const importe = Number(plata.importe ?? row.importe) || 0;
+    const anticipo = Number(plata.anticipo ?? row.anticipo) || 0;
+    if (importe && anticipo > importe) {
+      pintarMsg(calDatosMsg, "Lo cobrado no puede ser mayor que el importe total", "err");
+      return;
+    }
+
+    btnGuardarDatos.disabled = true;
+    pintarMsg(calDatosMsg, "Guardando...", "info");
+
+    // Son dos endpoints distintos: los datos del huésped y la plata. Se avisa
+    // cuál falló, porque "no se pudo guardar" a secas deja al dueño sin saber
+    // si el nombre entró y el importe no.
+    const fallaron = [];
+    try {
+      if (Object.keys(huesped).length) {
+        try {
+          await apiFetch(EP_SET_GUEST, { method: "POST", body: { id: calSeleccion.id, ...huesped } });
+        } catch (e) {
+          fallaron.push(`datos del huésped (${e.message})`);
+        }
+      }
+      if (Object.keys(plata).length) {
+        try {
+          await apiFetch(EP_SET_PAYMENT, { method: "POST", body: { id: calSeleccion.id, ...plata } });
+        } catch (e) {
+          fallaron.push(`importes (${e.message})`);
+        }
+      }
+
+      if (fallaron.length) {
+        pintarMsg(calDatosMsg, "No se pudo guardar: " + fallaron.join(" · "), "err");
+        return;
+      }
+
+      calDatos.classList.add("hidden");
+      closeCalendarModal();
+      showToast("Datos guardados ✅", "ok");
+      await refreshCalendar();
+      // Si Confirmadas o Números están cargados, la fila cambió y hay que
+      // rehacerlos: si no, el que acabás de cargar sigue figurando sin datos.
+      if (statsFilas) await cargarStats();
+    } finally {
+      btnGuardarDatos.disabled = false;
+    }
+  };
 
   btnCalCambiarFechas.onclick = () => {
     if (!calSeleccion) return;
