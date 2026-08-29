@@ -360,3 +360,32 @@ Se suben al toque, sin esperar a **Guardar**: el panel las manda apenas se
 elige el archivo, y la ficha muestra la miniatura. `tieneFoto` no se le cree al
 navegador — `store-catalog` le pregunta al almacenamiento cuáles existen, para
 que nadie pueda escribir una URL a mano ni quede un `<img>` roto.
+
+## Cargar los datos de una ocupación ya creada
+
+`set-reservation-guest` escribe nombre, teléfono, mail, DNI y notas sobre una
+fila que ya existe.
+
+Existía un agujero: `admin-update-reservation` sólo cambia el estado y
+`set-reservation-payment` sólo toca la plata, así que **no había forma de
+escribirle el nombre a una fila ya creada**. Se veía en los bloqueos: si el
+dueño bloqueaba unas fechas apurado, sin cargar quién era, esa fila se quedaba
+sin datos para siempre. Y el modal del calendario encima escondía los datos que
+un bloqueo sí tenía — cortaba en `BLOCKED` y mostraba `-` en todo, aunque
+`owner-blocks` ya guarde nombre, teléfono, DNI e importes al crear.
+
+Es el hermano de `set-reservation-payment` y sigue el mismo camino en n8n:
+valida el secret, busca la fila por id, **fusiona sólo los campos que llegaron**
+sobre lo que ya estaba guardado, y recién ahí escribe. Esa fusión es lo que
+permite guardar un teléfono sin borrar el nombre.
+
+Del lado del panel, el botón **Cargar datos** del calendario llama a los dos
+endpoints —este para los datos, `set-reservation-payment` para la plata— y si
+uno falla dice cuál: "no se pudo guardar" a secas deja al dueño sin saber si el
+nombre entró y el importe no.
+
+Un campo vacío no se toca; un guión lo borra. Sin esa convención no habría forma
+de vaciar un dato ya cargado, porque dejarlo en blanco significa "no lo toques".
+
+Variable de entorno opcional: `N8N_SET_GUEST_PATH` (por defecto
+`/webhook/set-reservation-guest`).
