@@ -3388,8 +3388,18 @@
         }
       });
 
-      setStatus(`✅ Desbloqueo OK. Filas eliminadas: ${out.deleted_count ?? "-"}`);
-      showToast(`Desbloqueado ✅ (${out.deleted_count ?? 0})`, "ok");
+      // Cero desbloqueados no es un éxito: es que no había ningún bloqueo en
+      // esas fechas. El servidor venía contestando siempre que sí, y el panel
+      // le creía, así que el dueño veía el tilde verde y la fecha seguía
+      // bloqueada.
+      const cuantos = Number(out.deleted_count) || 0;
+      if (!cuantos) {
+        setStatus("⚠️ No había ningún bloqueo en esas fechas. No se cambió nada.");
+        showToast("No había nada para desbloquear", "err");
+      } else {
+        setStatus(`✅ Desbloqueado. Rangos liberados: ${cuantos}.`);
+        showToast(`Desbloqueado ✅ (${cuantos})`, "ok");
+      }
 
       el("note").value = "";
       fpIn && fpIn.clear();
@@ -5174,7 +5184,7 @@
           method: "POST",
           body: { house_code: calSeleccion.house_code, checkin: ci, checkout: co, note: "Movido desde el calendario" },
         });
-        await apiFetch(EP_OWNER_UNBLOCKS, {
+        const liberado = await apiFetch(EP_OWNER_UNBLOCKS, {
           method: "POST",
           body: {
             house_code: calSeleccion.house_code,
@@ -5183,6 +5193,16 @@
             note: "Movido desde el calendario",
           },
         });
+        // Mover es bloquear lo nuevo y liberar lo viejo. Si lo segundo no
+        // liberó nada, la casa queda bloqueada dos veces: hay que decirlo acá
+        // y no cerrar el modal como si hubiera salido bien.
+        if (!(Number(liberado.deleted_count) || 0)) {
+          pintarMsg(calFechasMsg,
+            `Se bloqueó ${ci} → ${co}, pero no se pudo liberar ${calSeleccion.check_in} → ${calSeleccion.check_out}. ` +
+            "La casa quedó bloqueada en las dos fechas: desbloqueá la vieja a mano.", "err");
+          await refreshCalendar();
+          return;
+        }
       } else {
         await apiFetch(EP_SET_DATES, {
           method: "POST",
@@ -5242,7 +5262,7 @@
 
     try {
       if (esBloqueo) {
-        await apiFetch(EP_OWNER_UNBLOCKS, {
+        const out = await apiFetch(EP_OWNER_UNBLOCKS, {
           method: "POST",
           body: {
             house_code: calSeleccion.house_code,
@@ -5251,6 +5271,14 @@
             note: "Desbloqueado desde el calendario",
           },
         });
+        // Si no liberó nada, el modal se queda abierto y lo dice. Cerrarlo con
+        // un "Fechas liberadas" cuando el bloqueo sigue ahí es peor que el
+        // error: el dueño se va convencido de que quedó resuelto.
+        if (!(Number(out.deleted_count) || 0)) {
+          pintarMsg(calAccionMsg,
+            "El servidor no encontró ningún bloqueo en esas fechas. No se cambió nada.", "err");
+          return;
+        }
       } else {
         const ep = calSeleccion.status === "HOLD_TRANSFER" ? EP_CANCEL_RESERVATION : EP_CANCEL_CONFIRMED;
         await apiFetch(ep, {
