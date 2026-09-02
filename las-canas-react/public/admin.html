@@ -94,6 +94,13 @@
     #calendar .fc-daygrid-event .fc-event-main { padding: 0 !important; }
     #calendar .fc-event { cursor: pointer; }
 
+    /* Los días del mes de al lado ya no se muestran (showNonCurrentDates), pero
+       la casilla sigue ocupando su lugar para no torcer la grilla. FullCalendar
+       la pinta de gris, y en esta pantalla el gris es el único bloque de color
+       sin nombre: se lee como un estado más, al lado de Confirmada / Hold /
+       Bloqueada. Vacía y sin fondo se entiende sola. */
+    #calendar .fc-day-disabled { background: transparent; }
+
     /* La barra de arriba: FullCalendar pega el grupo ‹ › contra "Hoy" sin
        ningún aire. En el celular, además, el título se lleva casi todo el ancho
        y los botones terminan amontonados en un rincón. */
@@ -5337,6 +5344,10 @@
       locale: "es",
       firstDay: 1,
       fixedWeekCount: false,
+      // Enero muestra del 1 al 31 y nada más. Sin esto la primera y la última
+      // fila completan la semana con días del mes de al lado, y en el celular
+      // un bloqueo del 28 de diciembre se lee como si fuera de enero.
+      showNonCurrentDates: false,
       headerToolbar: {
         left: "prev,next today",
         center: "title",
