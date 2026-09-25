@@ -1,6 +1,8 @@
 export default function Location() {
-  // 📍 Link externo (lo que te abre perfecto en Google Maps)
-  const googleMapsLink = "https://maps.app.goo.gl/NE1Ni4AthYiVn9tk8?g_st=ic";
+  // 📍 Link externo: va al perfil de empresa de Google, no a un pin suelto.
+  // Google usa las visitas al perfil desde el sitio como señal para el mapa,
+  // y además mantiene una sola ficha en vez de dos ubicaciones parecidas.
+  const googleMapsLink = "https://maps.app.goo.gl/iVeJD4qcaFcSLDD46";
 
   // ✅ Embed por coordenadas exactas (pin correcto)
   const mapEmbed =
@@ -30,10 +32,13 @@ export default function Location() {
                 </div>
                 <div>
                   <h4 className="font-bold text-brand-brown text-lg">Mar de Cobo</h4>
+                  {/* La dirección va escrita igual que en el perfil de Google
+                      (Santa Rosa 1030, B7609). Si el sitio y la ficha no dicen
+                      lo mismo, Google desconfía de las dos. */}
                   <p className="text-brand-brown/60 text-sm leading-relaxed italic">
-                    Santa Rosa entre Los Pinos y Del Trabajo, Mar de Cobo. Partido de
-                    Mar Chiquita, Provincia de Buenos Aires. Un entorno natural,
-                    tranquilo y rodeado de bosque.
+                    Santa Rosa 1030, Mar de Cobo (B7609). Partido de Mar Chiquita,
+                    Provincia de Buenos Aires. Un entorno natural, tranquilo y
+                    rodeado de bosque.
                   </p>
                 </div>
               </div>

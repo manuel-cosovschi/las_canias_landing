@@ -8,4 +8,19 @@
 /tienda                        /tienda.html                                     200
 /tienda/                       /tienda.html                                     200
 
+# El resto de las páginas sueltas, igual. Netlify ya sirve la versión sin
+# .html por su cuenta ("Pretty URLs"), pero eso es una opción del panel que
+# alguien puede apagar sin saber que rompe esto: si se apaga y estas reglas no
+# estuvieran, /reservar caería en el comodín de abajo y devolvería la home.
+# Las canónicas de cada página apuntan justo a estas URLs, así que tienen que
+# funcionar siempre.
+/mar-de-cobo                   /mar-de-cobo.html                                200
+/mar-de-cobo/                  /mar-de-cobo.html                                200
+/reservar                      /reservar.html                                   200
+/reservar/                     /reservar.html                                   200
+/terminos                      /terminos.html                                   200
+/terminos/                     /terminos.html                                   200
+/tips+sugerencias              /tips+sugerencias.html                           200
+/tips+sugerencias/             /tips+sugerencias.html                           200
+
 /*                            /index.html                                      200

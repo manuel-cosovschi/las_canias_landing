@@ -37,6 +37,13 @@ export default function Footer() {
               <li><a href="#casas" className="hover:text-brand-beige transition-colors">Nuestras Casas</a></li>
               <li><a href="#gallery" className="hover:text-brand-beige transition-colors">Galería</a></li>
               <li><a href="/tienda" className="hover:text-brand-beige transition-colors">Tienda de playa</a></li>
+              {/* La home es una SPA: Google la renderiza tarde. Este link deja
+                  la página de texto plano al alcance del rastreo desde el inicio. */}
+              <li>
+                <a href="/mar-de-cobo" className="hover:text-brand-beige transition-colors">
+                  Alquiler en Mar de Cobo
+                </a>
+              </li>
             </ul>
           </div>
 
