@@ -4,15 +4,18 @@ export default function Gallery() {
   const images = useMemo(
     () => [
       // ✅ IMÁGENES (carpeta: /public/Imagenes Postales/)
-      { src: "/Imagenes Postales/entradaVista1.jpg", alt: "Entrada" },
-      { src: "/Imagenes Postales/portonEntrada.JPG", alt: "Portón de entrada" },
-      { src: "/Imagenes Postales/autos1.JPG", alt: "Estacionamiento" },
-      { src: "/Imagenes Postales/IMG_5916 2.jpeg", alt: "Postal" },
-      { src: "/Imagenes Postales/IMG_6013.jpeg", alt: "Postal" },
-      { src: "/Imagenes Postales/IMG_6017.jpeg", alt: "Postal" },
-      { src: "/Imagenes Postales/IMG_6038.jpeg", alt: "Postal" },
-      { src: "/Imagenes Postales/IMG_6055.jpeg", alt: "Postal" },
-      { src: "/Imagenes Postales/IMG_6057.jpeg", alt: "Postal" },
+      // El alt dice qué se ve y dónde: es lo único que lee Google para
+      // entender una foto, y la búsqueda de imágenes trae bastante gente
+      // buscando alojamiento. "Postal" a secas no le decía nada a nadie.
+      { src: "/Imagenes Postales/entradaVista1.jpg", alt: "Entrada al complejo Las Cañas en Mar de Cobo" },
+      { src: "/Imagenes Postales/portonEntrada.JPG", alt: "Portón de entrada del complejo Las Cañas, Mar de Cobo" },
+      { src: "/Imagenes Postales/autos1.JPG", alt: "Estacionamiento del complejo Las Cañas en Mar de Cobo" },
+      { src: "/Imagenes Postales/IMG_5916 2.jpeg", alt: "Complejo Las Cañas, Mar de Cobo" },
+      { src: "/Imagenes Postales/IMG_6013.jpeg", alt: "Complejo Las Cañas, Mar de Cobo" },
+      { src: "/Imagenes Postales/IMG_6017.jpeg", alt: "Complejo Las Cañas, Mar de Cobo" },
+      { src: "/Imagenes Postales/IMG_6038.jpeg", alt: "Complejo Las Cañas, Mar de Cobo" },
+      { src: "/Imagenes Postales/IMG_6055.jpeg", alt: "Complejo Las Cañas, Mar de Cobo" },
+      { src: "/Imagenes Postales/IMG_6057.jpeg", alt: "Complejo Las Cañas, Mar de Cobo" },
 
       // ✅ VIDEOS (carpeta: /public/Imagenes Postales/)
       { src: "/Imagenes Postales/IMG_4104.MOV", alt: "" },

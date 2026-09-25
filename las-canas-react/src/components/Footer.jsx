@@ -40,7 +40,7 @@ export default function Footer() {
               {/* La home es una SPA: Google la renderiza tarde. Este link deja
                   la página de texto plano al alcance del rastreo desde el inicio. */}
               <li>
-                <a href="/mar-de-cobo.html" className="hover:text-brand-beige transition-colors">
+                <a href="/mar-de-cobo" className="hover:text-brand-beige transition-colors">
                   Alquiler en Mar de Cobo
                 </a>
               </li>
