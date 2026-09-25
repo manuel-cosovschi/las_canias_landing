@@ -8,4 +8,10 @@
 /tienda                        /tienda.html                                     200
 /tienda/                       /tienda.html                                     200
 
+# Misma idea para la página de contenido de Mar de Cobo: si alguien llega sin
+# el .html, tiene que ver la página y no la home. La canónica sigue siendo la
+# versión con .html, así que Google indexa una sola.
+/mar-de-cobo                   /mar-de-cobo.html                                200
+/mar-de-cobo/                  /mar-de-cobo.html                                200
+
 /*                            /index.html                                      200
