@@ -47,6 +47,7 @@ Mezclarlos da 401 sin ninguna pista de por qué.
 | `N8N_ADMIN_UPDATE_RESERVATION_PATH` | `admin-update-reservation` (opcional) |
 | `WA_VERIFY_TOKEN` / `N8N_WA_INCOMING_URL` | `wa-webhook` |
 | `N8N_WA_CONVERSATIONS_PATH` | `wa-conversations` (opcional, tiene default) |
+| `N8N_WA_ACTION_PATH` | `wa-panel-action` (opcional, tiene default) |
 | `GOOGLE_SERVICE_ACCOUNT_JSON` / `LC_SHEET_ID` / `LC_SHEET_TAB` | `list-calendar`, `search-reservations` |
 
 **Las variables nuevas se aplican recién en el siguiente deploy.** Cargarlas en
@@ -431,3 +432,46 @@ x-lc-secret: <LC_OWNER_SECRET>
 En el panel el texto de cada mensaje se pinta con `textContent`, nunca con
 `innerHTML`: lo escriben los huéspedes y un mensaje con HTML adentro no puede
 terminar ejecutándose en la pantalla del dueño.
+
+### Atender una conversación a mano
+
+`wa-panel-action` es lo que el panel usa para intervenir en una charla. Recibe
+`{ accion, wa_id, texto }` y acepta tres acciones:
+
+| Acción | Qué hace |
+| --- | --- |
+| `pausar` | Cañita deja de responderle a ese contacto |
+| `reanudar` | Cañita vuelve a atenderlo |
+| `responder` | Manda un mensaje como Las Cañas y lo guarda en la charla |
+
+**El interruptor es lo primero, no un adorno.** Sin él, el dueño contesta a mano
+y el bot le sigue respondiendo por encima a la misma persona: se pisan los dos en
+el mismo chat. Por eso el botón pregunta "¿estás seguro?" antes de cortar a
+Cañita, y avisa que si nadie atiende, esa persona se queda sin respuesta.
+
+La pausa vive en la data table **`wa_pausados`**, que es un registro
+*append-only*: cada pausa o reanudación agrega una fila y **gana la más
+reciente**. Queda el historial de cuándo se tomó y cuándo se devolvió cada
+conversación, y el endpoint sólo necesita insertar. El bot lo consulta apenas
+entra un mensaje, antes de cualquier otra cosa, así lo respetan por igual los
+mensajes de texto y los audios.
+
+Ese chequeo va con `onError: continueRegularOutput` **a propósito**: si la
+lectura de la tabla falla, el bot sigue contestando en vez de quedarse mudo.
+Falla hacia el lado seguro.
+
+#### La ventana de 24 horas
+
+WhatsApp sólo permite texto libre dentro de las **24 hs** del último mensaje del
+huésped; pasado eso Meta exige plantillas aprobadas. El panel lo resuelve así:
+
+- **Dentro de la ventana** → cuadro de respuesta normal.
+- **Fuera** → un aviso y un mensaje **ya escrito y editable**, con un botón que
+  abre WhatsApp con ese texto cargado para mandarlo desde el teléfono del dueño.
+
+Para saber si la ventana sigue abierta se usa `ultimo_entrante`, no la última
+actividad: una respuesta manual del dueño actualizaría la actividad y haría
+parecer que la ventana está abierta cuando ya venció.
+
+Si Meta igual rechaza el envío, n8n contesta 400 con el motivo y el panel lo
+muestra, en vez de un 500 opaco.

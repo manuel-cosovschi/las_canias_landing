@@ -787,6 +787,7 @@
           <select id="crmFiltro" class="rounded-xl border border-brand-beige px-3 py-2 text-sm">
             <option value="">Todos</option>
             <option value="conv">Con conversación guardada</option>
+            <option value="pausados">Los atiendo yo (Cañita en pausa)</option>
             <option value="availability">Consultó disponibilidad</option>
             <option value="price">Consultó precios</option>
             <option value="reserve">Quiso reservar</option>
@@ -2428,6 +2429,31 @@
   // la lista entera al servidor en cada tecla.
   let crmContactos = [];
 
+  // Qué fichas están desplegadas. Se guarda por número y no por posición en la
+  // lista, así el auto-refresh no te cierra la conversación que estás leyendo
+  // ni te la cambia por otra cuando entra un mensaje nuevo y cambia el orden.
+  const crmAbiertos = new Set();
+
+  let crmTimer = null;
+
+  // WhatsApp sólo deja mandar texto libre dentro de las 24 hs del último mensaje
+  // del huésped. Pasado eso Meta exige plantillas aprobadas, que se piden aparte.
+  const CRM_VENTANA_MS = 24 * 60 * 60 * 1000;
+
+  function crmDentroDeVentana(c) {
+    if (!c.ultimo_entrante) return false;
+    const t = new Date(c.ultimo_entrante).getTime();
+    if (isNaN(t)) return false;
+    return Date.now() - t < CRM_VENTANA_MS;
+  }
+
+  async function crmAccion(accion, wa_id, texto) {
+    return apiFetch("/.netlify/functions/wa-panel-action", {
+      method: "POST",
+      body: { accion, wa_id, texto: texto || "" },
+    });
+  }
+
   const CRM_TEMA = {
     availability: "Disponibilidad",
     price: "Precios",
@@ -2480,6 +2506,15 @@
     quien.className = "font-semibold text-sm truncate";
     quien.textContent = c.nombre ? `${c.nombre} · ${c.wa_id}` : c.wa_id;
 
+    // Que se vea sin abrir la ficha quién quedó a cargo de cada conversación.
+    if (c.pausado) {
+      const marca = document.createElement("span");
+      marca.className =
+        "ml-2 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300 whitespace-nowrap";
+      marca.textContent = "lo atendés vos";
+      quien.appendChild(marca);
+    }
+
     const resumen = document.createElement("p");
     resumen.className = "text-xs text-brand-accent mt-0.5";
     const partes = [];
@@ -2513,6 +2548,52 @@
     cuerpo.className =
       "hidden px-4 pb-4 pt-3 space-y-2 bg-brand-beige/10 border-t border-brand-beige";
 
+    // ---- Quién atiende: Cañita o vos ----
+    const barra = document.createElement("div");
+    barra.className =
+      "flex flex-wrap items-center justify-between gap-2 pb-3 mb-1 border-b border-brand-beige";
+
+    const quienAtiende = document.createElement("p");
+    quienAtiende.className = "text-xs font-semibold";
+    quienAtiende.textContent = c.pausado
+      ? "🙋 Lo atendés vos — Cañita no le responde"
+      : "🤖 Le responde Cañita automáticamente";
+
+    const btnPausa = document.createElement("button");
+    btnPausa.type = "button";
+    btnPausa.className =
+      "text-xs font-semibold px-3 py-1.5 rounded-xl border transition " +
+      (c.pausado
+        ? "bg-white border-brand-beige hover:bg-brand-beige/30"
+        : "bg-brand-brown text-white border-brand-brown hover:opacity-90");
+    btnPausa.textContent = c.pausado ? "Devolvérselo a Cañita" : "Acá contesto yo";
+
+    btnPausa.onclick = async (ev) => {
+      ev.stopPropagation();
+
+      const aviso = c.pausado
+        ? "¿Seguro? Cañita vuelve a responderle automáticamente a este contacto."
+        : "¿Seguro?\n\nCañita va a DEJAR de responderle a este contacto hasta que vos se lo devuelvas. Si no lo atendés, esta persona se queda sin respuesta.";
+
+      if (!window.confirm(aviso)) return;
+
+      btnPausa.disabled = true;
+      btnPausa.textContent = "Guardando…";
+      try {
+        await crmAccion(c.pausado ? "reanudar" : "pausar", c.wa_id);
+        setStatus(c.pausado ? "✅ Cañita vuelve a atenderlo." : "✅ Listo, lo atendés vos.");
+        await cargarConversaciones();
+      } catch (e) {
+        setStatus(`❌ ${e.message}`);
+        btnPausa.disabled = false;
+        btnPausa.textContent = c.pausado ? "Devolvérselo a Cañita" : "Acá contesto yo";
+      }
+    };
+
+    barra.appendChild(quienAtiende);
+    barra.appendChild(btnPausa);
+    cuerpo.appendChild(barra);
+
     if (!Array.isArray(c.conversacion) || !c.conversacion.length) {
       const vacio = document.createElement("p");
       vacio.className = "text-xs text-brand-accent";
@@ -2526,15 +2607,104 @@
       }
     }
 
-    const escribir = document.createElement("a");
-    escribir.className = "inline-block mt-2 text-xs font-semibold text-brand-brown underline";
-    escribir.href = `https://wa.me/${encodeURIComponent(c.wa_id)}`;
-    escribir.target = "_blank";
-    escribir.rel = "noopener";
-    escribir.textContent = "Escribirle por WhatsApp";
-    cuerpo.appendChild(escribir);
+    // ---- Responder ----
+    const zona = document.createElement("div");
+    zona.className = "pt-3 mt-2 border-t border-brand-beige";
 
-    cabecera.onclick = () => cuerpo.classList.toggle("hidden");
+    if (crmDentroDeVentana(c)) {
+      const caja = document.createElement("textarea");
+      caja.rows = 2;
+      caja.placeholder = "Escribile como Las Cañas…";
+      caja.className =
+        "w-full rounded-xl border border-brand-beige px-3 py-2 text-sm resize-y";
+      // Marca para que el auto-refresh sepa distinguir una respuesta a medio
+      // escribir de la plantilla, que viene con texto de fábrica.
+      caja.dataset.respuesta = "1";
+      // Sin esto, tocar el textarea cierra la ficha (el click sube a la cabecera).
+      caja.onclick = (ev) => ev.stopPropagation();
+
+      const enviar = document.createElement("button");
+      enviar.type = "button";
+      enviar.className =
+        "mt-2 rounded-xl bg-brand-brown text-white px-4 py-2 text-sm font-semibold hover:opacity-90 transition";
+      enviar.textContent = "Enviar";
+
+      enviar.onclick = async (ev) => {
+        ev.stopPropagation();
+        const texto = caja.value.trim();
+        if (!texto) { setStatus("❌ Escribí algo antes de enviar."); return; }
+
+        enviar.disabled = true;
+        enviar.textContent = "Enviando…";
+        try {
+          await crmAccion("responder", c.wa_id, texto);
+          caja.value = "";
+          setStatus("✅ Mensaje enviado.");
+          await cargarConversaciones();
+        } catch (e) {
+          setStatus(`❌ ${e.message}`);
+          enviar.disabled = false;
+          enviar.textContent = "Enviar";
+        }
+      };
+
+      const nota = document.createElement("p");
+      nota.className = "text-[11px] text-brand-accent mt-1.5";
+      nota.textContent = c.pausado
+        ? "Sale como Las Cañas. Cañita está en pausa para este contacto."
+        : "Sale como Las Cañas. Ojo: Cañita sigue respondiendo sola a este contacto — si vas a atenderlo vos, tocá “Acá contesto yo”.";
+
+      zona.appendChild(caja);
+      zona.appendChild(enviar);
+      zona.appendChild(nota);
+    } else {
+      // Fuera de las 24 hs WhatsApp no deja mandar texto libre desde la API. Se
+      // le deja el mensaje ya escrito para que lo mande desde su propio WhatsApp.
+      const aviso = document.createElement("div");
+      aviso.className =
+        "rounded-xl border border-amber-300 bg-amber-50 px-3 py-2.5 text-xs text-amber-900";
+      aviso.textContent =
+        "Pasaron más de 24 hs desde el último mensaje de esta persona. WhatsApp no permite responderle con texto libre desde el panel: hay que escribirle desde tu WhatsApp.";
+
+      const plantilla = document.createElement("textarea");
+      plantilla.rows = 3;
+      plantilla.className =
+        "w-full mt-2 rounded-xl border border-brand-beige px-3 py-2 text-sm resize-y";
+      plantilla.value =
+        "¡Hola! Te escribimos de Las Cañas Mar de Cobo 🌊\n" +
+        "Habías consultado por el complejo y quedamos a mano. ¿Seguís interesado/a?\n" +
+        "Contanos las fechas y cuántas personas son y te pasamos disponibilidad.";
+      plantilla.onclick = (ev) => ev.stopPropagation();
+
+      const abrir = document.createElement("a");
+      abrir.className =
+        "inline-block mt-2 rounded-xl bg-brand-brown text-white px-4 py-2 text-sm font-semibold hover:opacity-90 transition";
+      abrir.target = "_blank";
+      abrir.rel = "noopener";
+      abrir.textContent = "Abrir WhatsApp con el mensaje listo";
+      abrir.href = `https://wa.me/${encodeURIComponent(c.wa_id)}?text=${encodeURIComponent(plantilla.value)}`;
+      // El link se rearma con lo que el dueño haya editado en la plantilla.
+      plantilla.oninput = () => {
+        abrir.href = `https://wa.me/${encodeURIComponent(c.wa_id)}?text=${encodeURIComponent(plantilla.value)}`;
+      };
+      abrir.onclick = (ev) => ev.stopPropagation();
+
+      zona.appendChild(aviso);
+      zona.appendChild(plantilla);
+      zona.appendChild(abrir);
+    }
+
+    cuerpo.appendChild(zona);
+
+    // La ficha arranca abierta si ya lo estaba antes de refrescar.
+    if (crmAbiertos.has(c.wa_id)) cuerpo.classList.remove("hidden");
+
+    cabecera.onclick = () => {
+      const seCierra = !cuerpo.classList.contains("hidden");
+      cuerpo.classList.toggle("hidden");
+      if (seCierra) crmAbiertos.delete(c.wa_id);
+      else crmAbiertos.add(c.wa_id);
+    };
 
     card.appendChild(cabecera);
     card.appendChild(cuerpo);
@@ -2548,7 +2718,8 @@
 
     const lista = crmContactos.filter((c) => {
       if (filtro === "conv" && !c.mensajes) return false;
-      if (filtro && filtro !== "conv" && c.last_topic !== filtro) return false;
+      if (filtro === "pausados" && !c.pausado) return false;
+      if (filtro && filtro !== "conv" && filtro !== "pausados" && c.last_topic !== filtro) return false;
       if (!q) return true;
       return `${c.wa_id} ${c.nombre || ""} ${c.last_topic || ""}`.toLowerCase().includes(q);
     });
@@ -2576,6 +2747,29 @@
     return crmContactos.length;
   }
 
+  // Refresca sola cada 30 s mientras la sección esté abierta, así entran los
+  // mensajes nuevos sin tener que tocar nada. Se saltea el ciclo si el dueño
+  // está escribiendo o dejó una respuesta a medio redactar: refrescar en ese
+  // momento le borraría el mensaje.
+  function crmAutoRefresh(encender) {
+    if (crmTimer) { clearInterval(crmTimer); crmTimer = null; }
+    if (!encender) return;
+
+    crmTimer = setInterval(async () => {
+      if (viewCrm.classList.contains("hidden")) return;
+
+      const ocupado = Array.from(viewCrm.querySelectorAll("textarea")).some((t) => {
+        if (t === document.activeElement) return true;
+        return t.dataset.respuesta === "1" && (t.value || "").trim() !== "";
+      });
+      if (ocupado) return;
+
+      // Silencioso: es un refresco de fondo, no tiene que ensuciar la barra de
+      // estado ni interrumpir lo que el dueño esté haciendo.
+      try { await cargarConversaciones(); } catch (e) {}
+    }, 30000);
+  }
+
   el("crmBuscar").oninput = () => renderConversaciones();
   el("crmFiltro").onchange = () => renderConversaciones();
 
@@ -2595,6 +2789,9 @@
       setStatus("Cargando conversaciones...");
       const n = await cargarConversaciones();
       setStatus(`✅ Conversaciones al día. Contactos: ${n}`);
+      // El intervalo se saltea solo cuando la sección no está visible, así que
+      // no hace falta apagarlo al cambiar de pestaña.
+      crmAutoRefresh(true);
     } catch (e) {
       setStatus(`❌ ${e.message}`);
     }
