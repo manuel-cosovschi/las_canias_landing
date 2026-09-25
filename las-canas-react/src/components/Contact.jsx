@@ -135,7 +135,7 @@ export default function Contact() {
 
             <p className="mt-6 text-xs text-brand-brown/50">
               Si preferís, también podés reservar directamente desde{" "}
-              <a href="/reservar.html" className="underline font-bold">
+              <a href="/reservar" className="underline font-bold">
                 Reservar
               </a>
               .

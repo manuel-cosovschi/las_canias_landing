@@ -57,7 +57,7 @@ export default function Footer() {
               </li>
 
               <li>
-                <a href="/reservar.html" className="hover:text-brand-beige transition-colors">
+                <a href="/reservar" className="hover:text-brand-beige transition-colors">
                   Reservar
                 </a>
               </li>

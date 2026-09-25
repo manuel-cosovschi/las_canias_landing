@@ -43,10 +43,10 @@ export default function Navbar() {
     { name: "Ubicación", href: "#location" },
 
     // ✅ NUEVO: después de Ubicación
-    { name: "Tips y sugerencias", href: "/tips+sugerencias.html" },
+    { name: "Tips y sugerencias", href: "/tips+sugerencias" },
 
     { name: "Contacto", href: "#contact" },
-    { name: "Términos", href: "/terminos.html" },
+    { name: "Términos", href: "/terminos" },
   ];
 
   const linkClass = `flex items-center leading-none text-[11px] font-black tracking-[0.22em] uppercase hover:text-brand-accent transition-colors ${
@@ -174,7 +174,7 @@ export default function Navbar() {
 
           <li className="flex items-center">
             <a
-              href="/reservar.html"
+              href="/reservar"
               className="bg-brand-brown hover:bg-black text-brand-cream px-10 py-4 rounded-full text-[10px] font-black uppercase tracking-[0.24em] transition-all shadow-xl hover:shadow-brand-brown/50"
             >
               Reservar
@@ -275,7 +275,7 @@ export default function Navbar() {
                 </a>
 
                 <a
-                  href="/reservar.html"
+                  href="/reservar"
                   className="mt-2 inline-flex items-center justify-center bg-brand-brown hover:bg-black text-brand-cream px-10 py-5 rounded-full text-[10px] font-black uppercase tracking-[0.24em] transition-all shadow-xl"
                   onClick={closeAll}
                 >
