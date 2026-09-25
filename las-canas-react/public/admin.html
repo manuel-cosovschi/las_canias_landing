@@ -365,6 +365,9 @@
           <button id="tabShop" class="navItem shrink-0 lg:w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold text-left transition">
             <span class="navPunto"></span><span class="whitespace-nowrap">Tienda</span>
           </button>
+          <button id="tabCrm" class="navItem shrink-0 lg:w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold text-left transition">
+            <span class="navPunto"></span><span class="whitespace-nowrap">Conversaciones</span>
+          </button>
           <button id="tabGuide" class="navItem shrink-0 lg:w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold text-left transition">
             <span class="navPunto"></span><span class="whitespace-nowrap">Guía</span>
           </button>
@@ -762,6 +765,44 @@
           Al guardar se reemplaza la lista completa, y las fotos de los productos que
           saques dejan de ocupar lugar. Las fotos se suben al toque, sin esperar a Guardar.
         </p>
+      </div>
+
+      <!-- CONVERSACIONES DE CAÑITA (CRM) -->
+      <div id="viewCrm" class="bg-white/75 rounded-2xl shadow-sm border border-brand-beige p-6 hidden">
+        <div class="flex items-start justify-between gap-4 mb-4">
+          <div>
+            <h2 class="serif text-xl sm:text-2xl font-bold">Conversaciones</h2>
+            <p class="text-xs text-brand-accent mt-1">
+              Todo el que le escribió a Cañita por WhatsApp. Tocá un contacto para ver la charla.
+            </p>
+          </div>
+          <span class="text-xs font-semibold px-3 py-1 rounded-full bg-brand-beige/50 border border-brand-beige/80">
+            WhatsApp
+          </span>
+        </div>
+
+        <div class="flex flex-col sm:flex-row gap-2 mb-4">
+          <input id="crmBuscar" type="text" placeholder="Buscar por teléfono, nombre o tema…"
+            class="flex-1 rounded-xl border border-brand-beige px-3 py-2 text-sm" />
+          <select id="crmFiltro" class="rounded-xl border border-brand-beige px-3 py-2 text-sm">
+            <option value="">Todos</option>
+            <option value="conv">Con conversación guardada</option>
+            <option value="availability">Consultó disponibilidad</option>
+            <option value="price">Consultó precios</option>
+            <option value="reserve">Quiso reservar</option>
+            <option value="handoff">Pidió hablar con una persona</option>
+          </select>
+          <button id="crmRefrescar" class="rounded-xl bg-brand-brown text-white px-4 py-2 text-sm font-semibold">
+            Refrescar
+          </button>
+        </div>
+
+        <p id="crmResumen" class="text-xs text-brand-accent mb-3"></p>
+
+        <!-- Las transcripciones arrancan el 25/09/2026: antes de eso los mensajes
+             no se guardaban en ningún lado, así que los contactos viejos figuran
+             con su consulta pero sin la charla. -->
+        <div id="crmLista" class="space-y-2"></div>
       </div>
 
       <div id="viewGuide" class="bg-white/75 rounded-2xl shadow-sm border border-brand-beige p-6 hidden">
@@ -1956,6 +1997,9 @@
   const tabShop = el("tabShop");
   const viewShop = el("viewShop");
 
+  const tabCrm = el("tabCrm");
+  const viewCrm = el("viewCrm");
+
   const tabGuide = el("tabGuide");
   const viewGuide = el("viewGuide");
 
@@ -2304,6 +2348,7 @@
     { id: "prices",    boton: tabPrices,    vista: viewPrices },
     { id: "rules",     boton: tabRules,     vista: viewRules },
     { id: "shop",      boton: tabShop,      vista: viewShop },
+    { id: "crm",       boton: tabCrm,       vista: viewCrm },
     { id: "guide",     boton: tabGuide,     vista: viewGuide },
   ];
 
@@ -2370,6 +2415,186 @@
       setStatus("Sacando cuentas...");
       const n = await cargarStats();
       setStatus(`✅ Números al día. Reservas confirmadas: ${n}`);
+    } catch (e) {
+      setStatus(`❌ ${e.message}`);
+    }
+  };
+
+  /* =====================
+     CONVERSACIONES (CRM)
+  ===================== */
+
+  // Se guardan los contactos ya traídos para poder filtrar sin volver a pedirle
+  // la lista entera al servidor en cada tecla.
+  let crmContactos = [];
+
+  const CRM_TEMA = {
+    availability: "Disponibilidad",
+    price: "Precios",
+    reserve: "Reserva",
+    faq: "Consulta general",
+    handoff: "Pidió una persona",
+    no_texto: "Mandó audio o foto",
+    error: "Error al procesar",
+  };
+
+  function crmFecha(iso) {
+    if (!iso) return "";
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return "";
+    return d.toLocaleString("es-AR", {
+      day: "2-digit", month: "2-digit", year: "2-digit",
+      hour: "2-digit", minute: "2-digit",
+    });
+  }
+
+  // El texto lo escriben los huéspedes, así que va con textContent y nunca con
+  // innerHTML: un mensaje con HTML adentro no puede terminar ejecutándose acá.
+  function crmBurbuja(texto, esDelBot) {
+    const fila = document.createElement("div");
+    fila.className = esDelBot ? "flex justify-end" : "flex justify-start";
+
+    const burbuja = document.createElement("div");
+    burbuja.className = esDelBot
+      ? "max-w-[85%] rounded-2xl px-3 py-2 text-sm bg-brand-brown text-white whitespace-pre-line"
+      : "max-w-[85%] rounded-2xl px-3 py-2 text-sm bg-white border border-brand-beige whitespace-pre-line";
+    burbuja.textContent = texto;
+
+    fila.appendChild(burbuja);
+    return fila;
+  }
+
+  function crmFicha(c) {
+    const card = document.createElement("div");
+    card.className = "rounded-2xl border border-brand-beige bg-white/70 overflow-hidden";
+
+    const cabecera = document.createElement("button");
+    cabecera.type = "button";
+    cabecera.className =
+      "w-full text-left px-4 py-3 flex items-start justify-between gap-3 hover:bg-brand-beige/20 transition";
+
+    const izq = document.createElement("div");
+    izq.className = "min-w-0";
+
+    const quien = document.createElement("p");
+    quien.className = "font-semibold text-sm truncate";
+    quien.textContent = c.nombre ? `${c.nombre} · ${c.wa_id}` : c.wa_id;
+
+    const resumen = document.createElement("p");
+    resumen.className = "text-xs text-brand-accent mt-0.5";
+    const partes = [];
+    if (c.last_topic) partes.push(CRM_TEMA[c.last_topic] || c.last_topic);
+    if (c.personas) partes.push(`${c.personas} personas`);
+    if (Array.isArray(c.fechas) && c.fechas.length === 2) partes.push(`${c.fechas[0]} → ${c.fechas[1]}`);
+    if (c.casa) partes.push(String(c.casa).replace("LC", "Las Cañas "));
+    resumen.textContent = partes.join(" · ") || "Sin datos cargados";
+
+    izq.appendChild(quien);
+    izq.appendChild(resumen);
+
+    const der = document.createElement("div");
+    der.className = "text-right shrink-0";
+
+    const cuando = document.createElement("p");
+    cuando.className = "text-xs text-brand-accent whitespace-nowrap";
+    cuando.textContent = crmFecha(c.ultima);
+
+    const cuantos = document.createElement("p");
+    cuantos.className = "text-xs font-semibold mt-0.5";
+    cuantos.textContent = c.mensajes ? `${c.mensajes} mensajes` : "sin charla";
+
+    der.appendChild(cuando);
+    der.appendChild(cuantos);
+
+    cabecera.appendChild(izq);
+    cabecera.appendChild(der);
+
+    const cuerpo = document.createElement("div");
+    cuerpo.className =
+      "hidden px-4 pb-4 pt-3 space-y-2 bg-brand-beige/10 border-t border-brand-beige";
+
+    if (!Array.isArray(c.conversacion) || !c.conversacion.length) {
+      const vacio = document.createElement("p");
+      vacio.className = "text-xs text-brand-accent";
+      vacio.textContent =
+        "Esta consulta es anterior a que se empezara a guardar el texto de los mensajes, así que queda sólo el resumen de arriba.";
+      cuerpo.appendChild(vacio);
+    } else {
+      for (const turno of c.conversacion) {
+        if (turno.entrante) cuerpo.appendChild(crmBurbuja(turno.entrante, false));
+        if (turno.saliente) cuerpo.appendChild(crmBurbuja(turno.saliente, true));
+      }
+    }
+
+    const escribir = document.createElement("a");
+    escribir.className = "inline-block mt-2 text-xs font-semibold text-brand-brown underline";
+    escribir.href = `https://wa.me/${encodeURIComponent(c.wa_id)}`;
+    escribir.target = "_blank";
+    escribir.rel = "noopener";
+    escribir.textContent = "Escribirle por WhatsApp";
+    cuerpo.appendChild(escribir);
+
+    cabecera.onclick = () => cuerpo.classList.toggle("hidden");
+
+    card.appendChild(cabecera);
+    card.appendChild(cuerpo);
+    return card;
+  }
+
+  function renderConversaciones() {
+    const cont = el("crmLista");
+    const q = (el("crmBuscar").value || "").trim().toLowerCase();
+    const filtro = el("crmFiltro").value || "";
+
+    const lista = crmContactos.filter((c) => {
+      if (filtro === "conv" && !c.mensajes) return false;
+      if (filtro && filtro !== "conv" && c.last_topic !== filtro) return false;
+      if (!q) return true;
+      return `${c.wa_id} ${c.nombre || ""} ${c.last_topic || ""}`.toLowerCase().includes(q);
+    });
+
+    cont.innerHTML = "";
+
+    if (!lista.length) {
+      const p = document.createElement("p");
+      p.className = "text-sm text-brand-accent";
+      p.textContent = "No hay contactos que coincidan.";
+      cont.appendChild(p);
+    } else {
+      for (const c of lista) cont.appendChild(crmFicha(c));
+    }
+
+    const conCharla = crmContactos.filter((c) => c.mensajes).length;
+    el("crmResumen").textContent =
+      `${lista.length} de ${crmContactos.length} contactos · ${conCharla} con la charla guardada`;
+  }
+
+  async function cargarConversaciones() {
+    const out = await apiFetch("/.netlify/functions/wa-conversations", { method: "GET" });
+    crmContactos = Array.isArray(out.contactos) ? out.contactos : [];
+    renderConversaciones();
+    return crmContactos.length;
+  }
+
+  el("crmBuscar").oninput = () => renderConversaciones();
+  el("crmFiltro").onchange = () => renderConversaciones();
+
+  el("crmRefrescar").onclick = async () => {
+    try {
+      setStatus("Actualizando conversaciones...");
+      const n = await cargarConversaciones();
+      setStatus(`✅ Conversaciones actualizadas. Contactos: ${n}`);
+    } catch (e) {
+      setStatus(`❌ ${e.message}`);
+    }
+  };
+
+  tabCrm.onclick = async () => {
+    showTab("crm");
+    try {
+      setStatus("Cargando conversaciones...");
+      const n = await cargarConversaciones();
+      setStatus(`✅ Conversaciones al día. Contactos: ${n}`);
     } catch (e) {
       setStatus(`❌ ${e.message}`);
     }

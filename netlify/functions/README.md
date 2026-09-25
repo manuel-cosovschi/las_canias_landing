@@ -46,6 +46,7 @@ Mezclarlos da 401 sin ninguna pista de por qué.
 | `N8N_SET_PAYMENT_PATH` | `set-reservation-payment` (opcional, tiene default) |
 | `N8N_ADMIN_UPDATE_RESERVATION_PATH` | `admin-update-reservation` (opcional) |
 | `WA_VERIFY_TOKEN` / `N8N_WA_INCOMING_URL` | `wa-webhook` |
+| `N8N_WA_CONVERSATIONS_PATH` | `wa-conversations` (opcional, tiene default) |
 | `GOOGLE_SERVICE_ACCOUNT_JSON` / `LC_SHEET_ID` / `LC_SHEET_TAB` | `list-calendar`, `search-reservations` |
 
 **Las variables nuevas se aplican recién en el siguiente deploy.** Cargarlas en
@@ -389,3 +390,44 @@ de vaciar un dato ya cargado, porque dejarlo en blanco significa "no lo toques".
 
 Variable de entorno opcional: `N8N_SET_GUEST_PATH` (por defecto
 `/webhook/set-reservation-guest`).
+
+## Las conversaciones de Cañita (sección *Conversaciones*)
+
+`wa-conversations` alimenta la sección **Conversaciones** del panel: quién le
+escribió al WhatsApp, qué consultó y la charla completa.
+
+El texto de los mensajes **no se guardaba en ninguna parte**. `wa_memory` sólo
+lleva el último estado de cada contacto (tema, personas, fechas, casa), y los
+mensajes vivían nada más que en los logs de ejecución de n8n, que se purgan. Por
+eso el bot ahora escribe cada intercambio en la data table
+**`wa_conversaciones`** (`wa_id`, `nombre`, `entrante`, `saliente`, `intent`),
+una fila por turno.
+
+Ese registro cuelga **después** de los nodos de envío del workflow
+`WhatsApp Bot – Las Cañas`, no antes: así no le agrega ni un milisegundo a lo que
+espera el huésped. Y va con `onError: continueRegularOutput`, porque perder una
+fila del historial no puede cortarle la atención a nadie.
+
+La consecuencia a tener presente: **las transcripciones arrancan el día que esto
+se desplegó**. Las consultas anteriores siguen apareciendo en la lista —salen de
+`wa_memory`— pero con `mensajes: 0` y sin charla. El panel lo aclara en pantalla
+en vez de mostrar una ficha vacía sin explicación.
+
+El endpoint cruza las dos tablas y devuelve los contactos ordenados por última
+actividad:
+
+```
+GET /.netlify/functions/wa-conversations
+x-lc-secret: <LC_OWNER_SECRET>
+
+{ "ok": true, "total": 230, "contactos": [
+  { "wa_id": "549…", "nombre": "…", "last_topic": "availability",
+    "personas": 4, "fechas": ["2026-11-20","2026-11-23"], "casa": "LC3",
+    "ultima": "2026-09-25T19:30:51.993Z", "mensajes": 2,
+    "conversacion": [ { "entrante": "…", "saliente": "…", "intent": "faq", "ts": "…" } ] }
+] }
+```
+
+En el panel el texto de cada mensaje se pinta con `textContent`, nunca con
+`innerHTML`: lo escriben los huéspedes y un mensaje con HTML adentro no puede
+terminar ejecutándose en la pantalla del dueño.
