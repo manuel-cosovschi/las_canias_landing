@@ -14,8 +14,13 @@ export default function Hero() {
         temporario de casas frente al mar, ideal para familias y descanso en la costa.
       </p>
       <div className="absolute inset-0 z-0">
+        {/* La ruta era "/entradaVista1.jpg", que no existe: ese pedido caía en
+            el comodín de _redirects y devolvía el index.html con código 200, así
+            que el navegador recibía HTML donde esperaba un JPEG, fallaba, y el
+            onError de abajo lo escondía. Por eso el fondo no se veía y tampoco
+            aparecía una imagen rota: el 404 venía disfrazado de 200. */}
         <img
-          src="/entradaVista1.jpg"
+          src="/Imagenes Postales/entradaVista1.jpg"
           alt="" // decorativo
           aria-hidden="true"
           className="w-full h-full object-cover grayscale-[0.15] sepia-[0.08]"
@@ -58,7 +63,7 @@ export default function Hero() {
 
         <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
           <a
-            href="/reservar.html"
+            href="/reservar"
             className="group relative w-full sm:w-auto px-16 py-6 bg-brand-brown text-brand-cream rounded-full font-black text-xs uppercase tracking-[0.2em] overflow-hidden transition-all shadow-2xl hover:shadow-brand-brown/40"
           >
             <span className="relative z-10">Reservar estadía</span>

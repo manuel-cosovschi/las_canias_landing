@@ -491,7 +491,7 @@ export default function HousesSection() {
                   <div className="mt-auto">
                     <div className="flex gap-3">
                       <a
-                        href="/reservar.html"
+                        href="/reservar"
                         className="flex-1 text-center py-5 bg-brand-cream hover:bg-brand-brown text-brand-brown hover:text-white rounded-2xl font-black text-[11px] uppercase tracking-widest transition-all border border-brand-beige"
                       >
                         Reservar
