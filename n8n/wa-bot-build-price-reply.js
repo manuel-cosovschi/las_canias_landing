@@ -73,15 +73,45 @@ if (!periodos.length) {
   ];
 }
 
-let state = {};
+// De donde salen las fechas. Hay dos fuentes y el orden importa:
+//
+// - `Normalize Brain Output` trae lo que el cerebro acaba de extraer DEL MENSAJE
+//   que la persona escribio recien.
+// - `Load State` trae la memoria guardada, que es lo que se sabia ANTES de este
+//   mensaje.
+//
+// Este nodo leia solo la memoria, asi que en el primer mensaje de una charla
+// estaba siempre vacia: a quien escribia "que precio tiene Las Cañas 3 del 2 al
+// 12 de enero?" le contestaba con el periodo vigente, ignorando enero. El
+// cerebro habia entendido bien —guardaba dates 2027-01-02 a 2027-01-12 y LC3—,
+// pero esa extraccion se leia un paso mas tarde del que hacia falta.
+//
+// Primero lo del mensaje actual; la memoria queda de respaldo para cuando la
+// persona ya venia hablando ("dale, pasame valores" despues de dar las fechas).
+let recien = {};
 try {
-  state = ($("Load State").first().json || {}).state || {};
+  recien = $("Normalize Brain Output").first().json || {};
 } catch (e) {
-  state = {};
+  recien = {};
 }
 
-const fechas = Array.isArray(state.dates) ? state.dates : [];
-const preferida = String(state.house_preference || "").toUpperCase();
+let guardado = {};
+try {
+  guardado = ($("Load State").first().json || {}).state || {};
+} catch (e) {
+  guardado = {};
+}
+
+const esYMD = (v) => typeof v === "string" && /^\d{4}-\d{2}-\d{2}$/.test(v);
+const fechasValidas = (v) => Array.isArray(v) && v.length === 2 && esYMD(v[0]) && esYMD(v[1]);
+
+const fechas = fechasValidas(recien.dates)
+  ? recien.dates
+  : fechasValidas(guardado.dates)
+  ? guardado.dates
+  : [];
+
+const preferida = String(recien.house_preference || guardado.house_preference || "").toUpperCase();
 const casaPref = CASAS.indexOf(preferida) !== -1 ? preferida : null;
 
 const pesos = (n) => "$" + Number(n).toLocaleString("es-AR");
@@ -135,8 +165,7 @@ try {
   hoy = new Date().toISOString().slice(0, 10);
 }
 
-const esYMD = (v) => typeof v === "string" && /^\d{4}-\d{2}-\d{2}$/.test(v);
-const tieneFechas = fechas.length === 2 && esYMD(fechas[0]) && esYMD(fechas[1]);
+const tieneFechas = fechas.length === 2;
 
 let reply;
 
