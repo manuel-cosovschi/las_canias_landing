@@ -66,7 +66,7 @@ if (!periodos.length) {
     {
       json: {
         reply:
-          "Uy, justo no puedo ver los valores en este momento 🙏 Te paso nuestro WhatsApp asi te los pasamos a mano:\n\n" +
+          "Uy, justo no puedo ver los valores en este momento 🙏 Te paso nuestro WhatsApp así te los pasamos a mano:\n\n" +
           WA_HUMANO,
       },
     },
@@ -179,7 +179,7 @@ if (tieneFechas) {
 
   if (!cotizaciones.length) {
     reply =
-      "Para esas fechas todavia no tengo la tarifa cargada 🙏 Te paso nuestro WhatsApp asi te la confirmamos:\n\n" +
+      "Para esas fechas todavía no tengo la tarifa cargada 🙏 Te paso nuestro WhatsApp así te la confirmamos:\n\n" +
       WA_HUMANO;
   } else {
     const n = cotizaciones[0].calc.noches;
@@ -198,7 +198,7 @@ if (tieneFechas) {
 
     const cierre =
       cotizaciones.length === 1
-        ? "La senia es la mitad: " + pesos(cotizaciones[0].calc.senia) + ". ¿Te paso el link para reservar?"
+        ? "La seña es la mitad: " + pesos(cotizaciones[0].calc.senia) + ". ¿Te paso el link para reservar?"
         : "¿Querés que te diga cuál les conviene o te paso el link para reservar?";
 
     reply = "¡Dale! 😊 " + encabezado + "\n\n" + lineas.join("\n") + "\n\n" + cierre;
@@ -221,7 +221,7 @@ if (tieneFechas) {
     rotulo +
     " son:\n\n" +
     lineas.join("\n") +
-    "\n\nOjo que cambian segun la fecha: decime qué días te interesan y te paso el valor exacto.";
+    "\n\nOjo que cambian según la fecha: decime qué días te interesan y te paso el valor exacto.";
 }
 
 return [{ json: { reply } }];
