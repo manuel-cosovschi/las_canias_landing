@@ -206,6 +206,12 @@
     .lc-ev--hold { background-image: repeating-linear-gradient(45deg, rgba(255,255,255,.45) 0 5px, transparent 5px 10px); }
     /* Blocked: sin huésped, se despinta y va con borde punteado. */
     .lc-ev--blocked { opacity: .72; border: 2px dashed rgba(255,255,255,.75); padding: 1px 4px; }
+    /* Sobre los colores claros (verde agua, verde resaltado, naranja) el rayado
+       y el borde blancos no se veían, así que un hold se confundía con una
+       reserva confirmada. Ahí van en oscuro. La clase la pone el calendario
+       según el color de la casa, no está anotada a mano. */
+    .lc-ev--claro.lc-ev--hold { background-image: repeating-linear-gradient(45deg, rgba(11,15,20,.38) 0 5px, transparent 5px 10px); }
+    .lc-ev--claro.lc-ev--blocked { border-color: rgba(11,15,20,.6); }
   </style>
 </head>
 
@@ -2101,20 +2107,57 @@
   // =====================
   // COLORS POR CASA (para calendario)
   // =====================
-  // Los 5 tonos van al fondo del evento, así que están elegidos para que el
-  // texto blanco en negrita quede legible encima (todos >= 4.5:1).
-  // Estos cinco no son gusto: salieron de correr el validador de paletas con
-  // --pairs all (en el calendario dos casas cualesquiera pueden quedar pegadas).
-  // El violeta anterior de LC2 estaba a ΔE 0.3 del azul de LC1 con daltonismo
-  // deutan y a 11.4 con visión normal: en los hechos, el mismo color.
-  // Los cinco además aguantan el texto blanco que el calendario les pone encima.
+  // Los colores los eligieron los dueños: naranja, celeste oscuro, verde
+  // resaltado, verde agua y violeta. Van al fondo del evento del calendario,
+  // con el nombre de la casa encima.
+  //
+  // Dos de ellos son claros a propósito (el verde resaltado y sobre todo el
+  // verde agua), así que el texto NO puede ser siempre blanco: sobre el verde
+  // agua el blanco queda en 1.86:1, ilegible. Por eso el color del texto no
+  // está fijo, lo decide textoSobre() midiendo el contraste real.
+  //
+  // Separación entre casas, incluyendo daltonismo deutan y protan: el par más
+  // parecido es LC4/LC5 con ΔE 15, arriba del umbral de 12 donde dos colores
+  // empiezan a confundirse de un vistazo.
   const HOUSE_COLORS = {
-    LC1: "#1D4ED8", // azul
-    LC2: "#A21CAF", // magenta
-    LC3: "#B45309", // naranja quemado
-    LC4: "#15803D", // verde
-    LC5: "#DB2777", // rosa
+    LC1: "#EA580C", // naranja
+    LC2: "#075985", // celeste oscuro
+    LC3: "#16A34A", // verde resaltado
+    LC4: "#2DD4BF", // verde agua
+    LC5: "#7C3AED", // violeta
   };
+
+  // Texto sobre el color de la casa: blanco si llega al mínimo de la WCAG
+  // (4.5:1) y oscuro si no. Se calcula en vez de anotarse a mano para que, si
+  // mañana cambian un color, el texto se acomode solo en lugar de quedar
+  // ilegible sin que nadie lo note.
+  const TEXTO_OSCURO = "#0B0F14";
+
+  function luminancia(hex) {
+    const c = String(hex || "").replace("#", "");
+    const canal = (i) => {
+      const v = parseInt(c.slice(i, i + 2), 16) / 255;
+      return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+    };
+    return 0.2126 * canal(0) + 0.7152 * canal(2) + 0.0722 * canal(4);
+  }
+
+  function contraste(a, b) {
+    const x = luminancia(a), y = luminancia(b);
+    const alto = Math.max(x, y), bajo = Math.min(x, y);
+    return (alto + 0.05) / (bajo + 0.05);
+  }
+
+  function textoSobre(fondo) {
+    return contraste(fondo, "#FFFFFF") >= 4.5 ? "#FFFFFF" : TEXTO_OSCURO;
+  }
+
+  // true cuando el fondo es claro y lo de encima tiene que ir oscuro: lo usa
+  // el calendario para el rayado del hold y el borde del bloqueo, que en
+  // blanco desaparecían sobre el verde agua.
+  function fondoClaro(hex) {
+    return textoSobre(hex) === TEXTO_OSCURO;
+  }
 
   const HOUSE_NAMES = {
     LC1: "Las Cañas 1",
@@ -5807,7 +5850,12 @@
         wrap.className = "lc-ev";
         // backgroundColor y no el shorthand background: el shorthand inline
         // pisaría el background-image del rayado de Hold.
-        wrap.style.backgroundColor = houseColor(house);
+        const fondo = houseColor(house);
+        wrap.style.backgroundColor = fondo;
+        // El texto acompaña al fondo: sobre el verde agua y el verde resaltado
+        // va oscuro, sobre el celeste y el violeta va blanco.
+        wrap.style.color = textoSobre(fondo);
+        if (fondoClaro(fondo)) wrap.classList.add("lc-ev--claro");
         if (status === "HOLD_TRANSFER") wrap.classList.add("lc-ev--hold");
         if (status === "BLOCKED") wrap.classList.add("lc-ev--blocked");
 

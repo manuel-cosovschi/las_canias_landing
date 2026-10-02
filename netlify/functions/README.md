@@ -104,8 +104,22 @@ reservar**. Es a propósito: darle una tarifa de respaldo cobraría de menos sin
 que nadie se entere. Si abrís un mes nuevo en el calendario, acordate de
 cargarle su período.
 
-La tarifa base vieja (`get-prices` / `set-prices` / `public-prices`) quedó sin
-uso: la página de reservas ya no la lee.
+### Quién lee los períodos
+
+Todo lo que dice un precio sale de `price-periods`, que es la misma tabla que
+los dueños editan en el panel: `reservar.html`, el panel de admin, el documento
+de reserva, y el bot de WhatsApp (nodo `Get Prices` del workflow en n8n).
+
+Ese último es el que conviene tener presente: **vive en n8n, no en este repo**,
+así que no aparece buscando acá. Durante un tiempo apuntó a `public-prices` y
+nadie lo notó — este README decía que esa tarifa estaba "sin uso" mientras el
+bot la seguía leyendo, y cotizaba los precios de agosto para una estadía de
+enero. Si algún día cambia la forma de la respuesta de `price-periods`, hay que
+tocar ese nodo también.
+
+La tarifa base vieja (`get-prices` / `set-prices` / `public-prices`) ya no la
+lee nadie: devuelve valores sueltos sin fechas, que es exactamente lo que causó
+aquel error.
 
 ## Los dos caminos a la planilla
 
