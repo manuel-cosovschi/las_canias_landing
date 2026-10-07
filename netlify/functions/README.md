@@ -121,6 +121,32 @@ La tarifa base vieja (`get-prices` / `set-prices` / `public-prices`) ya no la
 lee nadie: devuelve valores sueltos sin fechas, que es exactamente lo que causó
 aquel error.
 
+## Quién vence los holds (no es n8n)
+
+Cuando alguien reserva por la web, la fila queda en `HOLD_TRANSFER` con un
+`expires_at` 6 horas más tarde. Si no manda el comprobante, algo tiene que
+cancelarla y liberar las fechas. **Ese algo es un Google Apps Script pegado a
+la planilla, no n8n.**
+
+Dejarlo escrito acá porque no hay forma de deducirlo: no está en este
+repositorio, no está en n8n, y buscar "apps script" en el código no devuelve
+nada. La única huella que deja es el texto `Auto-expired (Apps Script)` en la
+columna `status_reason` de las reservas que venció, y el `reminder_1h_sent_at`
+del aviso de 1 hora antes.
+
+En n8n existen dos workflows que hacían ese trabajo, **`LC - Cron Expire
+Holds`** y **`LC - Aviso 1h antes de vencer`**, y están apagados a propósito:
+se apagaron el 28/01/2026 y el Apps Script empezó a vencer holds el 29/01.
+Prenderlos haría que cada reserva se venza dos veces y que salgan dos avisos
+por cada una.
+
+Cómo saber si sigue funcionando: una reserva web que venció lleva
+`status_reason = "Auto-expired (Apps Script)"` y `expired_at` cargado. Si
+aparece una fila en `HOLD_TRANSFER` con `expires_at` pasado y sin cancelar, el
+script dejó de correr — y conviene mirarlo rápido, porque `owner-list-pending`
+filtra los holds vencidos y esa fila **no se ve en el panel** mientras sigue
+bloqueando las fechas.
+
 ## Los dos caminos a la planilla
 
 No todo pasa por n8n. Para **escribir** una reserva sí (n8n manda mails, arma

@@ -12,15 +12,25 @@ function inclusiveToExclusive(v) {
 function normalizeRanges(out) {
   // Esperamos algo tipo: { ok:true, blocked:[{start,end}...] }
   const blocked = Array.isArray(out?.blocked) ? out.blocked : [];
-  const ranges = blocked
-    .map((r) => ({
-      from: r.from || r.start || r.check_in || r.begin,
-      // sin este caso, los rangos con end_inclusive se descartaban silenciosamente
-      to: r.end_inclusive
-        ? inclusiveToExclusive(r.end_inclusive)
-        : r.to || r.end || r.check_out || r.finish,
-    }))
-    .filter((r) => r.from && r.to);
+  const ranges = blocked.map((r) => ({
+    from: r.from || r.start || r.check_in || r.begin,
+    // sin este caso, los rangos con end_inclusive se descartaban silenciosamente
+    to: r.end_inclusive
+      ? inclusiveToExclusive(r.end_inclusive)
+      : r.to || r.end || r.check_out || r.finish,
+  }));
+
+  // Un rango que no se puede leer NO se descarta: eso publicaría como libres
+  // unas noches que están ocupadas, que es la única forma de equivocarse que
+  // termina en dos reservas para la misma casa.
+  //
+  // reservar.html ya corta la carga cuando le llega un rango ilegible ("antes
+  // que mostrar como libre una fecha que en realidad está ocupada"), pero esa
+  // protección no sirve de nada si acá lo filtramos primero: el navegador
+  // recibe una lista limpia a la que le falta una ocupación. Se avisa, como
+  // hace price-periods con un período ilegible.
+  const malo = ranges.findIndex((r) => !r.from || !r.to);
+  if (malo !== -1) return { ok: false, badIndex: malo, bad: blocked[malo] };
 
   return {
     ok: true,
@@ -73,8 +83,24 @@ exports.handler = async (event) => {
       secret,
     });
 
-    return json(200, normalizeRanges(out));
+    const normalizado = normalizeRanges(out);
+    if (normalizado.ok === false) {
+      // 502: el problema está en lo que contestó n8n, no en lo que pidió quien
+      // llama. El navegador corta la carga y muestra "no se pudo cargar
+      // disponibilidad", que es lo correcto: es preferible no poder reservar a
+      // vender una noche ocupada.
+      console.error("Rango de ocupación ilegible:", normalizado.bad);
+      return json(502, {
+        ok: false,
+        message: "Rango de ocupación ilegible",
+        index: normalizado.badIndex,
+      });
+    }
+
+    return json(200, normalizado);
   } catch (e) {
-    return json(500, { message: e.message || "Error" });
+    // n8n contesta 4xx cuando rechaza por validación; sin conservar el código,
+    // eso se confunde con una caída.
+    return json(e.status || 500, e.payload || { message: e.message || "Error" });
   }
 };
