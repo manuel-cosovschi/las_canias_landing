@@ -41,11 +41,26 @@ export default async (req) => {
 
     // Se separan los campos de texto del archivo. Sólo cuenta el archivo que
     // viene bajo "proof": el resto se ignora, como hacía la versión anterior.
+    //
+    // Los campos de texto van por lista blanca. Este endpoint es público —
+    // tiene que serlo, el huésped sube el comprobante sin estar logueado— y lo
+    // que llega acá termina en el mail que recibe el dueño. Antes se reenviaba
+    // a n8n todo lo que viniera, con cualquier nombre: alcanzaba con agregar
+    // un campo al formulario para meter texto propio en ese mail. Estos ocho
+    // son los que manda reservar.html; nada más hace falta.
+    const CAMPOS_VALIDOS = new Set([
+      "id", "guest_name", "email", "phone",
+      "house_code", "check_in", "check_out", "guests",
+    ]);
+    const LARGO_MAXIMO = 300;
+
     const campos = {};
     let archivo = null;
     for (const [nombre, valor] of entrada.entries()) {
       if (nombre === "proof" && typeof valor !== "string") archivo = valor;
-      else if (typeof valor === "string") campos[nombre] = valor;
+      else if (typeof valor === "string" && CAMPOS_VALIDOS.has(nombre)) {
+        campos[nombre] = valor.slice(0, LARGO_MAXIMO);
+      }
     }
 
     if (!campos.id) return respuestaJson(400, { message: "Falta id" });
@@ -53,8 +68,26 @@ export default async (req) => {
       return respuestaJson(400, { message: "Falta archivo comprobante (field: proof)" });
     }
 
-    const nombreArchivo = archivo.name || "comprobante";
+    // El límite y los formatos ya estaban del lado de la página, que es donde
+    // sirven para avisarle al huésped. Acá van de nuevo porque la página no es
+    // la única forma de llegar a este endpoint.
+    const MAX_BYTES = 10 * 1024 * 1024;
+    if (archivo.size > MAX_BYTES) {
+      return respuestaJson(413, { message: "El archivo supera los 10MB" });
+    }
+
+    const TIPOS_VALIDOS = new Set([
+      "image/jpeg", "image/png", "image/webp", "image/heic", "image/heif",
+      "image/gif", "application/pdf",
+    ]);
     const tipoArchivo = archivo.type || "application/octet-stream";
+    if (!TIPOS_VALIDOS.has(tipoArchivo.toLowerCase())) {
+      return respuestaJson(415, {
+        message: "El comprobante tiene que ser una imagen o un PDF",
+      });
+    }
+
+    const nombreArchivo = archivo.name || "comprobante";
     const bytes = Buffer.from(await archivo.arrayBuffer());
 
     // Se rearma el multipart para n8n, que espera el binario en la propiedad

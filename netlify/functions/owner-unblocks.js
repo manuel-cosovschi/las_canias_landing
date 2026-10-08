@@ -53,6 +53,10 @@ exports.handler = async (event) => {
     const out = await callN8n(path, { method: "POST", body: payload, baseUrl, secret });
     return json(200, out);
   } catch (e) {
-    return json(500, { message: e.message || "Error" });
+    // n8n contesta 4xx cuando rechaza por validación ("se solapan los
+    // períodos", "esa reserva ya está cancelada"). callN8n guarda ese código
+    // en e.status justamente para esto: devolver 500 convierte un "escribiste
+    // algo que no va" en un "se rompió el servidor".
+    return json(e.status || 500, e.payload || { message: e.message || "Error" });
   }
 };

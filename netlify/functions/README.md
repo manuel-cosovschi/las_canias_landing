@@ -121,6 +121,32 @@ La tarifa base vieja (`get-prices` / `set-prices` / `public-prices`) ya no la
 lee nadie: devuelve valores sueltos sin fechas, que es exactamente lo que causó
 aquel error.
 
+## Quién vence los holds (no es n8n)
+
+Cuando alguien reserva por la web, la fila queda en `HOLD_TRANSFER` con un
+`expires_at` 6 horas más tarde. Si no manda el comprobante, algo tiene que
+cancelarla y liberar las fechas. **Ese algo es un Google Apps Script pegado a
+la planilla, no n8n.**
+
+Dejarlo escrito acá porque no hay forma de deducirlo: no está en este
+repositorio, no está en n8n, y buscar "apps script" en el código no devuelve
+nada. La única huella que deja es el texto `Auto-expired (Apps Script)` en la
+columna `status_reason` de las reservas que venció, y el `reminder_1h_sent_at`
+del aviso de 1 hora antes.
+
+En n8n existen dos workflows que hacían ese trabajo, **`LC - Cron Expire
+Holds`** y **`LC - Aviso 1h antes de vencer`**, y están apagados a propósito:
+se apagaron el 28/01/2026 y el Apps Script empezó a vencer holds el 29/01.
+Prenderlos haría que cada reserva se venza dos veces y que salgan dos avisos
+por cada una.
+
+Cómo saber si sigue funcionando: una reserva web que venció lleva
+`status_reason = "Auto-expired (Apps Script)"` y `expired_at` cargado. Si
+aparece una fila en `HOLD_TRANSFER` con `expires_at` pasado y sin cancelar, el
+script dejó de correr — y conviene mirarlo rápido, porque `owner-list-pending`
+filtra los holds vencidos y esa fila **no se ve en el panel** mientras sigue
+bloqueando las fechas.
+
 ## Los dos caminos a la planilla
 
 No todo pasa por n8n. Para **escribir** una reserva sí (n8n manda mails, arma
@@ -251,10 +277,32 @@ recalcular el total con las tarifas en vez de leerlo.
 Ahora la hoja `reservas` tiene cuatro columnas más, en **AA:AD** (las A:Z ya
 estaban todas ocupadas): `importe`, `anticipo`, `facturado` y `cotizacion_usd`.
 
-- `reservar.html` manda el importe ya calculado al crear la reserva, así queda
-  guardado desde el arranque.
+- `reservar.html` manda el importe al crear la reserva y `create-reservation` lo
+  recalcula con las tarifas del panel antes de pasarlo a n8n, así el número que
+  se guarda no es el que eligió el navegador.
 - `set-reservation-payment` los edita desde el panel. Sólo pisa los campos que
   vienen en el pedido, así se puede guardar el anticipo sin tocar el resto.
+
+### El importe se perdía al guardar
+
+Durante meses este archivo decía que el importe "queda guardado desde el
+arranque". No era cierto, y no se podía ver desde el repo: el nodo **Append row
+in sheet** del workflow `create-reservation` de n8n mapea las columnas una por
+una, y tenía diecinueve — ninguna era `importe`. El número llegaba a n8n y se
+descartaba al escribir la fila.
+
+Cómo se confirmó, por si vuelve a pasar: en la hoja `reservas`, las **27 filas
+con `source = web` tenían la columna AA vacía**, y sólo las de `source = excel`
+—cargadas por el import del Excel, que escribe la fila completa— tenían monto.
+Esa asimetría es la huella del problema.
+
+El arreglo está en n8n, no acá: el nodo ahora mapea también `importe`, tomándolo
+de `{{ $items("Webhook")[0].json.body.importe }}`, que es el valor que
+`create-reservation` ya recalculó del lado del servidor.
+
+**Si se agrega otra columna de plata a la planilla, agregarla también a ese
+nodo.** Un mapeo incompleto no falla: escribe la fila sin esa columna y
+devuelve `ok`. Es el mismo error de forma que el `A:Z` de `_sheet.js`.
 - El **saldo no se guarda**: sale de `importe - anticipo`. Guardarlo sería
   tener dos números que pueden quedar en desacuerdo.
 - El documento de confirmación usa el importe guardado si existe, y si no cae

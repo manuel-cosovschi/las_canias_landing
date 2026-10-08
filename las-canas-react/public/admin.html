@@ -1876,17 +1876,17 @@
         <div class="mt-4 pt-4 border-t border-brand-beige grid sm:grid-cols-2 gap-3">
           <label class="block">
             <span class="block text-xs font-bold uppercase tracking-wider text-brand-accent mb-1">Importe total</span>
-            <input id="calImporte" type="number" min="0" step="1000"
+            <input id="calImporte" type="text" inputmode="decimal" placeholder="Monto, o un guión para borrar"
               class="w-full rounded-xl border border-brand-beige px-3 py-2 text-sm">
           </label>
           <label class="block">
             <span class="block text-xs font-bold uppercase tracking-wider text-brand-accent mb-1">Cobrado (seña)</span>
-            <input id="calAnticipo" type="number" min="0" step="1000"
+            <input id="calAnticipo" type="text" inputmode="decimal" placeholder="Monto, o un guión para borrar"
               class="w-full rounded-xl border border-brand-beige px-3 py-2 text-sm">
           </label>
           <label class="block">
             <span class="block text-xs font-bold uppercase tracking-wider text-brand-accent mb-1">Cotización USD</span>
-            <input id="calCotizacion" type="number" min="0" step="1"
+            <input id="calCotizacion" type="text" inputmode="decimal" placeholder="Cotización, o un guión para borrar"
               class="w-full rounded-xl border border-brand-beige px-3 py-2 text-sm">
           </label>
           <label class="flex items-end gap-2 pb-2">
@@ -3526,12 +3526,18 @@
   }
 
   // reservas son [check_in, check_out) -> deshabilitar hasta el día anterior al checkout
+  //
+  // La cuenta va entera en UTC a propósito. "2026-12-20" es una fecha sin hora,
+  // y Date.parse la lee como medianoche UTC; restarle un día con setDate(), que
+  // es local, en Argentina (UTC-3) partía de las 21:00 del día anterior y
+  // terminaba restando dos. El efecto era que la última noche ocupada quedaba
+  // seleccionable en los calendarios de bloquear y desbloquear.
   function toMinusOneDayISO(iso) {
-    const ms = Date.parse(iso);
-    if (!Number.isFinite(ms)) return iso;
-    const d = new Date(ms);
-    d.setDate(d.getDate() - 1);
-    return toISO(d);
+    const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(iso || ""));
+    if (!m) return iso;
+    const d = new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])));
+    d.setUTCDate(d.getUTCDate() - 1);
+    return d.toISOString().slice(0, 10);
   }
 
   function normalizeDisableRanges(ranges) {
@@ -4675,7 +4681,7 @@
 
   // El saldo no se guarda en ningún lado: siempre sale de importe - anticipo,
   // así no hay dos números que puedan quedar en desacuerdo.
-  function refrescarSaldo() {
+  function refrescarSaldoImportes() {
     const importe = Number(pagoImporte.value) || 0;
     const anticipo = Number(pagoAnticipo.value) || 0;
     const saldo = importe - anticipo;
@@ -4689,7 +4695,7 @@
       : "&nbsp;";
   }
 
-  [pagoImporte, pagoAnticipo, pagoCotizacion].forEach(i => i.addEventListener("input", refrescarSaldo));
+  [pagoImporte, pagoAnticipo, pagoCotizacion].forEach(i => i.addEventListener("input", refrescarSaldoImportes));
 
   function openPagoModal(row) {
     pagoReserva = row;
@@ -4703,7 +4709,7 @@
     pagoFacturado.checked = String(row.facturado || "").toLowerCase() === "si";
 
     pagoMsg.classList.add("hidden");
-    refrescarSaldo();
+    refrescarSaldoImportes();
 
     pagoModal.classList.remove("hidden");
     pagoModal.classList.add("flex");
@@ -4738,16 +4744,22 @@
     btnGuardarPago.textContent = "Guardando...";
 
     try {
-      await apiFetch(EP_SET_PAYMENT, {
-        method: "POST",
-        body: {
-          id: pagoReserva.id,
-          importe: pagoImporte.value.trim(),
-          anticipo: pagoAnticipo.value.trim(),
-          cotizacion_usd: pagoCotizacion.value.trim(),
-          facturado: pagoFacturado.checked,
-        },
-      });
+      // "Facturado" tiene tres estados y el tilde sólo sabe de dos: vacío
+      // significa que nadie lo marcó todavía, y Números los cuenta aparte
+      // para no dar por no facturado lo que sólo falta cargar. Mandarlo
+      // siempre convertía ese "sin marcar" en un "no" apenas alguien abría
+      // este modal a corregir un importe. Va sólo si cambió, igual que en el
+      // modal del calendario.
+      const facturadoAntes = String(pagoReserva.facturado || "").trim().toLowerCase() === "si";
+      const cuerpo = {
+        id: pagoReserva.id,
+        importe: pagoImporte.value.trim(),
+        anticipo: pagoAnticipo.value.trim(),
+        cotizacion_usd: pagoCotizacion.value.trim(),
+      };
+      if (pagoFacturado.checked !== facturadoAntes) cuerpo.facturado = pagoFacturado.checked;
+
+      await apiFetch(EP_SET_PAYMENT, { method: "POST", body: cuerpo });
 
       showToast("Importes guardados ✅", "ok");
       closePagoModal();
@@ -5502,7 +5514,7 @@
     return v === "-" ? "" : v;
   };
 
-  function refrescarSaldo() {
+  function refrescarSaldoCalendario() {
     const importe = Number(CAMPOS_PLATA.importe.value) || 0;
     const anticipo = Number(CAMPOS_PLATA.anticipo.value) || 0;
     if (!importe && !anticipo) {
@@ -5518,7 +5530,7 @@
   }
 
   for (const input of [CAMPOS_PLATA.importe, CAMPOS_PLATA.anticipo]) {
-    input.addEventListener("input", refrescarSaldo);
+    input.addEventListener("input", refrescarSaldoCalendario);
   }
 
   btnCalCargarDatos.onclick = () => {
@@ -5534,7 +5546,7 @@
     }
     el("calFacturado").checked = String(row.facturado || "").trim().toLowerCase() === "si";
 
-    refrescarSaldo();
+    refrescarSaldoCalendario();
     pintarMsg(calDatosMsg, "", "info");
     calFechas.classList.add("hidden");
     calDatos.classList.remove("hidden");
@@ -5650,30 +5662,74 @@
 
     try {
       if (calSeleccion.status === "BLOCKED") {
-        // Primero el bloqueo nuevo: si esas fechas están ocupadas, owner-blocks
-        // lo rechaza y el bloqueo original sigue intacto. Al revés se perdería.
-        await apiFetch(EP_OWNER_BLOCKS, {
-          method: "POST",
-          body: { house_code: calSeleccion.house_code, checkin: ci, checkout: co, note: "Movido desde el calendario" },
-        });
-        const liberado = await apiFetch(EP_OWNER_UNBLOCKS, {
-          method: "POST",
-          body: {
-            house_code: calSeleccion.house_code,
-            checkin: calSeleccion.check_in,
-            checkout: calSeleccion.check_out,
-            note: "Movido desde el calendario",
-          },
-        });
-        // Mover es bloquear lo nuevo y liberar lo viejo. Si lo segundo no
-        // liberó nada, la casa queda bloqueada dos veces: hay que decirlo acá
-        // y no cerrar el modal como si hubiera salido bien.
-        if (!(Number(liberado.deleted_count) || 0)) {
-          pintarMsg(calFechasMsg,
-            `Se bloqueó ${ci} → ${co}, pero no se pudo liberar ${calSeleccion.check_in} → ${calSeleccion.check_out}. ` +
-            "La casa quedó bloqueada en las dos fechas: desbloqueá la vieja a mano.", "err");
-          await refreshCalendar();
-          return;
+        // Mover un bloqueo es crear el nuevo y liberar el viejo, y el orden
+        // depende de si los dos rangos se tocan.
+        //
+        // Si NO se tocan conviene crear primero: si las fechas nuevas están
+        // ocupadas, owner-blocks lo rechaza y el bloqueo original queda intacto.
+        //
+        // Si se solapan —correr el bloqueo un día o estirarlo, que es lo que
+        // más se hace— ese orden no puede funcionar nunca: el bloqueo viejo
+        // sigue ocupando las fechas nuevas, así que owner-blocks las rechaza y
+        // el movimiento falla siempre. Ahí hay que liberar primero, y si
+        // después falla el bloqueo nuevo se vuelve a poner el viejo, para no
+        // dejar la casa liberada sin que el dueño se entere.
+        const cuerpoViejo = {
+          house_code: calSeleccion.house_code,
+          checkin: calSeleccion.check_in,
+          checkout: calSeleccion.check_out,
+          note: "Movido desde el calendario",
+        };
+        const cuerpoNuevo = {
+          house_code: calSeleccion.house_code,
+          checkin: ci,
+          checkout: co,
+          note: "Movido desde el calendario",
+        };
+        const seSolapan = ci < calSeleccion.check_out && calSeleccion.check_in < co;
+
+        if (seSolapan) {
+          const liberado = await apiFetch(EP_OWNER_UNBLOCKS, { method: "POST", body: cuerpoViejo });
+          if (!(Number(liberado.deleted_count) || 0)) {
+            pintarMsg(calFechasMsg,
+              `No se encontró el bloqueo ${calSeleccion.check_in} → ${calSeleccion.check_out}. No se cambió nada.`, "err");
+            await refreshCalendar();
+            return;
+          }
+
+          try {
+            await apiFetch(EP_OWNER_BLOCKS, { method: "POST", body: cuerpoNuevo });
+          } catch (e) {
+            // Las fechas nuevas estaban ocupadas por otra cosa. Se repone el
+            // bloqueo original: si esto también fallara, la casa queda libre y
+            // hay que decirlo, porque si no se alquila sola.
+            let repuesto = true;
+            try {
+              await apiFetch(EP_OWNER_BLOCKS, { method: "POST", body: cuerpoViejo });
+            } catch (e2) {
+              repuesto = false;
+            }
+            pintarMsg(calFechasMsg,
+              repuesto
+                ? `No se pudo bloquear ${ci} → ${co}: ${e.message || "fechas ocupadas"}. Se dejó el bloqueo como estaba.`
+                : `No se pudo bloquear ${ci} → ${co} ni reponer el bloqueo anterior. ` +
+                  `OJO: ${calSeleccion.check_in} → ${calSeleccion.check_out} quedó LIBRE. Volvé a bloquearlo a mano.`,
+              "err");
+            await refreshCalendar();
+            return;
+          }
+        } else {
+          await apiFetch(EP_OWNER_BLOCKS, { method: "POST", body: cuerpoNuevo });
+          const liberado = await apiFetch(EP_OWNER_UNBLOCKS, { method: "POST", body: cuerpoViejo });
+          // Si lo segundo no liberó nada, la casa queda bloqueada dos veces:
+          // hay que decirlo y no cerrar el modal como si hubiera salido bien.
+          if (!(Number(liberado.deleted_count) || 0)) {
+            pintarMsg(calFechasMsg,
+              `Se bloqueó ${ci} → ${co}, pero no se pudo liberar ${calSeleccion.check_in} → ${calSeleccion.check_out}. ` +
+              "La casa quedó bloqueada en las dos fechas: desbloqueá la vieja a mano.", "err");
+            await refreshCalendar();
+            return;
+          }
         }
       } else {
         await apiFetch(EP_SET_DATES, {
