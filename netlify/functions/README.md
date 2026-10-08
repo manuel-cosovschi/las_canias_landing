@@ -604,6 +604,51 @@ En el panel el texto de cada mensaje se pinta con `textContent`, nunca con
 `innerHTML`: lo escriben los huéspedes y un mensaje con HTML adentro no puede
 terminar ejecutándose en la pantalla del dueño.
 
+### Cuando el bot se rompe, n8n no se entera
+
+Esta es la trampa más cara de todo el sistema, así que vale escribirla entera.
+
+El nodo `ChatGPT Brain` tiene `onError: continueErrorOutput`: si la llamada a
+OpenAI falla, el bot **no** explota — contesta un texto de disculpa, deriva a
+una persona, y registra la fila con `intent: "error"`. Para n8n eso es una
+ejecución **exitosa**.
+
+El 8 de octubre de 2026 la consola de n8n mostraba **2736 ejecuciones y cero
+errores**. El bot estaba roto hacía ocho días: la cuenta de OpenAI había sido
+dada de baja y la API key devolvía `account_deactivated`. **18 clientes reales**
+se quedaron sin respuesta, varios pidiendo quincenas de enero.
+
+Y lo que lo hizo invisible: **"Hola" nunca dejó de funcionar.** Los saludos los
+contesta el nodo `Fast Rules`, que no toca OpenAI. Cualquiera que probara el bot
+de la forma obvia lo veía sano.
+
+> **Para probar si el bot anda, nunca uses un saludo.** Mandale algo que lo
+> obligue a pensar: *"Tenés disponibilidad del 20 al 23 de noviembre para 4
+> personas?"*. Si contesta con casas y precios, el cerebro está vivo.
+
+El workflow **`LC - Aviso: el bot está contestando con error`** existe para que
+no vuelva a pasar en silencio. Cada hora cuenta las filas con `intent: error` de
+`wa_conversaciones` y manda un mail si:
+
+- hay **3 o más en la última hora** (una ráfaga: avisa al toque), o
+- en el chequeo de las **9 de la mañana** hay 3 o más en las últimas 24 horas
+
+El mail trae el runbook de qué revisar —empezando por la credencial de OpenAI— y
+**la lista de las consultas que se quedaron sin responder, con nombre y
+teléfono**, porque esas conversaciones casi siempre se recuperan si se contestan
+a tiempo.
+
+Dos detalles de implementación que importan:
+
+- El texto de los clientes va **escapado** en el mail. Es texto que escribió un
+  desconocido y termina en la casilla del dueño: un mensaje con `<` que sólo
+  rompe el formato del mail sería el caso bueno.
+- La credencial de OpenAI la comparten `ChatGPT Brain` y `Transcribir Audio`, así
+  que **la misma caída se lleva los audios**. El mail lo recuerda.
+
+La copia versionada del nodo está en **`n8n/wa-aviso-bot-error.js`**, con sus
+pruebas al lado (`node n8n/wa-aviso-bot-error.test.js`).
+
 ### Atender una conversación a mano
 
 `wa-panel-action` es lo que el panel usa para intervenir en una charla. Recibe
