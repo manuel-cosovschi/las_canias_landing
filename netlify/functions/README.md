@@ -69,7 +69,8 @@ Netlify**, y son varios.
 | `N8N_OWNER_APPROVE_PATH` | `confirm-transfer` |
 | `N8N_OWNER_CANCEL_PATH` | `cancel-reservation` |
 | `N8N_OWNER_CANCEL_CONFIRMED_PATH` | `cancel-confirmed` |
-| `N8N_OWNER_BLOCK_PATH` / `N8N_OWNER_UNBLOCK_PATH` | `owner-blocks`, `owner-unblocks` |
+| `N8N_CREATE_MANUAL_PATH` | `owner-blocks`, `create-manual-reservation` (opcional, tiene default) |
+| `N8N_OWNER_UNBLOCK_PATH` | `owner-unblocks` (opcional, tiene default) |
 | `N8N_GET_PRICE_PERIODS_PATH` | `reservation-document` (opcional, tiene default) |
 | `N8N_SET_PAYMENT_PATH` | `set-reservation-payment` (opcional, tiene default) |
 | `WA_VERIFY_TOKEN` / `N8N_WA_INCOMING_URL` | `wa-webhook` |
@@ -174,6 +175,31 @@ script dejó de correr — y conviene mirarlo rápido, porque `owner-list-pendin
 filtra los holds vencidos y esa fila **no se ve en el panel** mientras sigue
 bloqueando las fechas.
 
+## Workflows de n8n que quedaron apagados
+
+n8n acumuló prototipos y versiones viejas que seguían **activas**, con webhook
+publicado, años después de haber sido reemplazadas. Un webhook activo que nadie
+llama no es inofensivo: contesta.
+
+Estos quedaron despublicados, todos con **cero ejecuciones** en el historial:
+
+| Workflow | Por qué |
+|---|---|
+| `Reserva por transferencia` | El prototipo original del flujo, del 5 de enero — un día antes de `create-reservation`. Sin validar secret ni fechas ni solapamientos, escribiendo directo en la planilla con `status: PENDING_TRANSFER` (que no existe en la máquina de estados, así que **la fila no bloquea las fechas**), las fechas en `DD/MM/YYYY`, y cuatro campos con `=={{ }}` que Sheets habría tomado como fórmula |
+| `owner-unblock` | Devolvía siempre `{"ok":true,"deleted_count":"=1"}` sin tocar nada. Lo reemplazó `owner-unblock-v2` |
+| `owner-block` | Lo reemplazó `create-manual-reservation`, que es el que llama `owner-blocks.js`. Su env var `N8N_OWNER_BLOCK_PATH` no se usa en ningún archivo |
+| `Admin Update Status` | Su única function apuntaba a un path que no estaba registrado, así que sólo podía dar 404. Lo reemplazó `set-reservation-status` |
+
+Antes de apagar uno vale mirar dos cosas: que ninguna function del repo lo
+llame (ojo con los paths hardcodeados como fallback de la env var) y que su
+historial de ejecuciones esté vacío. Las dos juntas, porque una function puede
+llamarlo por env var sin que el path aparezca en el código.
+
+`Availability - Las Cañas` todavía normaliza fechas en `DD/MM/YYYY` además de
+`YYYY-MM-DD`. Es la huella del prototipo de arriba: el único que escribía en
+ese formato. Se deja porque es inofensivo y porque si quedó alguna fila vieja
+así, sacarlo la volvería invisible.
+
 ## Los dos caminos a la planilla
 
 No todo pasa por n8n. Para **escribir** una reserva sí (n8n manda mails, arma
@@ -220,6 +246,30 @@ Guardar la copia es **best-effort**: va en un `try/catch` y el `require` de
 `@netlify/blobs` es perezoso. Si el almacenamiento falla, se pierde la copia
 del panel y nada más — la reserva sigue su curso y el mail igual sale. Los
 comprobantes anteriores a esto no están: para esos, sigue estando el mail.
+
+### El webhook del comprobante tampoco validaba el secret
+
+`submit-proof` manda `x-lc-secret` con `N8N_SECRET`, pero el workflow
+`LC – Proof Upload (Send Email)` **no miraba los headers en ningún nodo**: su
+primer nodo pedía un `id` y un archivo, y con eso seguía de largo.
+
+Lo que habilitaba no era leer datos — los mails salen para los dueños y para
+el huésped, no para quien pegó. Era **mandar**: cualquiera que conociera la URL
+podía hacer que a los tres dueños les llegara un adjunto presentado como el
+comprobante de una reserva real, con los datos de la fila de la planilla en el
+cuerpo del mail para que se viera legítimo, y que al huésped le llegara un
+*"recibimos tu comprobante"* desde el Gmail del complejo. Un comprobante falso
+que entra por ese camino es indistinguible de uno real hasta que alguien mira
+la cuenta bancaria.
+
+La validación va al principio de `validar input + armar binary`, **antes** de
+leer la planilla y antes de los dos nodos de Gmail, así un pedido sin secret no
+dispara nada. Un pedido rechazado sale por el nodo `ERROR`, que es el camino
+que ya existía para los pedidos mal formados.
+
+A diferencia del de `create-reservation`, este path **no** está hardcodeado en
+el repo: vive sólo en `N8N_PROOF_WEBHOOK_PATH`. Había que conocer la URL. Eso
+lo hacía menos urgente, no menos roto.
 
 ## Reglas del calendario
 
