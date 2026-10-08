@@ -17,6 +17,34 @@ header `x-lc-secret`, y ninguno llega nunca al navegador.
 endpoint que valide con `assertAuth` tiene que comparar contra ese mismo valor.
 Mezclarlos da 401 sin ninguna pista de por qué.
 
+### Mandar el secret no alcanza: n8n tiene que leerlo
+
+`callN8n` pone `x-lc-secret` en **todos** los pedidos. Eso no significa que el
+workflow del otro lado lo mire: el header puede llegar y nadie leerlo.
+
+Es lo que pasaba con `create-reservation`. El nodo que validaba la solicitud
+nunca tocaba los headers, así que **el webhook aceptaba cualquier POST de
+cualquiera**, y cada POST aceptado crea un `HOLD_TRANSFER` que bloquea la casa
+seis horas. Pesaba más que en los otros porque su path está hardcodeado en
+`create-reservation.js` —`/webhook/f484ae09-…`— y este repo es público: la URL
+no había que adivinarla.
+
+Se auditaron de a uno los 18 paths que están hardcodeados en el repo, mandando
+un POST sin secret con un payload que no puede modificar nada (un `id` que no
+existe). **Era el único abierto**; todos los demás, lectura y escritura,
+contestan `Unauthorized (secret inválido)`. Si se agrega un webhook nuevo,
+vale repetir la prueba: que conteste 200 no dice nada sobre si validó.
+
+| Webhook | Secret que espera |
+|---|---|
+| `create-reservation` | `N8N_SECRET` |
+| el resto de los que escriben | `LC_OWNER_SECRET` |
+
+El valor concreto vive hardcodeado en el nodo Code de cada workflow, no en una
+variable: n8n Cloud no expone `$env` dentro de un Code node. Si se rota un
+secret hay que cambiarlo **en cada workflow que lo valide más la env var de
+Netlify**, y son varios.
+
 ## Variables por función
 
 | Variable | La usan |
@@ -44,7 +72,6 @@ Mezclarlos da 401 sin ninguna pista de por qué.
 | `N8N_OWNER_BLOCK_PATH` / `N8N_OWNER_UNBLOCK_PATH` | `owner-blocks`, `owner-unblocks` |
 | `N8N_GET_PRICE_PERIODS_PATH` | `reservation-document` (opcional, tiene default) |
 | `N8N_SET_PAYMENT_PATH` | `set-reservation-payment` (opcional, tiene default) |
-| `N8N_ADMIN_UPDATE_RESERVATION_PATH` | `admin-update-reservation` (opcional) |
 | `WA_VERIFY_TOKEN` / `N8N_WA_INCOMING_URL` | `wa-webhook` |
 | `N8N_WA_CONVERSATIONS_PATH` | `wa-conversations` (opcional, tiene default) |
 | `N8N_WA_ACTION_PATH` | `wa-panel-action` (opcional, tiene default) |
@@ -226,6 +253,38 @@ un mínimo abriría fechas que los dueños no habilitaron.
 Ojo: habilitar un mes nuevo son **dos** pasos — correr la ventana en *Reglas* y
 cargarle su período en *Precios*. Con uno solo el mes sigue sin poder
 reservarse.
+
+### El servidor lee las mismas reglas que la página
+
+`reservar.html` respeta estas reglas, pero la página es sólo la vitrina: quien
+decide es el webhook `create-reservation`. Y ahí las reglas estaban
+**hardcodeadas** en el nodo Code — una lista de findes fijos escrita a mano,
+un mínimo de noches fijo y ningún tope de ventana.
+
+Hoy coincidían de casualidad. El problema era de fecha de vencimiento: los
+findes fijos cargados en n8n llegan hasta diciembre de 2026, así que **el día
+que los dueños carguen los de enero y febrero de 2027 desde el panel, la página
+los iba a respetar y el servidor no**. Y el tope de la ventana no existía del
+lado del servidor en absoluto: `config_calendario` dice hasta 2027-03-31 y n8n
+aceptaba 2030.
+
+Ahora el workflow tiene un nodo HTTP (*Leer reglas del calendario*) que pide
+`/api/calendar-config` —**la misma respuesta que lee `reservar.html`**, no la
+data table cruda— y el nodo Code valida contra eso. Se lee la respuesta ya
+traducida a propósito: si cada lado interpretara la tabla por su cuenta
+volveríamos a tener dos reglas que se pueden separar.
+
+La normalización es la misma que `normalizeCalendarConfig` en `reservar.html`,
+incluido que **una regla ilegible invalida toda la config**.
+
+Si el endpoint no responde, el nodo Code usa las reglas de respaldo (las que
+estaban hardcodeadas) y lo avisa por consola. No corta la reserva: la página
+tampoco carga sin esa misma config, así que un pedido legítimo no llega hasta
+ahí con el endpoint caído, y cortar dejaría la web sin reservas por una falla
+de red.
+
+La copia versionada del nodo está en **`n8n/create-reservation--validar.js`**.
+Si cambiás una, cambiá la otra.
 
 ## El documento de reserva confirmada
 
@@ -430,7 +489,7 @@ que nadie pueda escribir una URL a mano ni quede un `<img>` roto.
 `set-reservation-guest` escribe nombre, teléfono, mail, DNI y notas sobre una
 fila que ya existe.
 
-Existía un agujero: `admin-update-reservation` sólo cambia el estado y
+Existía un agujero: `set-reservation-status` sólo cambia el estado y
 `set-reservation-payment` sólo toca la plata, así que **no había forma de
 escribirle el nombre a una fila ya creada**. Se veía en los bloqueos: si el
 dueño bloqueaba unas fechas apurado, sin cargar quién era, esa fila se quedaba

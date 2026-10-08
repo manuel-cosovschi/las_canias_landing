@@ -3,8 +3,8 @@
 // Carga o corrige los datos del huésped de una fila que ya existe: nombre,
 // teléfono, mail, DNI y notas.
 //
-// Hasta ahora no había forma de hacerlo. admin-update-reservation sólo cambia
-// el estado, y set-reservation-payment sólo toca la plata. El agujero se veía
+// Hasta ahora no había forma de hacerlo: set-reservation-status sólo cambia el
+// estado, y set-reservation-payment sólo toca la plata. El agujero se veía
 // en los bloqueos: si el dueño bloqueaba unas fechas sin cargar quién era, esa
 // fila se quedaba sin nombre para siempre y el calendario mostraba "-".
 //

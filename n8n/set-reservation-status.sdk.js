@@ -2,8 +2,17 @@
 //
 // Corrige el estado de una reserva en la planilla y NADA MÁS. Existe porque no
 // había forma de deshacer una cancelación: cancel-confirmed cancela y avisa,
-// pero no hay vuelta atrás, y admin-update-reservation apunta a un webhook que
-// no está registrado en n8n.
+// pero no hay vuelta atrás.
+//
+// Reemplazó a `admin-update-reservation`, que apuntaba a un webhook que no
+// estaba registrado en n8n y por lo tanto sólo podía contestar 404. Esa función
+// de Netlify y el workflow `Admin Update Status` ya no están: la primera se
+// borró, el segundo quedó despublicado con cero ejecuciones en su historial.
+//
+// **Todavía no lo llama nadie.** El workflow está activo y validando el secret,
+// pero no hay función de Netlify ni botón en el panel que le pegue, así que
+// deshacer una cancelación sigue siendo algo que hay que hacer a mano sobre la
+// planilla. Está acá listo para engancharlo.
 //
 // **No manda ningún mail, a propósito.** Se usa para corregir errores
 // administrativos, y avisarle al huésped de una corrección sólo lo confunde.
