@@ -4,7 +4,7 @@
 // teléfono, mail, DNI y notas. Lo llama el panel desde el calendario, vía la
 // función set-reservation-guest de Netlify.
 //
-// Existe porque había un agujero: admin-update-reservation sólo cambia el
+// Existe porque había un agujero: set-reservation-status sólo cambia el
 // estado y set-reservation-payment sólo toca la plata, así que un bloqueo
 // creado sin datos se quedaba sin nombre para siempre.
 //
