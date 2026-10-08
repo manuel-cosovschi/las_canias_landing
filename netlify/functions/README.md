@@ -69,7 +69,8 @@ Netlify**, y son varios.
 | `N8N_OWNER_APPROVE_PATH` | `confirm-transfer` |
 | `N8N_OWNER_CANCEL_PATH` | `cancel-reservation` |
 | `N8N_OWNER_CANCEL_CONFIRMED_PATH` | `cancel-confirmed` |
-| `N8N_OWNER_BLOCK_PATH` / `N8N_OWNER_UNBLOCK_PATH` | `owner-blocks`, `owner-unblocks` |
+| `N8N_CREATE_MANUAL_PATH` | `owner-blocks`, `create-manual-reservation` (opcional, tiene default) |
+| `N8N_OWNER_UNBLOCK_PATH` | `owner-unblocks` (opcional, tiene default) |
 | `N8N_GET_PRICE_PERIODS_PATH` | `reservation-document` (opcional, tiene default) |
 | `N8N_SET_PAYMENT_PATH` | `set-reservation-payment` (opcional, tiene default) |
 | `WA_VERIFY_TOKEN` / `N8N_WA_INCOMING_URL` | `wa-webhook` |
@@ -173,6 +174,31 @@ aparece una fila en `HOLD_TRANSFER` con `expires_at` pasado y sin cancelar, el
 script dejó de correr — y conviene mirarlo rápido, porque `owner-list-pending`
 filtra los holds vencidos y esa fila **no se ve en el panel** mientras sigue
 bloqueando las fechas.
+
+## Workflows de n8n que quedaron apagados
+
+n8n acumuló prototipos y versiones viejas que seguían **activas**, con webhook
+publicado, años después de haber sido reemplazadas. Un webhook activo que nadie
+llama no es inofensivo: contesta.
+
+Estos quedaron despublicados, todos con **cero ejecuciones** en el historial:
+
+| Workflow | Por qué |
+|---|---|
+| `Reserva por transferencia` | El prototipo original del flujo, del 5 de enero — un día antes de `create-reservation`. Sin validar secret ni fechas ni solapamientos, escribiendo directo en la planilla con `status: PENDING_TRANSFER` (que no existe en la máquina de estados, así que **la fila no bloquea las fechas**), las fechas en `DD/MM/YYYY`, y cuatro campos con `=={{ }}` que Sheets habría tomado como fórmula |
+| `owner-unblock` | Devolvía siempre `{"ok":true,"deleted_count":"=1"}` sin tocar nada. Lo reemplazó `owner-unblock-v2` |
+| `owner-block` | Lo reemplazó `create-manual-reservation`, que es el que llama `owner-blocks.js`. Su env var `N8N_OWNER_BLOCK_PATH` no se usa en ningún archivo |
+| `Admin Update Status` | Su única function apuntaba a un path que no estaba registrado, así que sólo podía dar 404. Lo reemplazó `set-reservation-status` |
+
+Antes de apagar uno vale mirar dos cosas: que ninguna function del repo lo
+llame (ojo con los paths hardcodeados como fallback de la env var) y que su
+historial de ejecuciones esté vacío. Las dos juntas, porque una function puede
+llamarlo por env var sin que el path aparezca en el código.
+
+`Availability - Las Cañas` todavía normaliza fechas en `DD/MM/YYYY` además de
+`YYYY-MM-DD`. Es la huella del prototipo de arriba: el único que escribía en
+ese formato. Se deja porque es inofensivo y porque si quedó alguna fila vieja
+así, sacarlo la volvería invisible.
 
 ## Los dos caminos a la planilla
 
