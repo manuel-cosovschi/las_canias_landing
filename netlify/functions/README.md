@@ -277,10 +277,32 @@ recalcular el total con las tarifas en vez de leerlo.
 Ahora la hoja `reservas` tiene cuatro columnas más, en **AA:AD** (las A:Z ya
 estaban todas ocupadas): `importe`, `anticipo`, `facturado` y `cotizacion_usd`.
 
-- `reservar.html` manda el importe ya calculado al crear la reserva, así queda
-  guardado desde el arranque.
+- `reservar.html` manda el importe al crear la reserva y `create-reservation` lo
+  recalcula con las tarifas del panel antes de pasarlo a n8n, así el número que
+  se guarda no es el que eligió el navegador.
 - `set-reservation-payment` los edita desde el panel. Sólo pisa los campos que
   vienen en el pedido, así se puede guardar el anticipo sin tocar el resto.
+
+### El importe se perdía al guardar
+
+Durante meses este archivo decía que el importe "queda guardado desde el
+arranque". No era cierto, y no se podía ver desde el repo: el nodo **Append row
+in sheet** del workflow `create-reservation` de n8n mapea las columnas una por
+una, y tenía diecinueve — ninguna era `importe`. El número llegaba a n8n y se
+descartaba al escribir la fila.
+
+Cómo se confirmó, por si vuelve a pasar: en la hoja `reservas`, las **27 filas
+con `source = web` tenían la columna AA vacía**, y sólo las de `source = excel`
+—cargadas por el import del Excel, que escribe la fila completa— tenían monto.
+Esa asimetría es la huella del problema.
+
+El arreglo está en n8n, no acá: el nodo ahora mapea también `importe`, tomándolo
+de `{{ $items("Webhook")[0].json.body.importe }}`, que es el valor que
+`create-reservation` ya recalculó del lado del servidor.
+
+**Si se agrega otra columna de plata a la planilla, agregarla también a ese
+nodo.** Un mapeo incompleto no falla: escribe la fila sin esa columna y
+devuelve `ok`. Es el mismo error de forma que el `A:Z` de `_sheet.js`.
 - El **saldo no se guarda**: sale de `importe - anticipo`. Guardarlo sería
   tener dos números que pueden quedar en desacuerdo.
 - El documento de confirmación usa el importe guardado si existe, y si no cae
