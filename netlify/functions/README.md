@@ -221,6 +221,30 @@ Guardar la copia es **best-effort**: va en un `try/catch` y el `require` de
 del panel y nada más — la reserva sigue su curso y el mail igual sale. Los
 comprobantes anteriores a esto no están: para esos, sigue estando el mail.
 
+### El webhook del comprobante tampoco validaba el secret
+
+`submit-proof` manda `x-lc-secret` con `N8N_SECRET`, pero el workflow
+`LC – Proof Upload (Send Email)` **no miraba los headers en ningún nodo**: su
+primer nodo pedía un `id` y un archivo, y con eso seguía de largo.
+
+Lo que habilitaba no era leer datos — los mails salen para los dueños y para
+el huésped, no para quien pegó. Era **mandar**: cualquiera que conociera la URL
+podía hacer que a los tres dueños les llegara un adjunto presentado como el
+comprobante de una reserva real, con los datos de la fila de la planilla en el
+cuerpo del mail para que se viera legítimo, y que al huésped le llegara un
+*"recibimos tu comprobante"* desde el Gmail del complejo. Un comprobante falso
+que entra por ese camino es indistinguible de uno real hasta que alguien mira
+la cuenta bancaria.
+
+La validación va al principio de `validar input + armar binary`, **antes** de
+leer la planilla y antes de los dos nodos de Gmail, así un pedido sin secret no
+dispara nada. Un pedido rechazado sale por el nodo `ERROR`, que es el camino
+que ya existía para los pedidos mal formados.
+
+A diferencia del de `create-reservation`, este path **no** está hardcodeado en
+el repo: vive sólo en `N8N_PROOF_WEBHOOK_PATH`. Había que conocer la URL. Eso
+lo hacía menos urgente, no menos roto.
+
 ## Reglas del calendario
 
 Igual que los precios, las define el dueño desde el panel (pestaña *Reglas*).
