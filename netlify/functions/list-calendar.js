@@ -158,11 +158,16 @@ exports.handler = async (event) => {
         const status = String(r.status || "").trim().toUpperCase();
         const name = houseName(house);
 
-        // title corto; el detalle completo va en extendedProps
-        const title =
-          status === "CONFIRMED" ? `${name} · Confirmada`
-          : status === "HOLD_TRANSFER" ? `${name} · Hold`
-          : `${name} · Bloqueada`;
+        // title corto; el detalle completo va en extendedProps.
+        //
+        // Confirmada y bloqueada dicen lo mismo a propósito: para los dueños una
+        // casa bloqueada y una reservada son el mismo hecho —esa casa no se
+        // alquila esos días— y pedían no verlas como dos estados distintos.
+        // Sólo el hold se separa, porque todavía se puede caer.
+        //
+        // De paso el chip entra entero en el celular: antes se leía
+        // "Las Cañas 1 · Blo…" y el nombre de la casa quedaba cortado.
+        const title = status === "HOLD_TRANSFER" ? `${name} · Hold` : name;
 
         // Sin colores acá a propósito: el calendario pinta cada evento con el
         // color de su casa, y esa paleta vive en admin.html (una sola fuente).
