@@ -202,15 +202,25 @@
       overflow: hidden;
       text-overflow: ellipsis;
     }
-    /* Hold: rayado diagonal = reserva provisoria, todavía sin confirmar. */
-    .lc-ev--hold { background-image: repeating-linear-gradient(45deg, rgba(255,255,255,.45) 0 5px, transparent 5px 10px); }
-    /* Blocked: sin huésped, se despinta y va con borde punteado. */
-    .lc-ev--blocked { opacity: .72; border: 2px dashed rgba(255,255,255,.75); padding: 1px 4px; }
+    /* El estado NO cambia el color de fondo: una casa se reconoce por su color
+       y nada más. Antes el bloqueo llevaba `opacity: .72`, así que un bloqueo de
+       Las Cañas 2 salía naranja lavado y una confirmada de la misma casa naranja
+       pleno, y de un vistazo parecían dos casas distintas. El estado va por
+       encima del color —rayado o borde—, nunca tiñéndolo. */
+    /* Hold: rayado diagonal = reserva provisoria, todavía sin confirmar.
+       Franjas finas y separadas, y bien translúcidas: con el rayado anterior
+       —casi la mitad del chip en blanco al 45%— un hold de Las Cañas 2 se leía
+       celeste al lado de una confirmada azul, que es el mismo problema que el
+       `opacity` del bloqueo. Así sigue distinguiéndose sin cambiar el color. */
+    .lc-ev--hold { background-image: repeating-linear-gradient(45deg, rgba(255,255,255,.22) 0 3px, transparent 3px 11px); }
+    /* Blocked: sin huésped, va con borde cortado. El padding compensa los 2px
+       del borde para que el chip ocupe lo mismo que los demás. */
+    .lc-ev--blocked { border: 2px dashed rgba(255,255,255,.75); padding: 1px 4px; }
     /* Sobre los colores claros (verde agua, verde resaltado, naranja) el rayado
        y el borde blancos no se veían, así que un hold se confundía con una
        reserva confirmada. Ahí van en oscuro. La clase la pone el calendario
        según el color de la casa, no está anotada a mano. */
-    .lc-ev--claro.lc-ev--hold { background-image: repeating-linear-gradient(45deg, rgba(11,15,20,.38) 0 5px, transparent 5px 10px); }
+    .lc-ev--claro.lc-ev--hold { background-image: repeating-linear-gradient(45deg, rgba(11,15,20,.26) 0 3px, transparent 3px 11px); }
     .lc-ev--claro.lc-ev--blocked { border-color: rgba(11,15,20,.6); }
   </style>
 </head>
@@ -1303,10 +1313,10 @@
             <span class="w-6 h-3 rounded" style="background:#4A3728"></span> Confirmada
           </span>
           <span class="inline-flex items-center gap-2 px-3 py-2 rounded-2xl bg-white/70 border border-brand-beige font-semibold">
-            <span class="w-6 h-3 rounded" style="background:#4A3728;background-image:repeating-linear-gradient(45deg,rgba(255,255,255,.5) 0 4px,transparent 4px 8px)"></span> Hold
+            <span class="w-6 h-3 rounded" style="background:#4A3728;background-image:repeating-linear-gradient(45deg,rgba(255,255,255,.22) 0 3px,transparent 3px 11px)"></span> Hold
           </span>
           <span class="inline-flex items-center gap-2 px-3 py-2 rounded-2xl bg-white/70 border border-brand-beige font-semibold">
-            <span class="w-6 h-3 rounded border-2 border-dashed border-white" style="background:#4A3728;opacity:.72"></span> Bloqueada
+            <span class="w-6 h-3 rounded border-2 border-dashed border-white" style="background:#4A3728"></span> Bloqueada
           </span>
         </div>
 
@@ -3540,6 +3550,17 @@
     return d.toISOString().slice(0, 10);
   }
 
+  // Para desbloquear: el check-out de un bloqueo es el día siguiente a su
+  // última noche. Un bloqueo del 20 al 23 ocupa las noches 20, 21 y 22, y para
+  // sacarlo hay que elegir salida el 23.
+  function toPlusOneDayISO(iso) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(iso || ""));
+    if (!m) return iso;
+    const d = new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])));
+    d.setUTCDate(d.getUTCDate() + 1);
+    return d.toISOString().slice(0, 10);
+  }
+
   function normalizeDisableRanges(ranges) {
     return (ranges || [])
       .map(r => {
@@ -3559,18 +3580,35 @@
       .filter(Boolean);
   }
 
-  function initPickers(disabledRanges = []) {
-    const disable = normalizeDisableRanges(disabledRanges);
-
+  // `disable` y `enable` son excluyentes en flatpickr: si se pasa `enable`, todo
+  // lo que no esté en la lista queda apagado. Bloquear usa `disable` (no se
+  // puede bloquear algo ocupado) y desbloquear usa `enable` (no se puede sacar
+  // un bloqueo que no existe). Los rangos llegan ya normalizados, con el `to`
+  // INCLUSIVO: el último día ocupado.
+  function initPickers({ disable = [], enableIn = null, enableOut = null, minDate = "today" } = {}) {
     if (fpIn) fpIn.destroy();
     if (fpOut) fpOut.destroy();
 
-    fpIn = flatpickr(el("checkin"), {
+    const comunes = {
       locale: flatpickr.l10ns.es,
       dateFormat: "d/m/Y",
-      minDate: "today",
       disableMobile: true,
-      disable,
+      minDate,
+    };
+
+    const cfgIn = { ...comunes };
+    const cfgOut = { ...comunes };
+
+    if (enableIn) {
+      cfgIn.enable = enableIn;
+      cfgOut.enable = enableOut || enableIn;
+    } else {
+      cfgIn.disable = disable;
+      cfgOut.disable = disable;
+    }
+
+    fpIn = flatpickr(el("checkin"), {
+      ...cfgIn,
       onChange: (selectedDates) => {
         const inDate = selectedDates?.[0];
         if (!inDate) return;
@@ -3584,18 +3622,17 @@
       }
     });
 
-    fpOut = flatpickr(el("checkout"), {
-      locale: flatpickr.l10ns.es,
-      dateFormat: "d/m/Y",
-      minDate: "today",
-      disableMobile: true,
-      disable,
-    });
+    fpOut = flatpickr(el("checkout"), cfgOut);
   }
 
+  // Los dos modos necesitan listas opuestas, así que esto mira en qué modo está.
+  // Antes los dos compartían el mismo set —las fechas ocupadas, apagadas— y al
+  // desbloquear quedaban apagadas justamente las fechas que había que elegir.
   async function loadAvailabilityAndUpdatePickers() {
+    const house = el("house").value;
+    if (modoBloqueo === "desbloquear") return cargarPickersDeDesbloqueo(house);
+
     try {
-      const house = el("house").value;
       const res = await fetch(`${EP_AVAILABILITY}?house_code=${encodeURIComponent(house)}`, { method: "GET" });
       const data = await res.json().catch(() => ({}));
 
@@ -3603,9 +3640,51 @@
         .concat(data.blocked || [])
         .concat(data.ranges || []);
 
-      initPickers(ranges);
+      initPickers({ disable: normalizeDisableRanges(ranges) });
     } catch {
-      initPickers([]);
+      initPickers({ disable: [] });
+    }
+  }
+
+  // Sólo se habilitan las fechas que HOY están bloqueadas en esa casa.
+  //
+  // Los rangos salen de `list-calendar` y no de `availability`, porque hace
+  // falta el estado: `availability` devuelve todo lo ocupado junto, sin
+  // distinguir un bloqueo manual de una reserva confirmada. Desbloquear sólo
+  // saca BLOCKED, así que habilitar una confirmada sería ofrecer un botón que
+  // no hace nada —o que se lleva una reserva con huésped e importe.
+  async function cargarPickersDeDesbloqueo(house) {
+    const tip = el("tipDesbloqueo");
+
+    try {
+      const out = await apiFetch(EP_LIST_CALENDAR, { method: "GET", body: null });
+
+      const bloqueos = (out.events || [])
+        .filter((e) => String(e?.extendedProps?.house_code || "") === house)
+        .filter((e) => String(e?.extendedProps?.status || "").toUpperCase() === "BLOCKED")
+        .map((e) => ({
+          from: String(e.start || "").slice(0, 10),
+          to: toMinusOneDayISO(String(e.end || "").slice(0, 10)),
+        }))
+        .filter((r) => /^\d{4}-\d{2}-\d{2}$/.test(r.from) && /^\d{4}-\d{2}-\d{2}$/.test(r.to));
+
+      // Sin `minDate`: un bloqueo que arrancó ayer también se saca, y la lista
+      // de habilitadas ya impide elegir cualquier otra cosa.
+      initPickers({
+        enableIn: bloqueos,
+        enableOut: bloqueos.map((r) => ({ from: toPlusOneDayISO(r.from), to: toPlusOneDayISO(r.to) })),
+        minDate: null,
+      });
+
+      tip.textContent = bloqueos.length
+        ? `Sólo se pueden elegir fechas bloqueadas. ${houseName(house)} tiene ${bloqueos.length} ${bloqueos.length === 1 ? "bloqueo" : "bloqueos"}.`
+        : `${houseName(house)} no tiene ningún bloqueo para sacar.`;
+    } catch {
+      // Si no se pueden leer los bloqueos no se habilita nada. Desbloquear a
+      // ciegas borra la fila entera, y esa fila puede ser una reserva con
+      // huésped e importe: no dejar elegir es mejor que dejar elegir cualquiera.
+      initPickers({ enableIn: [], enableOut: [], minDate: null });
+      tip.textContent = "No se pudieron leer los bloqueos, así que no se habilitó ninguna fecha. Recargá la página y probá de nuevo.";
     }
   }
 
@@ -3655,6 +3734,13 @@
       el("note").value = "";
       limpiarDatosBloqueo();
     }
+
+    // Cada modo habilita fechas distintas, así que el calendario se rearma al
+    // elegir. Las fechas ya puestas se borran primero: una que servía para
+    // bloquear puede no existir siquiera en la lista de desbloqueo, y al revés.
+    el("checkin").value = "";
+    el("checkout").value = "";
+    loadAvailabilityAndUpdatePickers();
   }
 
   el("modoBloquear").onclick = () => mostrarModo("bloquear");
@@ -5323,9 +5409,23 @@
   btnCloseCalendarModal2.onclick = closeCalendarModal;
   calendarModal.addEventListener("click", (e) => { if (e.target === calendarModal) closeCalendarModal(); });
 
+  // Día/mes/año, que es como se lee una fecha acá. El detalle mostraba el ISO
+  // crudo de la planilla ("2026-11-20"), que arranca por el año y se lee como
+  // si fuera de otro país.
+  //
+  // Se reordena el texto y no se usa `new Date`: "2026-11-20" es una fecha sin
+  // hora, Date la lee como medianoche UTC, y en Argentina (UTC-3) eso cae a las
+  // 21:00 del 19. Formatearla con la zona local restaría un día. Es el mismo
+  // error que ya mordió en toMinusOneDayISO.
+  function fmtYmdAR(iso) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(iso || ""));
+    return m ? `${m[3]}/${m[2]}/${m[1]}` : (iso || "-");
+  }
+
   function fmtDates(startISO, endISO) {
-    // FullCalendar end es exclusive: mostramos (start → end)
-    return `${startISO} → ${endISO}`;
+    // FullCalendar end es exclusive: mostramos (start → end), que son la
+    // entrada y la salida tal como las entiende el dueño.
+    return `${fmtYmdAR(startISO)} → ${fmtYmdAR(endISO)}`;
   }
 
   // En el calendario los eventos ya dicen "Confirmada"/"Hold"/"Bloqueada"; el
