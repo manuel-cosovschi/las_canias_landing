@@ -536,6 +536,39 @@ que nadie pueda escribir una URL a mano ni quede un `<img>` roto.
 
 ## El calendario del panel
 
+### Cada casa, siempre el mismo renglón
+
+Las Cañas 1 va arriba de todo y Las Cañas 5 abajo, **todos los días**. Sin esto,
+FullCalendar amontona los eventos hacia arriba: en un día con una sola reserva,
+esa reserva ocupa el primer renglón sea de la casa que sea, así que Las Cañas 5
+caía en el renglón 2 un día y en el 1 al día siguiente, dentro de la misma
+semana. Buscar una casa en la grilla se volvía imposible.
+
+Son dos piezas, y hacen falta las dos:
+
+1. **`eventOrder: "orden"`** ordena los eventos de cada día por número de casa.
+   Por sí solo no alcanza: respeta el orden, pero si una casa no tiene nada ese
+   día, las de abajo suben igual.
+2. **Huecos invisibles** (`calcularHuecos`): un evento vacío por cada casa y día
+   sin reserva, que ocupa el alto de un chip y le guarda el renglón. Van con
+   `visibility: hidden` y no `display: none`, justamente porque tienen que
+   seguir ocupando el lugar.
+
+Para no estirar el calendario al pedo, **por semana se reservan renglones sólo
+hasta la casa más alta que tenga algo esa semana**: una semana con sólo Las
+Cañas 1 mide un renglón, y una semana sin nada no mide ninguno. El número de
+renglón sigue siendo el de la casa, así que no se mueve de una semana a otra; lo
+único que no se dibuja son los renglones vacíos del final.
+
+Dos cosas para no romperlo:
+
+- Los huecos se recalculan en `datesSet`, que es cuando cambia el mes a la
+  vista, y usan **`info.startStr`, no `info.start`**: `info.start` es un `Date`
+  local a las 00:00 y pasarlo por `toISOString()` en Argentina devuelve el día
+  anterior. Mismo error de siempre.
+- `eventClick` corta si el evento es un hueco: no es una reserva y no tiene
+  detalle que mostrar.
+
 ### Confirmada y bloqueada se dibujan igual
 
 El calendario muestra **dos estados, no tres**. Una reserva confirmada y un

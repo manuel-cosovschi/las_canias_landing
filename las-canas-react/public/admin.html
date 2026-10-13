@@ -222,6 +222,10 @@
        oscuro. La clase la pone el calendario según el color de la casa, no está
        anotada a mano. */
     .lc-ev--claro.lc-ev--hold { background-image: repeating-linear-gradient(45deg, rgba(11,15,20,.26) 0 3px, transparent 3px 11px); }
+    /* El renglón que se le guarda a una casa el día que no tiene reserva. Ocupa
+       el alto de un chip y no se ve ni se puede tocar: `visibility: hidden` y no
+       `display: none` justamente porque tiene que seguir ocupando el lugar. */
+    .lc-ev--hueco { visibility: hidden; pointer-events: none; }
   </style>
 </head>
 
@@ -5953,6 +5957,101 @@
     }
   }
 
+  /* =====================
+     UN RENGLÓN FIJO POR CASA
+  ===================== */
+
+  // FullCalendar amontona los eventos hacia arriba: en un día con una sola
+  // reserva, esa reserva va al primer renglón, sea de la casa que sea. Así, Las
+  // Cañas 5 aparecía en el renglón 2 un día y en el 1 al día siguiente, y
+  // encontrar una casa de un vistazo se volvía imposible.
+  //
+  // El arreglo son dos piezas: `eventOrder: "orden"` ordena los eventos de cada
+  // día por número de casa, y estos huecos invisibles le guardan el renglón a
+  // las casas que ese día no tienen nada. Sin los huecos el orden se respeta
+  // pero las de abajo igual suben.
+  const CASAS_EN_ORDEN = ["LC1", "LC2", "LC3", "LC4", "LC5"];
+
+  // Lo último que devolvió list-calendar, y el rango de días a la vista. Hacen
+  // falta para recalcular los renglones cuando el dueño cambia de mes, sin
+  // volver a pedirle los eventos al servidor.
+  let calEventos = [];
+  let calRango = null;
+
+  function ordenDeCasa(code) {
+    const i = CASAS_EN_ORDEN.indexOf(String(code || "").toUpperCase());
+    // Una casa que no esté en la lista va al final y no desordena a las cinco.
+    return i >= 0 ? i + 1 : CASAS_EN_ORDEN.length + 1;
+  }
+
+  function sumarDiasISO(iso, n) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(iso || ""));
+    if (!m) return iso;
+    const d = new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])));
+    d.setUTCDate(d.getUTCDate() + n);
+    return d.toISOString().slice(0, 10);
+  }
+
+  // Devuelve un evento invisible por cada casa y día sin reserva.
+  //
+  // Por semana se reservan renglones sólo hasta la casa más alta que tenga algo
+  // esa semana: si sólo hay Las Cañas 1, la semana mide un renglón y no cinco, y
+  // una semana vacía no mide nada. El número de renglón sigue siendo el de la
+  // casa, así que no se mueve de una semana a otra; lo único que no se dibuja
+  // son los renglones vacíos del final.
+  function calcularHuecos(desde, hasta) {
+    const ocupado = new Set();
+    for (const ev of calEventos) {
+      const casa = String((ev.extendedProps && ev.extendedProps.house_code) || "").toUpperCase();
+      const ini = String(ev.start || "").slice(0, 10);
+      const fin = String(ev.end || "").slice(0, 10);
+      if (!casa || !/^\d{4}-\d{2}-\d{2}$/.test(ini) || !/^\d{4}-\d{2}-\d{2}$/.test(fin)) continue;
+      // end es exclusivo, igual que en FullCalendar.
+      for (let d = ini; d < fin; d = sumarDiasISO(d, 1)) ocupado.add(casa + "|" + d);
+    }
+
+    const huecos = [];
+    // El rango que da FullCalendar siempre arranca un lunes y mide semanas
+    // enteras, así que se puede recorrer de a 7 días.
+    for (let semana = desde; semana < hasta; semana = sumarDiasISO(semana, 7)) {
+      const dias = [];
+      for (let k = 0; k < 7; k++) dias.push(sumarDiasISO(semana, k));
+
+      let tope = 0;
+      for (const d of dias) {
+        CASAS_EN_ORDEN.forEach((casa, i) => {
+          if (ocupado.has(casa + "|" + d)) tope = Math.max(tope, i + 1);
+        });
+      }
+      if (!tope) continue;
+
+      for (const d of dias) {
+        for (let i = 0; i < tope; i++) {
+          const casa = CASAS_EN_ORDEN[i];
+          if (ocupado.has(casa + "|" + d)) continue;
+          huecos.push({
+            id: `hueco-${casa}-${d}`,
+            start: d,
+            end: sumarDiasISO(d, 1),
+            allDay: true,
+            display: "block",
+            extendedProps: { hueco: true, orden: i + 1 },
+          });
+        }
+      }
+    }
+    return huecos;
+  }
+
+  function pintarHuecos(desde, hasta) {
+    if (!cal) return;
+    calRango = { desde, hasta };
+
+    const previos = cal.getEventSourceById("huecos");
+    if (previos) previos.remove();
+    cal.addEventSource({ id: "huecos", events: calcularHuecos(desde, hasta) });
+  }
+
   async function ensureCalendar() {
     if (calInited) return;
 
@@ -5966,6 +6065,11 @@
       height: "auto",
       locale: "es",
       firstDay: 1,
+      // Cada casa siempre en el mismo renglón: Las Cañas 1 arriba de todo, Las
+      // Cañas 5 abajo. Sin esto FullCalendar amontona los eventos hacia arriba
+      // y la misma casa cae en renglones distintos según qué más haya ese día,
+      // que es lo que confundía al mirar la grilla.
+      eventOrder: "orden",
       fixedWeekCount: false,
       // Enero muestra del 1 al 31 y nada más. Sin esto la primera y la última
       // fila completan la semana con días del mes de al lado, y en el celular
@@ -6001,9 +6105,23 @@
         const house = p.house_code || "";
         const status = String(p.status || "").toUpperCase();
 
+        // Los huecos no son reservas: son el renglón que se le guarda a una casa
+        // el día que no tiene nada, para que no se le corra el lugar. Ocupan el
+        // alto de un chip y no se ven.
+        if (p.hueco) {
+          const vacio = document.createElement("div");
+          vacio.className = "lc-ev lc-ev--hueco";
+          vacio.setAttribute("aria-hidden", "true");
+          const relleno = document.createElement("span");
+          relleno.className = "lc-ev-txt";
+          relleno.textContent = "·";
+          vacio.appendChild(relleno);
+          return { domNodes: [vacio] };
+        }
+
         // El color de fondo es la casa (para distinguirlas de un vistazo) y el
-        // estado va por relleno: lleno = confirmada, rayado = hold, punteado =
-        // bloqueo. Antes el color era el estado y las 5 casas se veían igual.
+        // único estado que se dibuja es el hold, con el rayado. Antes el color
+        // era el estado y las 5 casas se veían igual.
         const wrap = document.createElement("div");
         wrap.className = "lc-ev";
         // backgroundColor y no el shorthand background: el shorthand inline
@@ -6030,9 +6148,20 @@
 
       eventClick: (info) => {
         info.jsEvent.preventDefault();
+        // Un hueco no es una reserva: no tiene detalle que mostrar.
+        if (info.event.extendedProps && info.event.extendedProps.hueco) return;
         fillCalendarModal(info.event);
         prepararAcciones(info.event);
         openCalendarModal();
+      },
+
+      // Los renglones se recalculan al cambiar de mes, porque dependen de qué
+      // casas tienen algo en cada semana a la vista.
+      datesSet: (info) => {
+        // startStr y no info.start: info.start es un Date local a las 00:00, y
+        // pasarlo por toISOString() en Argentina (UTC-3) devuelve el día
+        // anterior. startStr ya viene en la zona del calendario.
+        pintarHuecos(info.startStr.slice(0, 10), info.endStr.slice(0, 10));
       },
     });
 
@@ -6044,10 +6173,26 @@
     if (!calInited || !cal) return;
 
     const out = await apiFetch(EP_LIST_CALENDAR, { method: "GET", body: null });
-    const events = out.events || [];
 
-    cal.removeAllEvents();
-    cal.addEventSource(events);
+    // `orden` es el renglón que le toca a la casa, y es lo que ordena los
+    // eventos dentro de un día (ver eventOrder). Una casa desconocida va al
+    // final en vez de romper el orden de las cinco.
+    calEventos = (out.events || []).map((e) => ({
+      ...e,
+      extendedProps: {
+        ...(e.extendedProps || {}),
+        orden: ordenDeCasa(e.extendedProps && e.extendedProps.house_code),
+      },
+    }));
+
+    // Por id y no removeAllEvents(): hay dos fuentes —las reservas y los
+    // huecos— y cada una se reemplaza sola. Además removeAllEvents() dejaba la
+    // fuente anterior registrada y se iba sumando una por refresco.
+    const previas = cal.getEventSourceById("reservas");
+    if (previas) previas.remove();
+    cal.addEventSource({ id: "reservas", events: calEventos });
+
+    if (calRango) pintarHuecos(calRango.desde, calRango.hasta);
   }
 
   async function refreshCalendarIfReady() {
