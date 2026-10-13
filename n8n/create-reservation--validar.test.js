@@ -222,6 +222,31 @@ console.log("\n== 6. Lo que ya validaba, sigue validando ==");
   const r = correr({ headers: H, body: { ...base, payment_method: "card", checkin: "2026-11-28", checkout: "2026-12-02" } });
   check("card -> PENDING_PAYMENT sin expires", r.json.ok === true && r.json.row.status === "PENDING_PAYMENT" && r.json.row.expires_at === "", JSON.stringify(r.json));
 }
+{
+  // Un bloqueo de los dueños ocupa la casa igual que una confirmada. Casi
+  // siempre atrás hay una reserva que entró por teléfono.
+  const rows = [{ id: "BLQ-LC4-2026-11-28", house_code: "LC4", status: "BLOCKED", check_in: "2026-11-29", check_out: "2026-12-01", notes: "Alquiler" }];
+  const r = correr({ headers: H, body: { ...base, checkin: "2026-11-28", checkout: "2026-12-02" }, sheetRows: rows });
+  check("bloqueo de los dueños -> rechaza", r.json.ok === false && /no disponibles/.test(r.json.message), JSON.stringify(r.json));
+}
+{
+  // El bloqueo sin expires_at tampoco se cuela: BLOCKED no mira vencimiento.
+  const rows = [{ id: "BLQ", house_code: "LC4", status: "blocked", check_in: "2026-11-28", check_out: "2026-12-02" }];
+  const r = correr({ headers: H, body: { ...base, checkin: "2026-11-28", checkout: "2026-12-02" }, sheetRows: rows });
+  check("bloqueo en minúscula también bloquea", r.json.ok === false && /no disponibles/.test(r.json.message), JSON.stringify(r.json));
+}
+{
+  // Pegado pero sin pisar: el día de salida de uno puede ser el de entrada del otro.
+  const rows = [{ id: "BLQ", house_code: "LC4", status: "BLOCKED", check_in: "2026-12-02", check_out: "2026-12-05" }];
+  const r = correr({ headers: H, body: { ...base, checkin: "2026-11-28", checkout: "2026-12-02" }, sheetRows: rows });
+  check("bloqueo que arranca el día de salida -> acepta", r.json.ok === true, JSON.stringify(r.json));
+}
+{
+  // Un bloqueo de OTRA casa no tiene que estorbar.
+  const rows = [{ id: "BLQ", house_code: "LC1", status: "BLOCKED", check_in: "2026-11-29", check_out: "2026-12-01" }];
+  const r = correr({ headers: H, body: { ...base, checkin: "2026-11-28", checkout: "2026-12-02" }, sheetRows: rows });
+  check("bloqueo de otra casa -> acepta", r.json.ok === true, JSON.stringify(r.json));
+}
 
 console.log(`\n==== ${pass} ok, ${fail} fallan ====\n`);
 process.exit(fail ? 1 : 0);

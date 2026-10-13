@@ -200,6 +200,41 @@ llamarlo por env var sin que el path aparezca en el código.
 ese formato. Se deja porque es inofensivo y porque si quedó alguna fila vieja
 así, sacarlo la volvería invisible.
 
+## La web aceptaba reservas encima de un bloqueo
+
+Hay tres lugares que deciden si una casa está ocupada, y durante meses no
+dijeron lo mismo:
+
+| Quién | Cuenta `BLOCKED` como ocupado |
+|---|---|
+| `Availability - Las Cañas` (lo que pinta el calendario) | sí, con un comentario que lo dice |
+| `create-reservation`, primer chequeo | **no** |
+| `create-reservation`, recheck antes de escribir | **no** |
+
+`BLOCKED` son las fechas que los dueños sacan de la venta, y casi nunca es
+mantenimiento: hoy 16 de los 18 bloqueos de la planilla dicen *"Alquiler"* o
+*"alquilada"* en las notas. Son reservas que entraron por teléfono o WhatsApp.
+
+Como el calendario sí las tapa, el agujero no se veía navegando: para caer en
+él hacía falta que el bloqueo apareciera **después** de que el visitante cargó
+la página. Que es exactamente el caso para el que existe el recheck — y el
+recheck tenía la misma falta, así que no atajaba nada.
+
+En criollo: los dueños bloqueaban una semana ya alquilada por teléfono, y la
+web seguía aceptando una reserva encima. Nadie se enteraba hasta que dos
+familias llegaban a la misma casa.
+
+Ahora los dos chequeos cuentan `BLOCKED`. Las pruebas de
+`n8n/create-reservation--validar.test.js` cubren los cuatro casos que importan:
+que un bloqueo rechace, que uno en minúscula también, que uno de otra casa no
+estorbe, y que uno que **arranca el día de salida** no estorbe tampoco — el
+check-out de uno puede ser el check-in del otro.
+
+Lo que no cambió, y conviene saberlo: entre leer la planilla y escribir la fila
+hay una ventana en la que dos pedidos simultáneos pueden pasar los dos. El
+recheck la hace chica, no la cierra. Con el volumen de hoy es teórico, pero no
+es imposible, y Sheets no tiene forma de evitarlo del todo.
+
 ## Los dos caminos a la planilla
 
 No todo pasa por n8n. Para **escribir** una reserva sí (n8n manda mails, arma
