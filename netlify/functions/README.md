@@ -200,6 +200,70 @@ llamarlo por env var sin que el path aparezca en el código.
 ese formato. Se deja porque es inofensivo y porque si quedó alguna fila vieja
 así, sacarlo la volvería invisible.
 
+## La web aceptaba reservas encima de un bloqueo
+
+Hay tres lugares que deciden si una casa está ocupada, y durante meses no
+dijeron lo mismo:
+
+| Quién | Cuenta `BLOCKED` como ocupado |
+|---|---|
+| `Availability - Las Cañas` (lo que pinta el calendario) | sí, con un comentario que lo dice |
+| `create-reservation`, primer chequeo | **no** |
+| `create-reservation`, recheck antes de escribir | **no** |
+
+`BLOCKED` son las fechas que los dueños sacan de la venta, y casi nunca es
+mantenimiento: hoy 16 de los 18 bloqueos de la planilla dicen *"Alquiler"* o
+*"alquilada"* en las notas. Son reservas que entraron por teléfono o WhatsApp.
+
+Como el calendario sí las tapa, el agujero no se veía navegando: para caer en
+él hacía falta que el bloqueo apareciera **después** de que el visitante cargó
+la página. Que es exactamente el caso para el que existe el recheck — y el
+recheck tenía la misma falta, así que no atajaba nada.
+
+En criollo: los dueños bloqueaban una semana ya alquilada por teléfono, y la
+web seguía aceptando una reserva encima. Nadie se enteraba hasta que dos
+familias llegaban a la misma casa.
+
+Ahora los dos chequeos cuentan `BLOCKED`. Las pruebas de
+`n8n/create-reservation--validar.test.js` cubren los cuatro casos que importan:
+que un bloqueo rechace, que uno en minúscula también, que uno de otra casa no
+estorbe, y que uno que **arranca el día de salida** no estorbe tampoco — el
+check-out de uno puede ser el check-in del otro.
+
+Lo que no cambió, y conviene saberlo: entre leer la planilla y escribir la fila
+hay una ventana en la que dos pedidos simultáneos pueden pasar los dos. El
+recheck la hace chica, no la cierra. Con el volumen de hoy es teórico, pero no
+es imposible, y Sheets no tiene forma de evitarlo del todo.
+
+## El botón "Confirmar" podía duplicar una reserva
+
+`owner-approve` escribía `status: CONFIRMED` sin mirar nada: ni en qué estado
+estaba la fila, ni si las fechas seguían libres. Y el panel muestra el botón
+**también en los holds vencidos** — los pinta de rojo, pero el botón está.
+
+El camino no era rebuscado, era el día normal de los dueños:
+
+1. Entra una solicitud por la web. Queda `HOLD_TRANSFER`, seis horas.
+2. El dueño abre el panel y va a mirar el banco.
+3. Pasan las seis horas. El Apps Script la cancela, o alguien bloquea esas
+   fechas porque cerró la misma semana por teléfono.
+4. El dueño vuelve, ve la tarjeta roja y hace click en **Confirmar**.
+5. Queda `CONFIRMED` encima de la otra ocupación. **Dos reservas para la misma
+   casa y las mismas noches.**
+
+Lo llamativo es que los dos workflows hermanos sí lo chequeaban desde el primer
+día: `set-reservation-dates` y `create-manual-reservation` leen la planilla
+entera y contestan 409 con *"Esas fechas se pisan con …"*. El único que no era
+el que más se usa.
+
+Ahora `owner-approve` hace lo mismo: lee la planilla completa antes de escribir
+y rechaza con 409 si otra fila de la misma casa se pisa. Confirmar algo que ya
+está confirmado sigue funcionando (el botón es idempotente), y una fila que no
+existe sigue respondiendo "Reserva no encontrada" desde donde lo hacía antes.
+
+En el panel, además, confirmar una solicitud vencida pide confirmación: mientras
+el hold estuvo vencido esas fechas estuvieron a la venta.
+
 ## Los dos caminos a la planilla
 
 No todo pasa por n8n. Para **escribir** una reserva sí (n8n manda mails, arma
@@ -647,6 +711,33 @@ Dos detalles:
 - Si no se pueden leer los bloqueos, **no se habilita ninguna fecha** y se dice en
   pantalla. Desbloquear a ciegas borra la fila entera; no dejar elegir es mejor
   que dejar elegir cualquier cosa.
+
+### Un `"2026-10-16"` suelto no le dice nada a flatpickr
+
+Lo de arriba estuvo escrito y sin funcionar durante un día entero: los rangos se
+armaban bien y el calendario seguía dejando elegir fechas alquiladas.
+
+flatpickr parsea los strings que van en `disable` y `enable` **con el
+`dateFormat` que tiene configurado**, y acá es `"d/m/Y"` porque es el formato en
+el que escriben los dueños. Con ese formato `"2026-10-16"` no se entiende, y
+flatpickr no avisa: descarta el rango en silencio.
+
+| Qué se le pasa | Qué apaga |
+|---|---|
+| `dateFormat: "d/m/Y"` + `{from:"2026-10-16", to:"2026-10-19"}` | **nada** |
+| `dateFormat: "d/m/Y"` + `{from:"16/10/2026", to:"19/10/2026"}` | 16, 17, 18, 19 |
+| `dateFormat: "d/m/Y"` + objetos `Date` | 16, 17, 18, 19 |
+| `dateFormat: "Y-m-d"` + `{from:"2026-10-16", …}` | 16, 17, 18, 19 |
+
+En `disable` el efecto era dejar elegible una fecha ocupada. En `enable` es peor:
+como significa "sólo estas fechas", no entender ninguna deja el calendario
+entero muerto.
+
+La conversión a `Date` vive dentro de `initPickers`, que es el único punto por el
+que los rangos entran a flatpickr y por lo tanto el único lugar donde no se
+puede olvidar. Y los `Date` se construyen con el constructor **local**, no con
+`Date.UTC`: la medianoche UTC en Argentina cae a las 21:00 del día anterior, que
+es el mismo error de un día que ya mordió dos veces en este calendario.
 
 El calendario se rearma al elegir el modo y después de cada bloqueo o desbloqueo,
 así que no queda con una lista vieja. El solape además lo rechaza el servidor

@@ -3586,6 +3586,35 @@
       .filter(Boolean);
   }
 
+  // Un "2026-10-16" suelto adentro de `disable` o `enable` NO alcanza.
+  //
+  // flatpickr parsea los strings de esas listas con el `dateFormat` que tiene
+  // configurado, y acá es "d/m/Y" porque es lo que escriben los dueños. Con ese
+  // formato "2026-10-16" no se entiende, y flatpickr **no avisa**: descarta el
+  // rango en silencio. En `disable` eso deja la fecha ocupada elegible; en
+  // `enable` es peor, porque si no entiende ninguno apaga el calendario entero.
+  //
+  // Pasarle objetos Date saca el formato del medio. Y tienen que construirse
+  // con el constructor local, no con Date.UTC: flatpickr compara contra fechas
+  // locales, y en Argentina (UTC-3) una medianoche UTC cae a las 21:00 del día
+  // anterior, que es el mismo error de un día que ya apareció dos veces acá.
+  function aFechaLocal(v) {
+    if (v instanceof Date) return v;
+    const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(v || ""));
+    if (!m) return null;
+    return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+  }
+
+  function aRangosDeFlatpickr(rangos) {
+    return (rangos || [])
+      .map((r) => {
+        const desde = aFechaLocal(r && r.from);
+        const hasta = aFechaLocal(r && r.to);
+        return desde && hasta ? { from: desde, to: hasta } : null;
+      })
+      .filter(Boolean);
+  }
+
   // `disable` y `enable` son excluyentes en flatpickr: si se pasa `enable`, todo
   // lo que no esté en la lista queda apagado. Bloquear usa `disable` (no se
   // puede bloquear algo ocupado) y desbloquear usa `enable` (no se puede sacar
@@ -3605,12 +3634,15 @@
     const cfgIn = { ...comunes };
     const cfgOut = { ...comunes };
 
+    // La conversión a Date va acá y no en cada llamador: éste es el único punto
+    // por donde los rangos entran a flatpickr, así que es el único lugar donde
+    // no se puede olvidar.
     if (enableIn) {
-      cfgIn.enable = enableIn;
-      cfgOut.enable = enableOut || enableIn;
+      cfgIn.enable = aRangosDeFlatpickr(enableIn);
+      cfgOut.enable = aRangosDeFlatpickr(enableOut || enableIn);
     } else {
-      cfgIn.disable = disable;
-      cfgOut.disable = disable;
+      cfgIn.disable = aRangosDeFlatpickr(disable);
+      cfgOut.disable = aRangosDeFlatpickr(disable);
     }
 
     fpIn = flatpickr(el("checkin"), {
@@ -4225,6 +4257,25 @@
       btn.onclick = () => {
         const id = btn.dataset.id;
         const row = pendingRaw.find(x => String(x.id) === String(id));
+
+        // Una solicitud vencida se sigue pudiendo confirmar —a veces el huésped
+        // transfirió y avisó tarde— pero no en piloto automático: mientras el
+        // hold estaba vencido esas fechas estuvieron a la venta, y alguien pudo
+        // haberlas tomado. El servidor ahora rechaza si se pisan, pero conviene
+        // que el dueño lo piense antes y no después del error.
+        const falta = cuantoFalta(row || {}) - Date.now();
+        const vencida = Number.isFinite(cuantoFalta(row || {})) && falta <= 0;
+        if (vencida) {
+          const sigue = window.confirm(
+            "Esta solicitud ya venció.\n\n" +
+            "Mientras estuvo vencida las fechas volvieron a estar a la venta, " +
+            "así que puede haberlas tomado otro. Si alguien más las reservó, " +
+            "el sistema no te va a dejar confirmar.\n\n" +
+            "¿Seguís igual?"
+          );
+          if (!sigue) return;
+        }
+
         openConfirmModal(row);
       };
     });

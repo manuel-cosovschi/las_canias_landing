@@ -330,6 +330,21 @@ const nowMs = Date.now();
 const isBlocking = (r) => {
   const st = String(r.status || "").trim().toUpperCase();
 
+  // BLOCKED son las fechas que los dueños sacaron de la venta, y casi siempre
+  // es una reserva que entró por WhatsApp o teléfono: hoy 16 de los 18
+  // bloqueos de la planilla dicen "Alquiler" o "alquilada" en las notas.
+  //
+  // Faltaba. El calendario de reservar.html sí las muestra ocupadas, porque
+  // availability las cuenta (`// ✅ BLOCKED siempre bloquea`), así que el
+  // agujero no se ve navegando: hace falta que el bloqueo aparezca DESPUÉS de
+  // que el visitante cargó el calendario. Y para eso justamente existe el
+  // recheck que corre antes de escribir — que tenía la misma falta, así que no
+  // atajaba nada.
+  //
+  // En criollo: los dueños bloqueaban una semana ya alquilada por teléfono y
+  // la web seguía aceptando una reserva encima.
+  if (st === "BLOCKED") return true;
+
   if (st === "CONFIRMED") return true;
 
   if (st === "HOLD_TRANSFER" || st === "PENDING_TRANSFER_CONFIRMATION") {
