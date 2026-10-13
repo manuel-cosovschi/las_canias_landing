@@ -683,6 +683,33 @@ Dos detalles:
   pantalla. Desbloquear a ciegas borra la fila entera; no dejar elegir es mejor
   que dejar elegir cualquier cosa.
 
+### Un `"2026-10-16"` suelto no le dice nada a flatpickr
+
+Lo de arriba estuvo escrito y sin funcionar durante un día entero: los rangos se
+armaban bien y el calendario seguía dejando elegir fechas alquiladas.
+
+flatpickr parsea los strings que van en `disable` y `enable` **con el
+`dateFormat` que tiene configurado**, y acá es `"d/m/Y"` porque es el formato en
+el que escriben los dueños. Con ese formato `"2026-10-16"` no se entiende, y
+flatpickr no avisa: descarta el rango en silencio.
+
+| Qué se le pasa | Qué apaga |
+|---|---|
+| `dateFormat: "d/m/Y"` + `{from:"2026-10-16", to:"2026-10-19"}` | **nada** |
+| `dateFormat: "d/m/Y"` + `{from:"16/10/2026", to:"19/10/2026"}` | 16, 17, 18, 19 |
+| `dateFormat: "d/m/Y"` + objetos `Date` | 16, 17, 18, 19 |
+| `dateFormat: "Y-m-d"` + `{from:"2026-10-16", …}` | 16, 17, 18, 19 |
+
+En `disable` el efecto era dejar elegible una fecha ocupada. En `enable` es peor:
+como significa "sólo estas fechas", no entender ninguna deja el calendario
+entero muerto.
+
+La conversión a `Date` vive dentro de `initPickers`, que es el único punto por el
+que los rangos entran a flatpickr y por lo tanto el único lugar donde no se
+puede olvidar. Y los `Date` se construyen con el constructor **local**, no con
+`Date.UTC`: la medianoche UTC en Argentina cae a las 21:00 del día anterior, que
+es el mismo error de un día que ya mordió dos veces en este calendario.
+
 El calendario se rearma al elegir el modo y después de cada bloqueo o desbloqueo,
 así que no queda con una lista vieja. El solape además lo rechaza el servidor
 (`create-manual-reservation` cuenta `CONFIRMED`, `HOLD_TRANSFER` y `BLOCKED` como
