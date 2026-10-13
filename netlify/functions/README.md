@@ -235,6 +235,35 @@ hay una ventana en la que dos pedidos simultáneos pueden pasar los dos. El
 recheck la hace chica, no la cierra. Con el volumen de hoy es teórico, pero no
 es imposible, y Sheets no tiene forma de evitarlo del todo.
 
+## El botón "Confirmar" podía duplicar una reserva
+
+`owner-approve` escribía `status: CONFIRMED` sin mirar nada: ni en qué estado
+estaba la fila, ni si las fechas seguían libres. Y el panel muestra el botón
+**también en los holds vencidos** — los pinta de rojo, pero el botón está.
+
+El camino no era rebuscado, era el día normal de los dueños:
+
+1. Entra una solicitud por la web. Queda `HOLD_TRANSFER`, seis horas.
+2. El dueño abre el panel y va a mirar el banco.
+3. Pasan las seis horas. El Apps Script la cancela, o alguien bloquea esas
+   fechas porque cerró la misma semana por teléfono.
+4. El dueño vuelve, ve la tarjeta roja y hace click en **Confirmar**.
+5. Queda `CONFIRMED` encima de la otra ocupación. **Dos reservas para la misma
+   casa y las mismas noches.**
+
+Lo llamativo es que los dos workflows hermanos sí lo chequeaban desde el primer
+día: `set-reservation-dates` y `create-manual-reservation` leen la planilla
+entera y contestan 409 con *"Esas fechas se pisan con …"*. El único que no era
+el que más se usa.
+
+Ahora `owner-approve` hace lo mismo: lee la planilla completa antes de escribir
+y rechaza con 409 si otra fila de la misma casa se pisa. Confirmar algo que ya
+está confirmado sigue funcionando (el botón es idempotente), y una fila que no
+existe sigue respondiendo "Reserva no encontrada" desde donde lo hacía antes.
+
+En el panel, además, confirmar una solicitud vencida pide confirmación: mientras
+el hold estuvo vencido esas fechas estuvieron a la venta.
+
 ## Los dos caminos a la planilla
 
 No todo pasa por n8n. Para **escribir** una reserva sí (n8n manda mails, arma

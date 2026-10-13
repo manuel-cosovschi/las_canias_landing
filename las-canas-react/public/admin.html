@@ -4257,6 +4257,25 @@
       btn.onclick = () => {
         const id = btn.dataset.id;
         const row = pendingRaw.find(x => String(x.id) === String(id));
+
+        // Una solicitud vencida se sigue pudiendo confirmar —a veces el huésped
+        // transfirió y avisó tarde— pero no en piloto automático: mientras el
+        // hold estaba vencido esas fechas estuvieron a la venta, y alguien pudo
+        // haberlas tomado. El servidor ahora rechaza si se pisan, pero conviene
+        // que el dueño lo piense antes y no después del error.
+        const falta = cuantoFalta(row || {}) - Date.now();
+        const vencida = Number.isFinite(cuantoFalta(row || {})) && falta <= 0;
+        if (vencida) {
+          const sigue = window.confirm(
+            "Esta solicitud ya venció.\n\n" +
+            "Mientras estuvo vencida las fechas volvieron a estar a la venta, " +
+            "así que puede haberlas tomado otro. Si alguien más las reservó, " +
+            "el sistema no te va a dejar confirmar.\n\n" +
+            "¿Seguís igual?"
+          );
+          if (!sigue) return;
+        }
+
         openConfirmModal(row);
       };
     });
