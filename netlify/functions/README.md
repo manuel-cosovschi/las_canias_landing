@@ -536,6 +536,23 @@ que nadie pueda escribir una URL a mano ni quede un `<img>` roto.
 
 ## El calendario del panel
 
+### Confirmada y bloqueada se dibujan igual
+
+El calendario muestra **dos estados, no tres**. Una reserva confirmada y un
+bloqueo salen idénticos —mismo color, mismo chip, mismo texto— porque para los
+dueños son el mismo hecho: *esa casa no se alquila esos días*. Lo pidieron así.
+
+El único estado que se separa es el **hold**, que va con el rayado, porque
+todavía se puede caer y eso sí cambia lo que hay que hacer.
+
+La diferencia real no se pierde: al tocar el evento, el detalle dice si es una
+reserva o un bloqueo, y de eso dependen las acciones (desbloquear sólo saca
+`BLOCKED`). Lo que se sacó es la distinción **visual en la grilla**, no el dato.
+
+El texto del chip sale de `list-calendar`: `CONFIRMED` y `BLOCKED` devuelven sólo
+el nombre de la casa, y `HOLD_TRANSFER` le agrega `· Hold`. De paso el nombre
+entra entero en el celular: antes se leía `Las Cañas 1 · Blo…`.
+
 ### El color es la casa, nunca el estado
 
 Cada casa tiene su color (`HOUSE_COLORS` en `admin.html`) y **ese color no

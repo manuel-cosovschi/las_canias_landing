@@ -205,23 +205,23 @@
     /* El estado NO cambia el color de fondo: una casa se reconoce por su color
        y nada más. Antes el bloqueo llevaba `opacity: .72`, así que un bloqueo de
        Las Cañas 2 salía naranja lavado y una confirmada de la misma casa naranja
-       pleno, y de un vistazo parecían dos casas distintas. El estado va por
-       encima del color —rayado o borde—, nunca tiñéndolo. */
+       pleno, y de un vistazo parecían dos casas distintas.
+
+       Y el único estado que se dibuja es el hold. Una confirmada y un bloqueo
+       salen idénticos a propósito: para los dueños son el mismo hecho —esa casa
+       no se alquila esos días— y pidieron no verlos como dos estados. Lo que
+       cambia entre uno y otro se ve al tocar el evento. */
     /* Hold: rayado diagonal = reserva provisoria, todavía sin confirmar.
        Franjas finas y separadas, y bien translúcidas: con el rayado anterior
        —casi la mitad del chip en blanco al 45%— un hold de Las Cañas 2 se leía
        celeste al lado de una confirmada azul, que es el mismo problema que el
        `opacity` del bloqueo. Así sigue distinguiéndose sin cambiar el color. */
     .lc-ev--hold { background-image: repeating-linear-gradient(45deg, rgba(255,255,255,.22) 0 3px, transparent 3px 11px); }
-    /* Blocked: sin huésped, va con borde cortado. El padding compensa los 2px
-       del borde para que el chip ocupe lo mismo que los demás. */
-    .lc-ev--blocked { border: 2px dashed rgba(255,255,255,.75); padding: 1px 4px; }
     /* Sobre los colores claros (verde agua, verde resaltado, naranja) el rayado
-       y el borde blancos no se veían, así que un hold se confundía con una
-       reserva confirmada. Ahí van en oscuro. La clase la pone el calendario
-       según el color de la casa, no está anotada a mano. */
+       blanco no se veía, así que un hold se confundía con lo demás. Ahí va en
+       oscuro. La clase la pone el calendario según el color de la casa, no está
+       anotada a mano. */
     .lc-ev--claro.lc-ev--hold { background-image: repeating-linear-gradient(45deg, rgba(11,15,20,.26) 0 3px, transparent 3px 11px); }
-    .lc-ev--claro.lc-ev--blocked { border-color: rgba(11,15,20,.6); }
   </style>
 </head>
 
@@ -1025,11 +1025,14 @@
           <details class="rounded-2xl border border-brand-beige bg-white/80 p-4">
             <summary class="font-semibold cursor-pointer">Calendario</summary>
             <div class="mt-3 text-sm text-brand-brown/90 space-y-2">
-              <p>Vista mensual de todo lo que ocupa las casas, con un color por tipo:</p>
+              <p>
+                Vista mensual de todo lo que ocupa las casas. <strong>El color es la casa</strong>,
+                no el estado: Las Cañas 2 es siempre el mismo azul, esté reservada o bloqueada.
+              </p>
               <ul class="list-disc pl-5 space-y-1">
-                <li><strong>Verde</strong>: confirmada, seña pagada.</li>
-                <li><strong>Ámbar</strong>: esperando transferencia, todavía puede caerse.</li>
-                <li><strong>Gris</strong>: bloqueo tuyo.</li>
+                <li><strong>Barra llena</strong>: la casa está ocupada. Da igual si es una reserva
+                  confirmada o un bloqueo tuyo: esos días no se alquilan.</li>
+                <li><strong>Barra rayada</strong>: esperando transferencia, todavía puede caerse.</li>
               </ul>
               <p>
                 Cada barra termina el día de check-out, que ya aparece libre. Si dos barras parecen
@@ -1309,14 +1312,13 @@
 
           <span class="w-px h-6 bg-brand-beige mx-1 hidden sm:inline-block"></span>
 
+          <!-- Dos estados y no tres: una confirmada y un bloqueo se dibujan
+               igual porque son el mismo hecho, la casa no se alquila esos días. -->
           <span class="inline-flex items-center gap-2 px-3 py-2 rounded-2xl bg-white/70 border border-brand-beige font-semibold">
-            <span class="w-6 h-3 rounded" style="background:#4A3728"></span> Confirmada
+            <span class="w-6 h-3 rounded" style="background:#4A3728"></span> Ocupada
           </span>
           <span class="inline-flex items-center gap-2 px-3 py-2 rounded-2xl bg-white/70 border border-brand-beige font-semibold">
             <span class="w-6 h-3 rounded" style="background:#4A3728;background-image:repeating-linear-gradient(45deg,rgba(255,255,255,.22) 0 3px,transparent 3px 11px)"></span> Hold
-          </span>
-          <span class="inline-flex items-center gap-2 px-3 py-2 rounded-2xl bg-white/70 border border-brand-beige font-semibold">
-            <span class="w-6 h-3 rounded border-2 border-dashed border-white" style="background:#4A3728"></span> Bloqueada
           </span>
         </div>
 
@@ -6012,8 +6014,9 @@
         // va oscuro, sobre el celeste y el violeta va blanco.
         wrap.style.color = textoSobre(fondo);
         if (fondoClaro(fondo)) wrap.classList.add("lc-ev--claro");
+        // Un bloqueo se dibuja igual que una confirmada: ver el comentario del
+        // título en list-calendar.js. El único estado que se marca es el hold.
         if (status === "HOLD_TRANSFER") wrap.classList.add("lc-ev--hold");
-        if (status === "BLOCKED") wrap.classList.add("lc-ev--blocked");
 
         const txt = document.createElement("span");
         txt.className = "lc-ev-txt";
