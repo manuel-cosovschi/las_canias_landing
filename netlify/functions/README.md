@@ -534,6 +534,75 @@ elige el archivo, y la ficha muestra la miniatura. `tieneFoto` no se le cree al
 navegador — `store-catalog` le pregunta al almacenamiento cuáles existen, para
 que nadie pueda escribir una URL a mano ni quede un `<img>` roto.
 
+## El calendario del panel
+
+### El color es la casa, nunca el estado
+
+Cada casa tiene su color (`HOUSE_COLORS` en `admin.html`) y **ese color no
+cambia según el estado**. Una reserva confirmada de Las Cañas 2 y un bloqueo de
+Las Cañas 2 son el mismo azul.
+
+Es fácil romperlo sin darse cuenta, porque el estado también se dibuja encima.
+Ya pasó dos veces:
+
+- el bloqueo llevaba `opacity: .72`, así que salía despintado y parecía otra casa
+- el hold llevaba un rayado blanco al 45% cubriendo casi medio chip, y el azul de
+  Las Cañas 2 se leía celeste
+
+**La regla: el estado puede agregar borde o textura, nunca teñir el fondo.** Hoy
+el hold va con un rayado fino y translúcido y el bloqueo con borde cortado; los
+dos conservan el color exacto de la casa. Si se toca esto, conviene medirlo —
+abrir los tres estados de una casa y comparar el `background-color` computado,
+que tiene que ser idéntico y con `opacity: 1`.
+
+El chip además dice el estado en palabras ("Las Cañas 2 · Bloqueada"), así que la
+información no depende sólo de lo visual.
+
+### Las fechas se muestran día/mes/año
+
+El detalle de una ocupación mostraba el ISO crudo de la planilla
+(`2026-11-20 → 2026-11-23`), que arranca por el año y se lee como de otro país.
+`fmtYmdAR` lo reordena a `20/11/2026`, igual que los calendarios de bloqueo, que
+ya usaban `d/m/Y`.
+
+**Reordena el texto, no usa `new Date`.** `"2026-11-20"` es una fecha sin hora y
+`Date` la lee como medianoche UTC: en Argentina (UTC-3) eso cae a las 21:00 del
+19, y formatearla con la zona local restaría un día. Es exactamente el error que
+ya había mordido en `toMinusOneDayISO`.
+
+### Bloquear y desbloquear no habilitan las mismas fechas
+
+Son operaciones inversas, así que los calendarios también lo son:
+
+| Modo | Qué se puede elegir |
+|---|---|
+| **Bloquear** | sólo fechas **libres** — lo ocupado va apagado (`disable`) |
+| **Desbloquear** | sólo fechas **bloqueadas** — todo lo demás va apagado (`enable`) |
+
+Antes los dos modos compartían el mismo set, el de las fechas ocupadas. Al
+bloquear estaba bien; al desbloquear quedaban apagadas **justo las fechas que
+había que elegir**, que son las que están bloqueadas.
+
+Los rangos del desbloqueo salen de `list-calendar` y no de `availability`, porque
+hace falta el **estado**: `availability` devuelve todo lo ocupado junto, sin
+distinguir un bloqueo manual de una reserva confirmada. Desbloquear sólo saca
+`BLOCKED`, así que ofrecer una confirmada sería un botón que no hace nada — o que
+se lleva una reserva con huésped e importe.
+
+Dos detalles:
+
+- El check-out de un bloqueo es **el día siguiente a su última noche**: uno del 20
+  al 23 ocupa las noches 20, 21 y 22, y para sacarlo hay que poder elegir salida
+  el 23. Por eso el calendario de salida habilita un rango corrido un día.
+- Si no se pueden leer los bloqueos, **no se habilita ninguna fecha** y se dice en
+  pantalla. Desbloquear a ciegas borra la fila entera; no dejar elegir es mejor
+  que dejar elegir cualquier cosa.
+
+El calendario se rearma al elegir el modo y después de cada bloqueo o desbloqueo,
+así que no queda con una lista vieja. El solape además lo rechaza el servidor
+(`create-manual-reservation` cuenta `CONFIRMED`, `HOLD_TRANSFER` y `BLOCKED` como
+ocupación), o sea que el picker es la red de adelante y n8n la de atrás.
+
 ## Cargar los datos de una ocupación ya creada
 
 `set-reservation-guest` escribe nombre, teléfono, mail, DNI y notas sobre una
