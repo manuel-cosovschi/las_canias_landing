@@ -58,9 +58,14 @@ export default function Navbar() {
     setDropOpen(false);
   };
 
+  // z-[70] y no z-50: el botón flotante de WhatsApp está en z-[60] y este nav,
+  // al ser fixed con z-index, crea su propio contexto de apilado. El z-[999]
+  // del menú vale sólo adentro de ese contexto, así que contra el botón quien
+  // competía era el 50 del nav, y perdía: la burbuja verde quedaba por encima
+  // del menú abierto, tapando "Reservar ahora".
   return (
     <nav
-      className={`fixed top-0 w-full z-50 transition-all duration-500 ${
+      className={`fixed top-0 w-full z-[70] transition-all duration-500 ${
         isScrolled ? "bg-white/95 backdrop-blur-md shadow-md py-2" : "bg-transparent py-4"
       }`}
     >
@@ -215,8 +220,21 @@ export default function Navbar() {
             type="button"
           />
 
-          <div className="absolute top-0 left-0 right-0 bg-brand-cream border-b border-brand-beige/60 shadow-2xl">
-            <div className="px-6 pt-5 pb-7">
+          {/* El menú entero mide más que la pantalla de un iPhone, así que lo
+              último —"Acceso propietarios"— quedaba cortado abajo y no había
+              forma de llegar: el panel no scrolleaba y el fondo tampoco.
+              Con max-height y overflow-y el que no entra se desliza.
+
+              dvh y no vh: en Safari de iOS, 100vh es la altura SIN las barras
+              del navegador, así que el panel medía más que lo que se ve y el
+              problema seguía igual. dvh es la altura real del momento.
+
+              overscroll-contain evita que, al llegar al final, el gesto siga
+              moviendo la página de atrás. */}
+          <div className="absolute top-0 left-0 right-0 max-h-[100dvh] overflow-y-auto overscroll-contain bg-brand-cream border-b border-brand-beige/60 shadow-2xl">
+            {/* El padding de abajo respeta la barra de gestos del iPhone, que
+                si no se come el último renglón. */}
+            <div className="px-6 pt-5 pb-[max(1.75rem,env(safe-area-inset-bottom))]">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <img
