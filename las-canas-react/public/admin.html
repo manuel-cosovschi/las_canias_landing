@@ -257,6 +257,20 @@
           <span class="hidden sm:inline">Clave dueños</span>
         </button>
 
+        <!-- Avisos del sistema. El contador sólo aparece si hay algo: un cero
+             permanente enseña a ignorar el botón. -->
+        <button id="btnNotis" type="button" aria-label="Avisos del sistema"
+          class="hidden relative w-10 h-10 shrink-0 rounded-full border border-brand-beige bg-white/70 hover:bg-white transition flex items-center justify-center">
+          <svg viewBox="0 0 24 24" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M18 8a6 6 0 1 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" />
+            <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
+          </svg>
+          <span id="notisBadge"
+            class="hidden absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-red-600 text-white
+                   text-[10px] font-black leading-[18px] text-center shadow"></span>
+        </button>
+
         <button id="btnAuth"
           class="hidden px-3 sm:px-4 py-2 rounded-full bg-brand-brown text-brand-cream text-[10px] font-black uppercase tracking-[0.1em] sm:tracking-[0.22em] shadow-lg hover:opacity-90 transition whitespace-nowrap">
           <span class="sm:hidden">Salir</span>
@@ -265,6 +279,49 @@
       </div>
     </div>
   </header>
+
+  <!-- El panel vive FUERA del header a propósito. Adentro no entra: está
+       anclado al botón, que no llega al borde de la pantalla, así que en el
+       celular se salía por la izquierda. Y `fixed` tampoco servía ahí, porque
+       el header tiene backdrop-blur y un filtro hace que lo fijo se posicione
+       contra el header en vez de contra la ventana. -->
+  <div id="notisPanel"
+    class="hidden fixed top-[72px] right-3 w-[min(92vw,26rem)] max-h-[70vh] overflow-y-auto rounded-2xl
+           border border-brand-beige bg-white shadow-xl z-[1400]">
+    <div class="sticky top-0 bg-white border-b border-brand-beige px-4 py-3 flex items-center justify-between gap-2">
+      <div class="min-w-0">
+        <div class="font-bold serif">Avisos del sistema</div>
+        <div id="notisResumen" class="text-xs text-brand-accent">-</div>
+      </div>
+      <button id="btnCerrarNotis" class="shrink-0 text-brand-brown/60 hover:text-brand-brown text-lg leading-none">✕</button>
+    </div>
+    <div id="notisLista" class="p-3 space-y-2"></div>
+    <div class="px-4 py-3 border-t border-brand-beige text-[11px] text-brand-accent">
+      Esto lo revisa el panel solo cada vez que entrás. Si algo está mal de verdad y no sabés qué
+      hacer, mandale una captura a Manu.
+    </div>
+  </div>
+
+  <!-- Lo urgente no espera a que alguien toque la campanita: salta al entrar. -->
+  <div id="notiModal" class="fixed inset-0 hidden items-center justify-center bg-black/50 p-4 z-[1500]">
+    <div class="w-full max-w-lg rounded-2xl bg-white shadow-xl border border-red-200 overflow-hidden">
+      <div class="bg-red-50 border-b border-red-200 px-6 py-4">
+        <h3 class="text-lg font-bold serif text-red-900">Hay algo que conviene mirar ya</h3>
+        <p class="text-sm text-red-800/80">El panel encontró esto al entrar.</p>
+      </div>
+      <div id="notiModalLista" class="p-6 space-y-3 max-h-[55vh] overflow-y-auto"></div>
+      <div class="px-6 pb-6 flex flex-wrap gap-2 justify-end">
+        <button id="btnNotiModalVer"
+          class="px-4 py-2 rounded-full border border-brand-beige bg-white text-xs font-semibold hover:bg-brand-cream transition">
+          Ver todos los avisos
+        </button>
+        <button id="btnNotiModalCerrar"
+          class="px-4 py-2 rounded-full bg-brand-brown text-brand-cream text-xs font-semibold hover:opacity-90 transition">
+          Entendido
+        </button>
+      </div>
+    </div>
+  </div>
 
   <main class="max-w-5xl mx-auto px-4 py-10">
     <!-- Hero -->
@@ -5384,6 +5441,9 @@
         showToast("Falta la clave de dueños", "err");
         openSecretModal();
       } else {
+      // Revisar la planilla al entrar. Si algo está urgente, salta solo.
+      revisarSistema().catch(() => {});
+
       // ✅ Cargar datos SOLO 1 vez al entrar y solo la tab activa
       if (!initialDataLoaded) {
         initialDataLoaded = true;
@@ -5403,6 +5463,12 @@
       btnAuth.classList.add("hidden");
       btnSecret.classList.add("hidden");
 
+      // Los avisos son de la planilla: sin sesión no se muestran ni se cuentan.
+      avisosSistema = [];
+      if (el("btnNotis")) el("btnNotis").classList.add("hidden");
+      cerrarPanelAvisos();
+      cerrarModalUrgentes();
+
       app.classList.add("hidden");
       loginView.classList.remove("hidden");
 
@@ -5411,6 +5477,359 @@
       stopCountdownTicker();
     }
   }
+
+  /* =====================
+     AVISOS DEL SISTEMA
+
+     Hay cosas que la planilla no puede impedir —dos filas con el mismo código,
+     un bloqueo sin motivo, una casa ocupada dos veces— y que nadie va a
+     encontrar leyendo 150 renglones. El panel las busca solo cada vez que se
+     entra y las muestra en la campanita. Lo urgente no espera: salta de una.
+
+     Todo se calcula acá con las filas que ya se leen; no hay nada guardado del
+     lado del servidor. El "ya lo revisé" vive en este navegador (localStorage),
+     así que si entran desde otro teléfono el aviso vuelve a aparecer. Es a
+     propósito: preferimos repetir un aviso a que se pierda.
+  ===================== */
+
+  const ORDEN_SEV = { urgente: 0, alta: 1, media: 2, baja: 3 };
+  const ESTILO_SEV = {
+    urgente: { chip: "bg-red-100 text-red-900 border-red-200", caja: "border-red-200 bg-red-50", texto: "Urgente" },
+    alta:    { chip: "bg-amber-100 text-amber-900 border-amber-200", caja: "border-amber-200 bg-amber-50", texto: "Revisar" },
+    media:   { chip: "bg-sky-100 text-sky-900 border-sky-200", caja: "border-sky-200 bg-sky-50", texto: "Para mirar" },
+    baja:    { chip: "bg-brand-beige/60 text-brand-brown border-brand-beige", caja: "border-brand-beige bg-brand-cream", texto: "Menor" },
+  };
+
+  let avisosSistema = [];
+
+  const CLAVE_AVISOS_OCULTOS = "lc_avisos_ocultos";
+
+  // localStorage puede tirar en modo privado o con las cookies bloqueadas, y un
+  // aviso que no se puede ocultar es molesto pero no rompe nada: se sigue igual.
+  function avisosOcultos() {
+    try {
+      const crudo = JSON.parse(localStorage.getItem(CLAVE_AVISOS_OCULTOS) || "[]");
+      return new Set(Array.isArray(crudo) ? crudo : []);
+    } catch { return new Set(); }
+  }
+
+  function ocultarAviso(id) {
+    try {
+      const s = avisosOcultos();
+      s.add(id);
+      localStorage.setItem(CLAVE_AVISOS_OCULTOS, JSON.stringify([...s]));
+    } catch { /* sin memoria: el aviso va a volver, y está bien */ }
+  }
+
+  function mostrarTodosLosAvisos() {
+    try { localStorage.removeItem(CLAVE_AVISOS_OCULTOS); } catch {}
+  }
+
+  const esFechaYmd = (v) => /^\d{4}-\d{2}-\d{2}$/.test(String(v || ""));
+
+  // Diciembre tarde, enero y febrero: las semanas que valen el triple.
+  function esTemporadaAlta(ymd) {
+    const m = /^\d{4}-(\d{2})-(\d{2})$/.exec(String(ymd || ""));
+    if (!m) return false;
+    const mes = Number(m[1]);
+    const dia = Number(m[2]);
+    return (mes === 12 && dia >= 15) || mes === 1 || mes === 2;
+  }
+
+  function detectarAvisos(filas) {
+    const avisos = [];
+    const hoy = new Date().toISOString().slice(0, 10);
+    const ahora = Date.now();
+
+    const holdVivo = (r) => {
+      const ms = Date.parse(String(r.expires_at || "").trim());
+      return Number.isFinite(ms) && ms > ahora;
+    };
+
+    const ocupa = (r) => {
+      if (r.status === "CONFIRMED" || r.status === "BLOCKED") return true;
+      return r.status === "HOLD_TRANSFER" && holdVivo(r);
+    };
+
+    const rango = (r) => `${fmtYmdAR(r.check_in)} → ${fmtYmdAR(r.check_out)}`;
+
+    // 1) La misma casa ocupada dos veces en los mismos días.
+    const porCasa = {};
+    for (const r of filas) {
+      if (!ocupa(r) || !esFechaYmd(r.check_in) || !esFechaYmd(r.check_out)) continue;
+      (porCasa[r.house_code] = porCasa[r.house_code] || []).push(r);
+    }
+    for (const [casa, lista] of Object.entries(porCasa)) {
+      lista.sort((a, b) => a.check_in.localeCompare(b.check_in));
+      for (let i = 0; i < lista.length; i++) {
+        for (let j = i + 1; j < lista.length; j++) {
+          const a = lista[i];
+          const b = lista[j];
+          if (b.check_in >= a.check_out) break;   // ordenadas: no hay más solapes con a
+          if (a.check_in < b.check_out && b.check_in < a.check_out) {
+            const futura = a.check_out > hoy || b.check_out > hoy;
+            avisos.push({
+              id: "solape:" + [a.id, b.id].sort().join("|"),
+              sev: futura ? "urgente" : "media",
+              titulo: `${houseName(casa)} está ocupada dos veces`,
+              detalle: `${a.id} (${rango(a)}) y ${b.id} (${rango(b)}) se pisan.`,
+              queHacer: futura
+                ? "Mirá cuál es la buena y cancelá o mové la otra. Si las dos son reales, hay que avisarle a alguien hoy."
+                : "Ya pasó, así que no urge, pero conviene dejar una sola para que los números cierren.",
+            });
+          }
+        }
+      }
+    }
+
+    // 2) Dos filas con el mismo código.
+    const porId = {};
+    for (const r of filas) (porId[r.id] = porId[r.id] || []).push(r);
+    for (const [id, lista] of Object.entries(porId)) {
+      if (lista.length < 2) continue;
+      avisos.push({
+        id: "idrepetido:" + id,
+        sev: "alta",
+        titulo: `Hay ${lista.length} filas con el mismo código`,
+        detalle: `${id} — ` + lista.map((r) => `${ESTADOS[r.status] || r.status} ${rango(r)}`).join(" · "),
+        queHacer: "La planilla busca las reservas por ese código, así que cualquier cambio puede caer en la fila equivocada sin avisar. Borrá la que no va (normalmente la cancelada).",
+      });
+    }
+
+    // 3) Bloqueos sin motivo, sin huésped y sin importe: suelen ser basura de
+    //    una prueba vieja, y mientras tanto esas fechas están fuera de venta.
+    for (const r of filas) {
+      if (r.status !== "BLOCKED") continue;
+      const nota = String(r.notes || "").trim();
+      if (nota && !/^row\.notes$/i.test(nota)) continue;
+      if (String(r.guest_name || "").trim()) continue;
+      if (Number(r.importe) > 0) continue;
+      if (!esFechaYmd(r.check_in) || !esFechaYmd(r.check_out)) continue;
+
+      const futuro = r.check_out > hoy;
+      avisos.push({
+        id: "bloqueoraro:" + r.id,
+        sev: !futuro ? "baja" : (esTemporadaAlta(r.check_in) ? "urgente" : "alta"),
+        titulo: `${houseName(r.house_code)} bloqueada sin motivo cargado`,
+        detalle: `${rango(r)} · código ${r.id}` + (nota ? ` · la nota dice "${nota}"` : " · sin nota"),
+        queHacer: futuro
+          ? "No tiene huésped, ni importe, ni motivo. Si nadie la bloqueó a propósito, desbloqueá esas fechas: hoy están fuera de venta."
+          : "Ya pasó. Se puede borrar para que no ensucie.",
+      });
+    }
+
+    // 4) Holds que vencieron y siguen figurando como pendientes.
+    const vencidos = filas.filter((r) => r.status === "HOLD_TRANSFER" && !holdVivo(r));
+    if (vencidos.length) {
+      avisos.push({
+        id: "holdsvencidos:" + vencidos.map((r) => r.id).sort().join(","),
+        sev: "media",
+        titulo: `${vencidos.length} ${vencidos.length === 1 ? "solicitud venció" : "solicitudes vencieron"} y siguen abiertas`,
+        detalle: vencidos.slice(0, 5).map((r) => `${r.id} · ${houseName(r.house_code)} ${rango(r)}`).join(" · ")
+          + (vencidos.length > 5 ? ` · y ${vencidos.length - 5} más` : ""),
+        queHacer: "Confirmalas si el huésped pagó, o cancelalas. Mientras sigan así figuran en Transferencias y confunden.",
+      });
+    }
+
+    // 5) Filas de prueba que quedaron ocupando fechas de verdad.
+    const prueba = filas.filter((r) =>
+      ocupa(r) && /BORRAR|PRUEBA|\bTEST\b|E2E|CHEQUEO/i.test(`${r.id} ${r.guest_name} ${r.notes}`));
+    for (const r of prueba) {
+      avisos.push({
+        id: "prueba:" + r.id,
+        sev: r.check_out > hoy ? "alta" : "baja",
+        titulo: `Una fila de prueba está ocupando ${houseName(r.house_code)}`,
+        detalle: `${r.id} · ${rango(r)} · ${r.guest_name || r.notes || "sin datos"}`,
+        queHacer: "Es de una prueba, no de un huésped. Borrala para liberar esas fechas.",
+      });
+    }
+
+    // 6) Fechas imposibles.
+    for (const r of filas) {
+      if (!esFechaYmd(r.check_in) || !esFechaYmd(r.check_out)) continue;
+      if (r.check_out > r.check_in) continue;
+      avisos.push({
+        id: "fechasmal:" + r.id,
+        sev: "urgente",
+        titulo: "Una reserva tiene las fechas al revés",
+        detalle: `${r.id} · ${houseName(r.house_code)} · ${rango(r)}`,
+        queHacer: "La salida tiene que ser posterior a la entrada. Corregila desde el calendario.",
+      });
+    }
+
+    avisos.sort((a, b) => (ORDEN_SEV[a.sev] - ORDEN_SEV[b.sev]) || a.titulo.localeCompare(b.titulo));
+    return avisos;
+  }
+
+  function tarjetaDeAviso(av, { conBoton = true } = {}) {
+    const est = ESTILO_SEV[av.sev] || ESTILO_SEV.baja;
+
+    const caja = document.createElement("div");
+    caja.className = `border rounded-2xl p-3 ${est.caja}`;
+
+    const cab = document.createElement("div");
+    cab.className = "flex items-start justify-between gap-2";
+
+    const izq = document.createElement("div");
+    izq.className = "min-w-0";
+
+    const chip = document.createElement("span");
+    chip.className = `inline-block px-2 py-0.5 rounded-full border text-[10px] font-black uppercase tracking-wide ${est.chip}`;
+    chip.textContent = est.texto;
+    izq.appendChild(chip);
+
+    const t = document.createElement("div");
+    t.className = "font-bold text-sm mt-1";
+    t.textContent = av.titulo;
+    izq.appendChild(t);
+
+    const d = document.createElement("div");
+    d.className = "text-xs text-brand-brown/80 mt-1 break-words";
+    d.textContent = av.detalle;
+    izq.appendChild(d);
+
+    const q = document.createElement("div");
+    q.className = "text-xs text-brand-accent mt-2";
+    q.textContent = av.queHacer;
+    izq.appendChild(q);
+
+    cab.appendChild(izq);
+
+    if (conBoton) {
+      const btn = document.createElement("button");
+      btn.className = "shrink-0 text-[10px] font-semibold px-2 py-1 rounded-full border border-brand-beige bg-white/80 hover:bg-white transition";
+      btn.textContent = "Ya lo vi";
+      btn.onclick = () => { ocultarAviso(av.id); pintarAvisos(); };
+      cab.appendChild(btn);
+    }
+
+    caja.appendChild(cab);
+    return caja;
+  }
+
+  function pintarAvisos() {
+    const badge = el("notisBadge");
+    const lista = el("notisLista");
+    const resumen = el("notisResumen");
+    if (!badge || !lista || !resumen) return;
+
+    const ocultos = avisosOcultos();
+    const visibles = avisosSistema.filter((a) => !ocultos.has(a.id));
+
+    badge.textContent = String(visibles.length);
+    badge.classList.toggle("hidden", visibles.length === 0);
+
+    const urgentes = visibles.filter((a) => a.sev === "urgente").length;
+    resumen.textContent = !avisosSistema.length
+      ? "Está todo en orden."
+      : !visibles.length
+        ? `${avisosSistema.length} ${avisosSistema.length === 1 ? "aviso marcado" : "avisos marcados"} como vistos.`
+        : `${visibles.length} sin revisar` + (urgentes ? ` · ${urgentes} urgente${urgentes === 1 ? "" : "s"}` : "");
+
+    lista.innerHTML = "";
+
+    if (!visibles.length) {
+      const vacio = document.createElement("div");
+      vacio.className = "text-sm text-brand-accent px-1 py-2";
+      vacio.textContent = avisosSistema.length
+        ? "No queda nada sin revisar."
+        : "El panel no encontró nada raro en la planilla.";
+      lista.appendChild(vacio);
+    } else {
+      for (const av of visibles) lista.appendChild(tarjetaDeAviso(av));
+    }
+
+    if (avisosSistema.length > visibles.length) {
+      const btn = document.createElement("button");
+      btn.className = "w-full text-xs font-semibold px-3 py-2 rounded-2xl border border-brand-beige bg-white/70 hover:bg-white transition";
+      btn.textContent = "Volver a mostrar los que marqué como vistos";
+      btn.onclick = () => { mostrarTodosLosAvisos(); pintarAvisos(); };
+      lista.appendChild(btn);
+    }
+  }
+
+  function abrirPanelAvisos() {
+    const p = el("notisPanel");
+    if (!p) return;
+    pintarAvisos();
+    p.classList.remove("hidden");
+  }
+
+  function cerrarPanelAvisos() {
+    const p = el("notisPanel");
+    if (p) p.classList.add("hidden");
+  }
+
+  function mostrarUrgentes() {
+    const ocultos = avisosOcultos();
+    const urgentes = avisosSistema.filter((a) => a.sev === "urgente" && !ocultos.has(a.id));
+    if (!urgentes.length) return;
+
+    const cont = el("notiModalLista");
+    const modal = el("notiModal");
+    if (!cont || !modal) return;
+
+    cont.innerHTML = "";
+    for (const av of urgentes) cont.appendChild(tarjetaDeAviso(av, { conBoton: false }));
+
+    modal.classList.remove("hidden");
+    modal.classList.add("flex");
+  }
+
+  function cerrarModalUrgentes() {
+    const modal = el("notiModal");
+    if (!modal) return;
+    modal.classList.add("hidden");
+    modal.classList.remove("flex");
+  }
+
+  async function revisarSistema() {
+    const btn = el("btnNotis");
+    if (btn) btn.classList.remove("hidden");
+
+    try {
+      const out = await apiFetch(`${EP_SEARCH_RESERVATIONS}?limit=500`, { method: "GET", body: null });
+      const filas = (out.items || []).filter((r) => r && r.id);
+      avisosSistema = detectarAvisos(filas);
+      pintarAvisos();
+      mostrarUrgentes();
+    } catch (e) {
+      // Si no se puede revisar, no se inventa un "está todo bien": se deja la
+      // campanita sin número y se avisa sólo si alguien la abre.
+      avisosSistema = [];
+      pintarAvisos();
+      const resumen = el("notisResumen");
+      if (resumen) resumen.textContent = "No se pudo revisar la planilla.";
+    }
+  }
+
+  if (el("btnNotis")) {
+    el("btnNotis").onclick = () => {
+      const p = el("notisPanel");
+      if (p && p.classList.contains("hidden")) abrirPanelAvisos();
+      else cerrarPanelAvisos();
+    };
+  }
+  if (el("btnCerrarNotis")) el("btnCerrarNotis").onclick = cerrarPanelAvisos;
+  if (el("btnNotiModalCerrar")) el("btnNotiModalCerrar").onclick = cerrarModalUrgentes;
+  // El panel se abre en el tick siguiente a propósito: el listener de "click
+  // afuera" de más abajo corre en el mismo evento, y como este botón vive en el
+  // modal y no en el panel, lo cerraba apenas se abría.
+  if (el("btnNotiModalVer")) {
+    el("btnNotiModalVer").onclick = () => {
+      cerrarModalUrgentes();
+      setTimeout(abrirPanelAvisos, 0);
+    };
+  }
+
+  // Click afuera cierra el panel, como cualquier menú.
+  document.addEventListener("click", (ev) => {
+    const p = el("notisPanel");
+    const b = el("btnNotis");
+    if (!p || p.classList.contains("hidden")) return;
+    if (p.contains(ev.target) || (b && b.contains(ev.target))) return;
+    cerrarPanelAvisos();
+  });
 
   btnAuth.onclick = () => {
     stopCountdownTicker();
