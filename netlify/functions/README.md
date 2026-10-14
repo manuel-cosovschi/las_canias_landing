@@ -235,6 +235,43 @@ hay una ventana en la que dos pedidos simultáneos pueden pasar los dos. El
 recheck la hace chica, no la cierra. Con el volumen de hoy es teórico, pero no
 es imposible, y Sheets no tiene forma de evitarlo del todo.
 
+## Avisos del sistema (la campanita)
+
+Hay cosas que la planilla no puede impedir y que nadie va a encontrar leyendo
+150 renglones: dos filas con el mismo código, una casa ocupada dos veces, un
+bloqueo sin motivo que dejó una semana de enero fuera de venta. El panel las
+busca solo cada vez que alguien entra.
+
+Seis chequeos, todos sobre las filas que el panel ya lee (`search-reservations`,
+sin filtro de estado). No hay nada guardado del lado del servidor:
+
+| Qué busca | Cuándo es urgente |
+|---|---|
+| La misma casa ocupada dos veces | si alguna de las dos todavía no pasó |
+| Dos filas con el mismo código | siempre "revisar" |
+| Bloqueo sin motivo, sin huésped y sin importe | si cae en temporada alta |
+| Solicitudes vencidas que siguen abiertas | nunca, es para ordenar |
+| Filas de prueba ocupando fechas | si todavía no pasaron |
+| Check-out anterior al check-in | siempre |
+
+El resultado va a la campanita del header, con el número en rojo. **Lo urgente
+no espera a que alguien la toque: salta como pop-up apenas entran.** El resto
+queda en el panel, cada aviso con qué hacer al respecto.
+
+Cada aviso se puede marcar como visto. Eso vive en el `localStorage` del
+navegador, no en el servidor: si entran desde otro teléfono, el aviso vuelve a
+aparecer. Es a propósito — preferimos repetir un aviso a que se pierda.
+
+Dos detalles de implementación que cuestan de encontrar:
+
+- El panel vive **fuera** del `<header>`. Adentro no entra: anclado al botón se
+  salía de la pantalla por la izquierda en el celular, y `position: fixed`
+  tampoco funciona ahí, porque el header tiene `backdrop-blur` y un filtro hace
+  que lo fijo se posicione contra el header en vez de contra la ventana.
+- "Ver todos los avisos" abre el panel en el tick siguiente (`setTimeout`). El
+  listener de "click afuera" corre en el mismo evento, y como ese botón está en
+  el modal y no en el panel, lo cerraba apenas se abría.
+
 ## El botón "Confirmar" podía duplicar una reserva
 
 `owner-approve` escribía `status: CONFIRMED` sin mirar nada: ni en qué estado
