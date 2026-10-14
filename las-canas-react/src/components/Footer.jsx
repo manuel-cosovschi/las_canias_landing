@@ -14,7 +14,11 @@ const IconInstagram = (props) => (
 
 export default function Footer() {
   return (
-    <footer className="bg-brand-brown text-brand-cream py-14 relative overflow-hidden">
+    // pb-28 y no py-14: el botón flotante de WhatsApp es fixed y su borde de
+    // arriba queda a 92px del fondo de la ventana, así que al llegar al final
+    // de la página se sentaba justo encima del crédito y tapaba el apellido.
+    // Con 112px abajo, el último renglón queda por encima del botón.
+    <footer className="bg-brand-brown text-brand-cream pt-14 pb-28 relative overflow-hidden">
       <div className="absolute top-0 left-0 w-full h-[1px] bg-gradient-to-r from-transparent via-brand-beige/30 to-transparent" />
 
       <div className="container mx-auto px-6">
@@ -93,7 +97,22 @@ export default function Footer() {
 
         <div className="border-t border-brand-cream/15 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-[10px] font-black uppercase tracking-[0.2em] text-brand-cream/40">
           <p>&copy; 2026 Las Cañas · Mar de Cobo</p>
-          <p className="text-brand-cream/30">Hecho con ❤️</p>
+
+          {/* El crédito de desarrollo. El nombre linkea al WhatsApp con un
+              mensaje ya escrito, así quien escribe no arranca de cero y se
+              sabe de dónde viene la consulta. */}
+          <p className="text-brand-cream/30">
+            Desarrollado por{" "}
+            <a
+              href="https://wa.me/5492235383082?text=Hola%20Manuel%2C%20te%20escribo%20por%20la%20web%20de%20Las%20Ca%C3%B1as."
+              target="_blank"
+              rel="noreferrer"
+              aria-label="Escribirle por WhatsApp a Manuel Cosovschi, que desarrolló el sitio"
+              className="text-brand-cream/60 underline decoration-brand-cream/20 underline-offset-4 hover:text-brand-beige hover:decoration-brand-beige transition-colors"
+            >
+              Manuel Cosovschi
+            </a>
+          </p>
         </div>
       </div>
     </footer>
