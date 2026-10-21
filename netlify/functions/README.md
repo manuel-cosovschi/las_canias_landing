@@ -574,8 +574,16 @@ mostraba 5/7 del importe y el resto se iba a enero. Más exacto, sí, y
 completamente inútil para cerrar contra un calendario, donde esa reserva es una
 sola cosa que pasa en diciembre.
 
-Ahora **cada reserva cuenta entera en el mes en que entra**, como la llevaban en
-el Excel. La suma de los doce meses sigue dando el total de la temporada.
+Ahora **cada reserva cuenta entera en el mes en que entra**. La suma de los doce
+meses sigue dando el total de la temporada, y además deja de perderse plata en
+el borde: una estadía que entra el 28 de noviembre pertenece a la temporada
+anterior, así que sus noches de diciembre no se dibujaban en ninguno de los dos
+gráficos.
+
+**El Excel que se baja sigue partiendo las estadías por mes**, en dos filas, que
+es como los dueños llevaban la planilla y lo que el conversor deshace al
+importar. Son dos cuentas distintas a propósito: el gráfico del panel se lee
+contra el calendario, el Excel contra la facturación del mes.
 
 Esto no era sólo confuso: hizo perder plata. La reserva de Las Cañas 1 del 27/12
 al 3/1 valía **$1.380.000**, y en la planilla quedó en **$985.715** — que es
