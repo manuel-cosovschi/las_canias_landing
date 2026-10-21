@@ -544,8 +544,10 @@ número.
 Ahora las tres usan `_plata.js`, que tiene una sola regla: **el separador
 decimal es el último** (`1.333.000,50` y `1,333,000.50` son el mismo número), y
 un punto es de miles salvo que el número no tenga forma de miles — `1.5` es uno
-y medio, `1.500` es mil quinientos. `_plata.test.js` cubre las formas en que los
-dueños escriben la plata; se corre con `node netlify/functions/_plata.test.js`.
+y medio, `1.500` es mil quinientos. El test vive en `netlify/tests/plata.test.js` —y no al lado, porque Netlify
+publica como función cada archivo de `netlify/functions` y un nombre con
+punto no es válido: el deploy entero falla— y cubre las formas en que los
+dueños escriben la plata. Se corre con `node netlify/tests/plata.test.js`.
 
 El panel tiene el mismo parser en `parsearMonto`, y además:
 
