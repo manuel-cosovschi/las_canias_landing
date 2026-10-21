@@ -226,6 +226,40 @@
        el alto de un chip y no se ve ni se puede tocar: `visibility: hidden` y no
        `display: none` justamente porque tiene que seguir ocupando el lugar. */
     .lc-ev--hueco { visibility: hidden; pointer-events: none; }
+
+    /* Campos de plata: el signo $ va adentro del campo, pegado a la izquierda,
+       y es sólo un adorno —no se selecciona ni entra en el valor—. El dueño
+       pidió verlo donde escribe, no en el rótulo. */
+    .campo-plata { position: relative; display: block; }
+    .campo-plata > .campo-plata-signo {
+      position: absolute;
+      left: .7rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #8C7B6B;
+      font-size: .85em;
+      line-height: 1;
+      pointer-events: none;
+    }
+    /* Pisa el padding de Tailwind del propio input (px-3, p-2, p-3): el
+       selector tiene más peso por el tipo de elemento. */
+    .campo-plata > input { padding-left: 1.75rem; }
+
+    /* Los modales largos tienen que poder scrollear. El del calendario crece
+       al abrir "Cargar datos" y en la pantalla de un portátil quedaba más alto
+       que la ventana: centrado con flex y sin scroll se cortaba arriba y abajo,
+       y no se llegaba ni al botón de guardar ni a la ✕ para cerrarlo.
+
+       `margin: auto` y no `align-items`: las dos cosas centran, pero con flex
+       centrado lo que sobresale queda fuera de alcance, y con margen automático
+       la caja se centra si entra y scrollea si no. */
+    .lc-modal { overflow-y: auto; overscroll-behavior: contain; }
+    .lc-modal > * {
+      margin: auto;
+      max-height: calc(100dvh - 2rem);
+      overflow-y: auto;
+      overscroll-behavior: contain;
+    }
   </style>
 </head>
 
@@ -303,7 +337,7 @@
   </div>
 
   <!-- Lo urgente no espera a que alguien toque la campanita: salta al entrar. -->
-  <div id="notiModal" class="fixed inset-0 hidden items-center justify-center bg-black/50 p-4 z-[1500]">
+  <div id="notiModal" class="lc-modal fixed inset-0 hidden items-center justify-center bg-black/50 p-4 z-[1500]">
     <div class="w-full max-w-lg rounded-2xl bg-white shadow-xl border border-red-200 overflow-hidden">
       <div class="bg-red-50 border-b border-red-200 px-6 py-4">
         <h3 class="text-lg font-bold serif text-red-900">Hay algo que conviene mirar ya</h3>
@@ -567,17 +601,17 @@
             </label>
             <label class="block">
               <span class="block text-xs font-bold uppercase tracking-wider text-brand-accent mb-1">Importe total <span class="normal-case tracking-normal font-normal text-brand-accent/80">(opcional)</span></span>
-              <input id="blockImporte" type="number" min="0" step="1000" placeholder="0"
+              <input id="blockImporte" type="text" inputmode="numeric" placeholder="0"
                 class="w-full rounded-xl border border-brand-beige px-3 py-2 text-sm tabular-nums">
             </label>
             <label class="block">
               <span class="block text-xs font-bold uppercase tracking-wider text-brand-accent mb-1">Seña cobrada <span class="normal-case tracking-normal font-normal text-brand-accent/80">(opcional)</span></span>
-              <input id="blockAnticipo" type="number" min="0" step="1000" placeholder="0"
+              <input id="blockAnticipo" type="text" inputmode="numeric" placeholder="0"
                 class="w-full rounded-xl border border-brand-beige px-3 py-2 text-sm tabular-nums">
             </label>
             <label class="block">
               <span class="block text-xs font-bold uppercase tracking-wider text-brand-accent mb-1">Cotización del dólar <span class="normal-case tracking-normal font-normal text-brand-accent/80">(opcional)</span></span>
-              <input id="blockDolar" type="number" min="0" step="10" placeholder="0"
+              <input id="blockDolar" type="text" inputmode="numeric" placeholder="0"
                 class="w-full rounded-xl border border-brand-beige px-3 py-2 text-sm tabular-nums">
             </label>
             <label class="block">
@@ -732,12 +766,12 @@
             </label>
             <label class="block">
               <span class="block text-xs font-bold uppercase tracking-wider text-brand-accent mb-1">Importe total</span>
-              <input id="cargaImporte" type="number" min="0" step="1000" placeholder="0"
+              <input id="cargaImporte" type="text" inputmode="numeric" placeholder="0"
                 class="w-full rounded-xl border border-brand-beige px-3 py-2 text-sm tabular-nums">
             </label>
             <label class="block">
               <span class="block text-xs font-bold uppercase tracking-wider text-brand-accent mb-1">Seña cobrada</span>
-              <input id="cargaAnticipo" type="number" min="0" step="1000" placeholder="0"
+              <input id="cargaAnticipo" type="text" inputmode="numeric" placeholder="0"
                 class="w-full rounded-xl border border-brand-beige px-3 py-2 text-sm tabular-nums">
             </label>
           </div>
@@ -1428,7 +1462,7 @@
             <div class="flex items-end gap-2 min-w-0 grow sm:grow-0">
               <label class="block min-w-0 grow sm:grow-0">
                 <span class="block text-xs text-brand-accent mb-1">Cuánto quieren facturar</span>
-                <input id="objetivoMonto" type="number" min="0" step="100000" placeholder="Sin objetivo"
+                <input id="objetivoMonto" type="text" inputmode="numeric" placeholder="Sin objetivo"
                   class="w-full sm:w-44 rounded-xl border border-brand-beige px-3 py-2 text-sm tabular-nums bg-white" />
               </label>
               <button id="btnGuardarObjetivo"
@@ -1450,7 +1484,10 @@
           <figure class="m-0">
             <figcaption class="mb-3">
               <h3 class="font-bold text-sm">Importe por mes</h3>
-              <p class="text-xs text-brand-accent">Las cinco casas juntas.</p>
+              <p class="text-xs text-brand-accent">
+                Las cinco casas juntas. Cada reserva cuenta entera en el mes en que entra,
+                como en el calendario.
+              </p>
             </figcaption>
             <div id="statsPorMes"></div>
           </figure>
@@ -1467,6 +1504,8 @@
         <div class="mt-7">
           <h3 class="font-bold text-sm mb-1">El detalle, casa por casa</h3>
           <p class="text-xs text-brand-accent mb-3">
+            <span class="whitespace-nowrap">S/cargar = noches que el calendario muestra ocupadas y todavía no tienen importe:</span>
+            son las que hacen que el calendario dé más que estas cuentas.
             Ocupación = noches vendidas sobre los días de la temporada que ya pasaron.
             <span class="whitespace-nowrap">US$ = a la cotización de cada reserva.</span>
             Fac. = cuántas estadías tienen la factura hecha.
@@ -1478,8 +1517,8 @@
               <thead>
                 <tr class="text-left text-[10px] uppercase tracking-wide text-brand-accent bg-brand-cream/60">
                   <th class="px-2 py-3 font-bold">Casa</th>
-                  <th class="px-2 py-3 font-bold text-right">Est.</th>
                   <th class="px-2 py-3 font-bold text-right">Noches</th>
+                  <th class="px-2 py-3 font-bold text-right">S/cargar</th>
                   <th class="px-2 py-3 font-bold text-right">Ocup.</th>
                   <th class="px-2 py-3 font-bold text-right">Importe</th>
                   <th class="px-2 py-3 font-bold text-right">Saldo</th>
@@ -1692,7 +1731,7 @@
   </main>
 
   <!-- SECRET MODAL (NO hardcode) -->
-  <div id="secretModal" class="fixed inset-0 hidden items-center justify-center bg-black/50 p-4 z-[1100]">
+  <div id="secretModal" class="lc-modal fixed inset-0 hidden items-center justify-center bg-black/50 p-4 z-[1100]">
     <div class="w-full max-w-md rounded-2xl bg-white shadow-xl p-6 border border-brand-beige">
       <div class="flex items-center justify-between mb-3">
         <h3 class="text-lg font-bold serif">Clave de propietarios</h3>
@@ -1732,7 +1771,7 @@
   </div>
 
   <!-- ACTION MODAL (Confirm / Cancel) -->
-  <div id="actionModal" class="fixed inset-0 hidden items-center justify-center bg-black/50 p-4 z-[1200]">
+  <div id="actionModal" class="lc-modal fixed inset-0 hidden items-center justify-center bg-black/50 p-4 z-[1200]">
     <div class="w-full max-w-lg rounded-2xl bg-white shadow-xl p-6 border border-brand-beige">
       <div class="flex items-start justify-between gap-3 mb-2">
         <div>
@@ -1791,7 +1830,7 @@
   </div>
 
   <!-- IMPORTES DE UNA RESERVA -->
-  <div id="pagoModal" class="fixed inset-0 hidden items-center justify-center bg-black/50 p-4 z-[1300]">
+  <div id="pagoModal" class="lc-modal fixed inset-0 hidden items-center justify-center bg-black/50 p-4 z-[1300]">
     <div class="w-full max-w-md rounded-2xl bg-white shadow-xl p-6 border border-brand-beige">
       <div class="flex items-start justify-between gap-3 mb-1">
         <h3 class="text-lg font-bold serif">Importes de la reserva</h3>
@@ -1802,14 +1841,14 @@
       <div class="space-y-3">
         <div>
           <label class="block text-sm font-semibold mb-1">Importe total</label>
-          <input id="pagoImporte" type="number" min="0" step="1000" inputmode="numeric"
+          <input id="pagoImporte" type="text" inputmode="numeric"
             class="w-full border border-brand-beige rounded-2xl p-3 bg-white/80 focus:outline-none focus:ring-2 focus:ring-brand-accent/40"
             placeholder="0">
         </div>
 
         <div>
           <label class="block text-sm font-semibold mb-1">Anticipo cobrado</label>
-          <input id="pagoAnticipo" type="number" min="0" step="1000" inputmode="numeric"
+          <input id="pagoAnticipo" type="text" inputmode="numeric"
             class="w-full border border-brand-beige rounded-2xl p-3 bg-white/80 focus:outline-none focus:ring-2 focus:ring-brand-accent/40"
             placeholder="0">
         </div>
@@ -1822,7 +1861,7 @@
         <div class="grid grid-cols-2 gap-3">
           <div>
             <label class="block text-sm font-semibold mb-1">Cotización USD</label>
-            <input id="pagoCotizacion" type="number" min="0" step="1" inputmode="numeric"
+            <input id="pagoCotizacion" type="text" inputmode="numeric"
               class="w-full border border-brand-beige rounded-2xl p-3 bg-white/80 focus:outline-none focus:ring-2 focus:ring-brand-accent/40"
               placeholder="0">
           </div>
@@ -1854,7 +1893,7 @@
   </div>
 
     <!-- CALENDAR DETAIL MODAL -->
-  <div id="calendarModal" class="fixed inset-0 hidden items-center justify-center bg-black/50 p-4 z-[1250]">
+  <div id="calendarModal" class="lc-modal fixed inset-0 hidden items-center justify-center bg-black/50 p-4 z-[1250]">
     <div class="w-full max-w-xl rounded-2xl bg-white shadow-xl p-6 border border-brand-beige">
       <div class="flex items-start justify-between gap-3 mb-2">
         <div>
@@ -1914,8 +1953,8 @@
            el cambio de fechas. -->
       <div id="calDatos" class="hidden mt-4 bg-white border border-brand-beige rounded-2xl p-4">
         <p class="text-xs text-brand-accent mb-3">
-          Lo que dejes vacío no se toca. Para borrar un dato que ya está
-          cargado, escribí un guión.
+          Está cargado lo que ya tiene la reserva. Cambiá lo que haga falta y
+          guardá: lo que borres acá queda borrado.
         </p>
 
         <div class="grid sm:grid-cols-2 gap-3">
@@ -1949,17 +1988,17 @@
         <div class="mt-4 pt-4 border-t border-brand-beige grid sm:grid-cols-2 gap-3">
           <label class="block">
             <span class="block text-xs font-bold uppercase tracking-wider text-brand-accent mb-1">Importe total</span>
-            <input id="calImporte" type="text" inputmode="decimal" placeholder="Monto, o un guión para borrar"
+            <input id="calImporte" type="text" inputmode="numeric" placeholder="0"
               class="w-full rounded-xl border border-brand-beige px-3 py-2 text-sm">
           </label>
           <label class="block">
             <span class="block text-xs font-bold uppercase tracking-wider text-brand-accent mb-1">Cobrado (seña)</span>
-            <input id="calAnticipo" type="text" inputmode="decimal" placeholder="Monto, o un guión para borrar"
+            <input id="calAnticipo" type="text" inputmode="numeric" placeholder="0"
               class="w-full rounded-xl border border-brand-beige px-3 py-2 text-sm">
           </label>
           <label class="block">
             <span class="block text-xs font-bold uppercase tracking-wider text-brand-accent mb-1">Cotización USD</span>
-            <input id="calCotizacion" type="text" inputmode="decimal" placeholder="Cotización, o un guión para borrar"
+            <input id="calCotizacion" type="text" inputmode="numeric" placeholder="0"
               class="w-full rounded-xl border border-brand-beige px-3 py-2 text-sm">
           </label>
           <label class="flex items-end gap-2 pb-2">
@@ -2006,7 +2045,7 @@
     </div>
   </div>
   <!-- COMPROBANTE MODAL -->
-  <div id="proofModal" class="fixed inset-0 hidden items-center justify-center bg-black/50 p-4 z-[1260]">
+  <div id="proofModal" class="lc-modal fixed inset-0 hidden items-center justify-center bg-black/50 p-4 z-[1260]">
     <div class="w-full max-w-3xl rounded-2xl bg-white shadow-xl p-6 border border-brand-beige">
       <div class="flex items-start justify-between gap-3 mb-2">
         <div class="min-w-0">
@@ -2940,6 +2979,12 @@
     lab.appendChild(cap);
     lab.appendChild(inp);
     padre.appendChild(lab);
+    // El precio por noche es plata como cualquier otra: con el signo adelante
+    // y los puntos de miles mientras se escribe.
+    if (campo.plata) {
+      inp.value = montoParaCampo(valor);
+      activarCampoDePlata(inp);
+    }
     return inp;
   }
 
@@ -2990,7 +3035,7 @@
     const precios = document.createElement("div");
     precios.className = "fp-precios grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3";
     for (const c of CASAS) {
-      campoFicha(precios, { type: "number", field: c, rotulo: c }, p.prices?.[c], validatePeriodsUI);
+      campoFicha(precios, { type: "number", plata: true, field: c, rotulo: c }, p.prices?.[c], validatePeriodsUI);
     }
     ficha.appendChild(precios);
 
@@ -3008,7 +3053,7 @@
     return Array.from(periodsBody.children).map(ficha => {
       const get = (f) => ficha.querySelector('[data-field="' + f + '"]')?.value ?? "";
       const prices = {};
-      for (const c of CASAS) prices[c] = Number(get(c));
+      for (const c of CASAS) prices[c] = parsearMonto(get(c));
       return { from: get("from"), to: get("to"), label: String(get("label")).trim(), prices };
     });
   }
@@ -3861,8 +3906,8 @@
     const desde = parseDMY(el("checkin").value);
     const hasta = parseDMY(el("checkout").value);
     const n = desde && hasta ? nochesEntreYmd(toISO(desde), toISO(hasta)) : null;
-    const total = Number(el("blockImporte").value) || 0;
-    const sena = Number(el("blockAnticipo").value) || 0;
+    const total = montoDe(el("blockImporte").value);
+    const sena = montoDe(el("blockAnticipo").value);
 
     const partes = [];
     if (n && n > 0) partes.push(`${n} ${n === 1 ? "noche" : "noches"}`);
@@ -3890,7 +3935,7 @@
   // pusieron el nombre del huésped, atrás hay alguien aunque el monto todavía
   // no esté. Se avisa igual, pero el aviso dice qué falta.
   function faltaLaPlataDelBloqueo() {
-    return !(Number(el("blockImporte").value) > 0);
+    return !(montoDe(el("blockImporte").value) > 0);
   }
 
   function refrescarAvisoImporte() {
@@ -3937,8 +3982,8 @@
       btnBlock.disabled = true;
       setStatus("Bloqueando...");
 
-      const importe = el("blockImporte").value.trim();
-      const anticipo = el("blockAnticipo").value.trim();
+      const importe = montoParaGuardar(el("blockImporte"));
+      const anticipo = montoParaGuardar(el("blockAnticipo"));
       if (importe !== "" && anticipo !== "" && Number(anticipo) > Number(importe)) {
         return setStatus("La seña no puede ser mayor que el importe total.");
       }
@@ -3956,7 +4001,7 @@
           dni: el("blockDni").value.trim(),
           importe,
           anticipo,
-          cotizacion_usd: el("blockDolar").value.trim(),
+          cotizacion_usd: montoParaGuardar(el("blockDolar")),
           facturado: el("blockFacturado").value,
         }
       });
@@ -3995,7 +4040,7 @@
         .filter((b) => String(b.status || "").trim().toUpperCase() === "BLOCKED")
         .filter((b) => String(b.house_code || "").trim().toUpperCase() === casa)
         .filter((b) => b.check_in && b.check_out && b.check_in < co && ci < b.check_out)
-        .filter((b) => Number(b.importe) > 0 || String(b.guest_name || "").trim());
+        .filter((b) => montoDe(b.importe) > 0 || String(b.guest_name || "").trim());
     } catch {
       // Si no se puede consultar, no se inventa un permiso: mejor preguntar.
       return window.confirm(
@@ -4010,8 +4055,8 @@
 
     const detalle = enRiesgo.map((b) => {
       const quien = String(b.guest_name || "").trim() || "sin nombre";
-      const plata = Number(b.importe) > 0 ? ` · ${pesosAR(Number(b.importe))}` : "";
-      return `  • ${b.check_in} → ${b.check_out} · ${quien}${plata}`;
+      const plata = montoDe(b.importe) > 0 ? ` · ${pesosAR(montoDe(b.importe))}` : "";
+      return `  • ${fmtDates(b.check_in, b.check_out)} · ${quien}${plata}`;
     }).join("\n");
 
     return window.confirm(
@@ -4268,7 +4313,7 @@
       cabecera.appendChild(chip(r.house_code || "-", "bg-brand-beige/50 border-brand-beige/80"));
       izq.appendChild(cabecera);
 
-      izq.appendChild(linea(`${r.check_in} → ${r.check_out}`, "text-sm text-brand-brown/90 mt-1"));
+      izq.appendChild(linea(fmtDates(r.check_in, r.check_out), "text-sm text-brand-brown/90 mt-1"));
 
       const contacto = [r.guest_name || "-", r.phone, r.email].filter(Boolean).join(" · ");
       izq.appendChild(linea(contacto, "text-xs text-brand-accent mt-1 break-words"));
@@ -4574,7 +4619,7 @@
     if (r.house_code) cabecera.appendChild(chip(r.house_code, "bg-brand-beige/50 border-brand-beige/80"));
     izq.appendChild(cabecera);
 
-    izq.appendChild(linea(`${r.check_in || "-"} → ${r.check_out || "-"}`, "text-sm text-brand-brown/90 mt-1"));
+    izq.appendChild(linea(fmtDates(r.check_in, r.check_out), "text-sm text-brand-brown/90 mt-1"));
 
     const contacto = [r.guest_name || "-", r.phone, r.email].filter(Boolean).join(" · ");
     izq.appendChild(linea(contacto, "text-xs text-brand-accent mt-1 break-words"));
@@ -4724,16 +4769,16 @@
       cabecera.appendChild(chip(r.house_code || "-", "bg-brand-beige/50 border-brand-beige/80"));
       izq.appendChild(cabecera);
 
-      izq.appendChild(linea(`${r.check_in} → ${r.check_out}`, "text-sm text-brand-brown/90 mt-1"));
+      izq.appendChild(linea(fmtDates(r.check_in, r.check_out), "text-sm text-brand-brown/90 mt-1"));
 
       const contacto = [r.guest_name || "-", r.phone, r.email].filter(Boolean).join(" · ");
       izq.appendChild(linea(contacto, "text-xs text-brand-accent mt-1 break-words"));
 
       // El saldo a la vista: es el dato que los dueños miraban en el Excel
       // para saber a quién hay que cobrarle.
-      const importe = Number(r.importe) || 0;
+      const importe = montoDe(r.importe);
       if (importe) {
-        const saldo = importe - (Number(r.anticipo) || 0);
+        const saldo = importe - montoDe(r.anticipo);
         const plata = document.createElement("div");
         plata.className = "text-xs mt-2 flex flex-wrap items-center gap-2";
         plata.innerHTML =
@@ -4865,6 +4910,152 @@
 
   let pagoReserva = null;
 
+  /* ---- leer y escribir plata ---- */
+
+  // Los dueños escriben los montos como los dicen: 1.333.000. Todo esto pasaba
+  // antes por Number(), que en castellano hace dos destrozos callados:
+  //
+  //   Number("300.000")   → 300    un precio de trescientos mil guardado en
+  //                                trescientos pesos, sin que nadie lo note
+  //   Number("1.333.000") → NaN    y el millón trescientos ni entraba: el
+  //                                panel contestaba "importe inválido"
+  //
+  // Acá el punto es separador de miles salvo que el número no tenga forma de
+  // miles (1.5 es uno y medio, 1.500 es mil quinientos) y la coma es la
+  // decimal. El mismo parseo vive en netlify/functions/_plata.js, porque el
+  // servidor tiene que entender lo mismo que el panel.
+  const MILES_PUNTO = /^\d{1,3}(\.\d{3})+$/;
+  const MILES_COMA = /^\d{1,3}(,\d{3})+$/;
+
+  function parsearMonto(v) {
+    if (v === undefined || v === null) return null;
+    if (typeof v === "number") return Number.isFinite(v) ? v : null;
+
+    let s = String(v).trim().replace(/[^\d.,-]/g, "");
+    if (!/\d/.test(s)) return null;
+
+    const negativo = s.startsWith("-");
+    s = s.replace(/-/g, "");
+
+    const coma = s.lastIndexOf(",");
+    const punto = s.lastIndexOf(".");
+
+    let decimal = -1;
+    if (coma >= 0 && punto >= 0) decimal = Math.max(coma, punto);
+    else if (coma >= 0) decimal = MILES_COMA.test(s) ? -1 : coma;
+    else if (punto >= 0) decimal = MILES_PUNTO.test(s) ? -1 : punto;
+
+    const entera = (decimal >= 0 ? s.slice(0, decimal) : s).replace(/[.,]/g, "");
+    const decimales = decimal >= 0 ? s.slice(decimal + 1).replace(/[.,]/g, "") : "";
+
+    const n = Number((entera || "0") + (decimales ? "." + decimales : ""));
+    if (!Number.isFinite(n)) return null;
+    return negativo ? -n : n;
+  }
+
+  // Para leer lo que ya está en la planilla o en un campo: sin monto, cero.
+  const montoDe = (v) => {
+    const n = parsearMonto(v);
+    return n === null ? 0 : n;
+  };
+
+  // Lo que viaja al servidor: el número pelado, sin los puntos que se ven en
+  // pantalla. Un campo vacío manda vacío, que es como se borra un importe.
+  const montoParaGuardar = (input) => {
+    const n = parsearMonto(input.value);
+    return n === null ? "" : String(n);
+  };
+
+  // 1333000 → "1.333.000". Es lo que se ve en el campo mientras se escribe.
+  const conPuntosDeMiles = (entera) =>
+    String(entera).replace(/^0+(?=\d)/, "").replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+
+  function montoParaCampo(n) {
+    const v = parsearMonto(n);
+    if (v === null) return "";
+    const entero = Math.trunc(Math.abs(v));
+    const centavos = Math.round((Math.abs(v) - entero) * 100);
+    return (v < 0 ? "-" : "") + conPuntosDeMiles(String(entero)) +
+      (centavos ? "," + String(centavos).padStart(2, "0") : "");
+  }
+
+  // El punto se pone solo mientras se escribe. El dueño pidió no tener que
+  // ponerlo él: sin los puntos no distingue 300000 de 3000000 y se confunde.
+  function formatearMientrasEscribe(input) {
+    const antes = input.value;
+    const caret = input.selectionStart === null ? antes.length : input.selectionStart;
+    const digitosAntes = (antes.slice(0, caret).match(/\d/g) || []).length;
+
+    const crudo = antes.replace(/[^\d,]/g, "");
+    const corte = crudo.indexOf(",");
+    const entera = corte >= 0 ? crudo.slice(0, corte) : crudo;
+    const decimales = corte >= 0 ? crudo.slice(corte + 1).replace(/,/g, "").slice(0, 2) : null;
+
+    let salida = conPuntosDeMiles(entera);
+    if (decimales !== null) salida += "," + decimales;
+    if (salida === antes) return;
+
+    input.value = salida;
+
+    // El cursor vuelve a quedar después del mismo dígito que tenía antes. Sin
+    // esto, apenas aparecía un punto el cursor saltaba al final y corregir una
+    // cifra del medio era imposible.
+    let pos = salida.length;
+    if (digitosAntes === 0) {
+      pos = 0;
+    } else {
+      let vistos = 0;
+      for (let i = 0; i < salida.length; i++) {
+        if (/\d/.test(salida[i])) vistos++;
+        if (vistos >= digitosAntes) { pos = i + 1; break; }
+      }
+    }
+    try { input.setSelectionRange(pos, pos); } catch { /* el campo no tiene el foco */ }
+  }
+
+  // Deja un campo listo para plata: el signo adentro, a la izquierda, y los
+  // puntos de miles mientras se escribe. El signo es un adorno —no entra en el
+  // valor—, así no hay que limpiarlo al leer ni se puede borrar sin querer.
+  function activarCampoDePlata(input, signo) {
+    if (!input || input.dataset.plata === "si") return input;
+    input.dataset.plata = "si";
+
+    // type="number" no admite puntos: escrito "1.333.000" el navegador
+    // devuelve "" y el importe se perdía entero al guardar. Por eso, texto.
+    input.type = "text";
+    input.setAttribute("inputmode", "numeric");
+    input.setAttribute("autocomplete", "off");
+    for (const atributo of ["min", "max", "step"]) input.removeAttribute(atributo);
+
+    const caja = document.createElement("span");
+    caja.className = "campo-plata";
+    input.parentNode.insertBefore(caja, input);
+
+    const marca = document.createElement("span");
+    marca.className = "campo-plata-signo";
+    marca.setAttribute("aria-hidden", "true");
+    marca.textContent = signo || "$";
+
+    caja.appendChild(marca);
+    caja.appendChild(input);
+
+    input.addEventListener("input", () => formatearMientrasEscribe(input));
+    formatearMientrasEscribe(input);
+    return input;
+  }
+
+  // Todos los campos donde se escribe plata, en un solo lugar. Los precios por
+  // noche se activan aparte, cuando se arma cada ficha de período.
+  for (const id of [
+    "blockImporte", "blockAnticipo", "blockDolar",   // bloquear fechas
+    "cargaImporte", "cargaAnticipo",                 // cargar una reserva a mano
+    "pagoImporte", "pagoAnticipo", "pagoCotizacion", // modal de importes
+    "calImporte", "calAnticipo", "calCotizacion",    // datos desde el calendario
+    "objetivoMonto",                                 // objetivo de la temporada
+  ]) {
+    activarCampoDePlata(el(id));
+  }
+
   // El espacio entre el signo y el número es "duro" ( ): así el importe no
   // se puede partir en dos renglones, y el texto que lo rodea sí puede cortar
   // donde haga falta. Antes se conseguía lo mismo prohibiendo el salto en toda
@@ -4882,14 +5073,14 @@
   // El saldo no se guarda en ningún lado: siempre sale de importe - anticipo,
   // así no hay dos números que puedan quedar en desacuerdo.
   function refrescarSaldoImportes() {
-    const importe = Number(pagoImporte.value) || 0;
-    const anticipo = Number(pagoAnticipo.value) || 0;
+    const importe = montoDe(pagoImporte.value);
+    const anticipo = montoDe(pagoAnticipo.value);
     const saldo = importe - anticipo;
 
     pagoSaldo.textContent = importe ? pesosAR(saldo) : "-";
     pagoSaldo.classList.toggle("text-red-700", saldo < 0);
 
-    const cotiz = Number(pagoCotizacion.value) || 0;
+    const cotiz = montoDe(pagoCotizacion.value);
     pagoDolares.innerHTML = (importe && cotiz)
       ? `Equivale a US$ ${Math.round(importe / cotiz).toLocaleString("es-AR")}`
       : "&nbsp;";
@@ -4901,11 +5092,11 @@
     pagoReserva = row;
 
     el("pagoSubtitulo").textContent =
-      `${row.id} · ${houseName(row.house_code)} · ${row.check_in} → ${row.check_out}`;
+      `${row.id} · ${houseName(row.house_code)} · ${fmtDates(row.check_in, row.check_out)}`;
 
-    pagoImporte.value = row.importe ?? "";
-    pagoAnticipo.value = row.anticipo ?? "";
-    pagoCotizacion.value = row.cotizacion_usd ?? "";
+    pagoImporte.value = montoParaCampo(row.importe);
+    pagoAnticipo.value = montoParaCampo(row.anticipo);
+    pagoCotizacion.value = montoParaCampo(row.cotizacion_usd);
     pagoFacturado.checked = String(row.facturado || "").toLowerCase() === "si";
 
     pagoMsg.classList.add("hidden");
@@ -4928,8 +5119,8 @@
   btnGuardarPago.onclick = async () => {
     if (!pagoReserva) return;
 
-    const importe = Number(pagoImporte.value) || 0;
-    const anticipo = Number(pagoAnticipo.value) || 0;
+    const importe = montoDe(pagoImporte.value);
+    const anticipo = montoDe(pagoAnticipo.value);
 
     // Cobrar más que el total casi siempre es un error de tipeo, y queda
     // guardado como un saldo negativo que después nadie entiende.
@@ -4953,9 +5144,9 @@
       const facturadoAntes = String(pagoReserva.facturado || "").trim().toLowerCase() === "si";
       const cuerpo = {
         id: pagoReserva.id,
-        importe: pagoImporte.value.trim(),
-        anticipo: pagoAnticipo.value.trim(),
-        cotizacion_usd: pagoCotizacion.value.trim(),
+        importe: montoParaGuardar(pagoImporte),
+        anticipo: montoParaGuardar(pagoAnticipo),
+        cotizacion_usd: montoParaGuardar(pagoCotizacion),
       };
       if (pagoFacturado.checked !== facturadoAntes) cuerpo.facturado = pagoFacturado.checked;
 
@@ -5033,8 +5224,8 @@
   // cargar el precio total donde va la seña, o al revés.
   function refrescarResumenCarga() {
     const n = nochesEntreYmd(cargaCheckin.value, cargaCheckout.value);
-    const total = Number(cargaImporte.value) || 0;
-    const sena = Number(cargaAnticipo.value) || 0;
+    const total = montoDe(cargaImporte.value);
+    const sena = montoDe(cargaAnticipo.value);
 
     const partes = [];
     if (n && n > 0) partes.push(`${n} ${n === 1 ? "noche" : "noches"}`);
@@ -5066,8 +5257,8 @@
     const co = cargaCheckout.value;
     const n = nochesEntreYmd(ci, co);
     const nombre = cargaNombre.value.trim();
-    const total = cargaImporte.value.trim();
-    const sena = cargaAnticipo.value.trim();
+    const total = montoParaGuardar(cargaImporte);
+    const sena = montoParaGuardar(cargaAnticipo);
 
     if (!ci || !co || !n || n <= 0) {
       pintarMsg(cargaMsg, "La salida tiene que ser posterior a la entrada", "err");
@@ -5103,7 +5294,7 @@
       });
 
       cargaManual.classList.add("hidden");
-      showToast(`Reserva cargada: ${houseName(cargaCasa.value)} ${ci} → ${co}`, "ok");
+      showToast(`Reserva cargada: ${houseName(cargaCasa.value)} ${fmtDates(ci, co)}`, "ok");
       await loadConfirmedSafe();
       // Los números salen de la planilla, así que hay que volver a pedirlos
       // para que la reserva recién cargada aparezca ahí también.
@@ -5124,7 +5315,7 @@
   function fillActionSummary(row) {
     a_id.textContent = row?.id || "-";
     a_house.textContent = row?.house_code || "-";
-    a_dates.textContent = (row?.check_in && row?.check_out) ? `${row.check_in} → ${row.check_out}` : "-";
+    a_dates.textContent = (row?.check_in && row?.check_out) ? fmtDates(row.check_in, row.check_out) : "-";
     a_guest.textContent = (row?.guest_name || "-") + (row?.phone ? ` — ${row.phone}` : "");
 
     // Label dinámico según acción
@@ -5603,7 +5794,7 @@
       const nota = String(r.notes || "").trim();
       if (nota && !/^row\.notes$/i.test(nota)) continue;
       if (String(r.guest_name || "").trim()) continue;
-      if (Number(r.importe) > 0) continue;
+      if (montoDe(r.importe) > 0) continue;
       if (!esFechaYmd(r.check_in) || !esFechaYmd(r.check_out)) continue;
 
       const futuro = r.check_out > hoy;
@@ -5952,8 +6143,8 @@
 
     // La plata sale de las columnas nuevas (importe/anticipo). El método y la
     // referencia son de las reservas que entraron por la web.
-    const importe = Number(row.importe) || 0;
-    const anticipo = Number(row.anticipo) || 0;
+    const importe = montoDe(row.importe);
+    const anticipo = montoDe(row.anticipo);
     const facturado = String(row.facturado || "").trim().toLowerCase();
 
     cal_payment.textContent = [
@@ -6076,23 +6267,33 @@
 
   /* ---- cargar los datos de una ocupación ya creada ---- */
 
-  // Un guión solo quiere decir "borrá esto". Sin esa convención no habría forma
-  // de vaciar un campo: dejarlo en blanco significa "no lo toques".
-  const leerCampo = (input) => {
-    const v = String(input.value || "").trim();
-    if (!v) return undefined;
-    return v === "-" ? "" : v;
+  // El formulario se abre con todo lo que ya está cargado a la vista, así que
+  // se manda lo que cambió y nada más. Borrar un dato es borrarlo de la
+  // pantalla, como en cualquier formulario.
+  //
+  // Antes el blanco quería decir "no lo toques" y había que escribir un guión
+  // para borrar. Nadie lo leía: el dueño vaciaba "Cobrado", el panel seguía
+  // comparando contra la seña vieja de la planilla y le contestaba "lo cobrado
+  // no puede ser mayor que el importe total" con el campo vacío delante. No
+  // había forma de entenderlo ni de salir.
+  const comoTexto = (v) => (v === undefined || v === null ? "" : String(v).trim());
+
+  // undefined = no cambió, "" = borralo, texto = guardá esto.
+  const cambioDeTexto = (input, valorGuardado) => {
+    const ahora = comoTexto(input.value) === "-" ? "" : comoTexto(input.value);
+    return ahora === comoTexto(valorGuardado) ? undefined : ahora;
   };
 
-  const leerMonto = (input) => {
-    const v = String(input.value || "").trim();
-    if (!v) return undefined;
-    return v === "-" ? "" : v;
+  const cambioDeMonto = (input, valorGuardado) => {
+    const ahora = parsearMonto(input.value);
+    const antes = parsearMonto(valorGuardado);
+    if (ahora === antes) return undefined;
+    return ahora === null ? "" : String(ahora);
   };
 
   function refrescarSaldoCalendario() {
-    const importe = Number(CAMPOS_PLATA.importe.value) || 0;
-    const anticipo = Number(CAMPOS_PLATA.anticipo.value) || 0;
+    const importe = montoDe(CAMPOS_PLATA.importe.value);
+    const anticipo = montoDe(CAMPOS_PLATA.anticipo.value);
     if (!importe && !anticipo) {
       calSaldo.textContent = "";
       return;
@@ -6117,8 +6318,9 @@
       input.value = row[campo] || "";
     }
     for (const [campo, input] of Object.entries(CAMPOS_PLATA)) {
-      const v = Number(row[campo]);
-      input.value = Number.isFinite(v) && v > 0 ? String(v) : "";
+      // Con los puntos puestos: es como el dueño lee la plata, y es lo mismo
+      // que va a ver mientras escribe.
+      input.value = montoParaCampo(row[campo]);
     }
     el("calFacturado").checked = String(row.facturado || "").trim().toLowerCase() === "si";
 
@@ -6134,22 +6336,23 @@
   btnGuardarDatos.onclick = async () => {
     if (!calSeleccion?.id) return;
 
+    const row = calSeleccion.row || {};
+
     const huesped = {};
     for (const [campo, input] of Object.entries(CAMPOS_HUESPED)) {
-      const v = leerCampo(input);
+      const v = cambioDeTexto(input, row[campo]);
       if (v !== undefined) huesped[campo] = v;
     }
 
     const plata = {};
     for (const [campo, input] of Object.entries(CAMPOS_PLATA)) {
-      const v = leerMonto(input);
+      const v = cambioDeMonto(input, row[campo]);
       if (v !== undefined) plata[campo] = v;
     }
 
     // El tilde siempre viaja: destildarlo tiene que poder marcar como no
     // facturada una que estaba en sí.
     const facturado = el("calFacturado").checked;
-    const row = calSeleccion.row || {};
     const facturadoAntes = String(row.facturado || "").trim().toLowerCase() === "si";
     if (facturado !== facturadoAntes) plata.facturado = facturado;
 
@@ -6158,9 +6361,11 @@
       return;
     }
 
-    // El mismo chequeo que hace el servidor, para avisar antes de mandar.
-    const importe = Number(plata.importe ?? row.importe) || 0;
-    const anticipo = Number(plata.anticipo ?? row.anticipo) || 0;
+    // El mismo chequeo que hace el servidor, pero contra lo que se ve en
+    // pantalla: si el campo quedó vacío es porque se está borrando, no porque
+    // haya que mirar lo que decía la planilla.
+    const importe = montoDe(CAMPOS_PLATA.importe.value);
+    const anticipo = montoDe(CAMPOS_PLATA.anticipo.value);
     if (importe && anticipo > importe) {
       pintarMsg(calDatosMsg, "Lo cobrado no puede ser mayor que el importe total", "err");
       return;
@@ -6268,7 +6473,7 @@
           const liberado = await apiFetch(EP_OWNER_UNBLOCKS, { method: "POST", body: cuerpoViejo });
           if (!(Number(liberado.deleted_count) || 0)) {
             pintarMsg(calFechasMsg,
-              `No se encontró el bloqueo ${calSeleccion.check_in} → ${calSeleccion.check_out}. No se cambió nada.`, "err");
+              `No se encontró el bloqueo ${fmtDates(calSeleccion.check_in, calSeleccion.check_out)}. No se cambió nada.`, "err");
             await refreshCalendar();
             return;
           }
@@ -6287,9 +6492,9 @@
             }
             pintarMsg(calFechasMsg,
               repuesto
-                ? `No se pudo bloquear ${ci} → ${co}: ${e.message || "fechas ocupadas"}. Se dejó el bloqueo como estaba.`
-                : `No se pudo bloquear ${ci} → ${co} ni reponer el bloqueo anterior. ` +
-                  `OJO: ${calSeleccion.check_in} → ${calSeleccion.check_out} quedó LIBRE. Volvé a bloquearlo a mano.`,
+                ? `No se pudo bloquear ${fmtDates(ci, co)}: ${e.message || "fechas ocupadas"}. Se dejó el bloqueo como estaba.`
+                : `No se pudo bloquear ${fmtDates(ci, co)} ni reponer el bloqueo anterior. ` +
+                  `OJO: ${fmtDates(calSeleccion.check_in, calSeleccion.check_out)} quedó LIBRE. Volvé a bloquearlo a mano.`,
               "err");
             await refreshCalendar();
             return;
@@ -6301,7 +6506,7 @@
           // hay que decirlo y no cerrar el modal como si hubiera salido bien.
           if (!(Number(liberado.deleted_count) || 0)) {
             pintarMsg(calFechasMsg,
-              `Se bloqueó ${ci} → ${co}, pero no se pudo liberar ${calSeleccion.check_in} → ${calSeleccion.check_out}. ` +
+              `Se bloqueó ${fmtDates(ci, co)}, pero no se pudo liberar ${fmtDates(calSeleccion.check_in, calSeleccion.check_out)}. ` +
               "La casa quedó bloqueada en las dos fechas: desbloqueá la vieja a mano.", "err");
             await refreshCalendar();
             return;
@@ -6316,7 +6521,7 @@
 
       calFechas.classList.add("hidden");
       closeCalendarModal();
-      showToast(`Fechas actualizadas: ${ci} → ${co}`, "ok");
+      showToast(`Fechas actualizadas: ${fmtDates(ci, co)}`, "ok");
       await refreshCalendar();
     } catch (e) {
       pintarMsg(calFechasMsg, e.message || "No se pudieron cambiar las fechas", "err");
@@ -6349,7 +6554,7 @@
     const que = esBloqueo
       ? `Desbloquear ${houseName(calSeleccion.house_code)} del ${calSeleccion.check_in} al ${calSeleccion.check_out}?`
       : [
-          `Cancelar la reserva${calSeleccion.guest_name ? " de " + calSeleccion.guest_name : ""} (${calSeleccion.check_in} → ${calSeleccion.check_out})?`,
+          `Cancelar la reserva${calSeleccion.guest_name ? " de " + calSeleccion.guest_name : ""} (${fmtDates(calSeleccion.check_in, calSeleccion.check_out)})?`,
           calSeleccion.email
             ? `\nSe le va a avisar por mail a ${calSeleccion.email}.`
             : "\nEsta reserva no tiene mail cargado, así que al huésped no le llega nada.",
@@ -6735,9 +6940,9 @@
 
     for (const r of dentro) {
       const noches = nochesEntre(r.check_in, r.check_out);
-      const importe = Number(r.importe) || 0;
-      const anticipo = Number(r.anticipo) || 0;
-      const cotizacion = Number(r.cotizacion_usd) || 0;
+      const importe = montoDe(r.importe);
+      const anticipo = montoDe(r.anticipo);
+      const cotizacion = montoDe(r.cotizacion_usd);
       const fac = String(r.facturado || "").trim().toLowerCase();
 
       const casa = porCasa[r.house_code];
@@ -6764,10 +6969,17 @@
         }
       }
 
-      const reparto = nochesPorMes(r.check_in, r.check_out);
-      for (const [mes, n] of Object.entries(reparto)) {
-        porMes[mes] = (porMes[mes] || 0) + (noches ? (importe * n) / noches : 0);
-      }
+      // Cada estadía cuenta entera en el mes en que entra, igual que en el
+      // Excel de los dueños.
+      //
+      // Antes se repartía noche por noche entre los meses que tocaba. Era más
+      // exacto y no cerraba con nada: la del 27 de diciembre al 3 de enero
+      // dejaba 5/7 del importe en diciembre, así que el dueño sumaba el
+      // calendario de diciembre, lo comparaba con la barra de dic y le faltaba
+      // plata sin entender por qué. El calendario manda: una reserva es de un
+      // mes, el mes en que entra.
+      const mes = String(r.check_in).slice(0, 7);
+      porMes[mes] = (porMes[mes] || 0) + importe;
     }
 
     // Ocupación: sobre los días de la temporada que ya pasaron, no sobre los
@@ -6944,20 +7156,31 @@
       .filter((b) => b.check_in >= desdeT && b.check_in < hastaT)
       .sort((a, b) => a.check_in.localeCompare(b.check_in));
 
+    // Las noches que el calendario muestra ocupadas y acá no suman un peso.
+    // Es exactamente la diferencia que los dueños encontraban al comparar un
+    // mes del calendario contra Números, así que va en la tabla, casa por
+    // casa, en vez de quedar sólo en el recuadro de abajo.
+    const sinCargar = {};
+    for (const c of CASAS) sinCargar[c] = 0;
+    for (const b of bloqueos) {
+      if (sinCargar[b.house_code] === undefined) continue;
+      sinCargar[b.house_code] += nochesEntreYmd(b.check_in, b.check_out) || 0;
+    }
+    const sinCargarTotal = Object.values(sinCargar).reduce((a, b) => a + b, 0);
+
     const cajaBloq = el("statsBloqueos");
     cajaBloq.classList.toggle("hidden", bloqueos.length === 0);
     if (bloqueos.length) {
-      const nochesBloq = bloqueos.reduce((s, b) => s + (nochesEntreYmd(b.check_in, b.check_out) || 0), 0);
       el("statsBloqueosTexto").textContent =
         `${bloqueos.length} ${bloqueos.length === 1 ? "bloqueo" : "bloqueos"} · ` +
-        `${nochesBloq} ${nochesBloq === 1 ? "noche" : "noches"} fuera de venta.`;
+        `${sinCargarTotal} ${sinCargarTotal === 1 ? "noche" : "noches"} fuera de venta.`;
 
       const lista = el("statsBloqueosLista");
       lista.innerHTML = "";
       for (const b of bloqueos.slice(0, 12)) {
         const li = document.createElement("li");
         const motivo = String(b.status_reason || b.notes || "").trim();
-        li.textContent = `${houseName(b.house_code)}: ${b.check_in} → ${b.check_out}` +
+        li.textContent = `${houseName(b.house_code)}: ${fmtDates(b.check_in, b.check_out)}` +
           (motivo ? ` · ${motivo.slice(0, 60)}` : "");
         lista.appendChild(li);
       }
@@ -6985,8 +7208,8 @@
       tr.appendChild(tdCasa);
 
       const celdas = [
-        String(c.estadias),
         String(c.noches),
+        sinCargar[c.casa] ? String(sinCargar[c.casa]) : "-",
         c.ocupacion === null ? "-" : `${Math.round(c.ocupacion * 100)}%`,
         pesosAR(c.importe),
         pesosAR(c.saldo),
@@ -7009,7 +7232,8 @@
 
     const trTotal = document.createElement("tr");
     trTotal.className = "border-t-2 border-brand-beige bg-brand-cream/40 font-bold";
-    for (const texto of ["Total", String(resumen.total.estadias), String(resumen.total.noches), "",
+    for (const texto of ["Total", String(resumen.total.noches),
+                         sinCargarTotal ? String(sinCargarTotal) : "-", "",
                          pesosAR(resumen.total.importe), pesosAR(resumen.total.saldo),
                          resumen.total.porNoche ? pesosAR(resumen.total.porNoche) : "-",
                          resumen.total.usd > 0 ? Math.round(resumen.total.usd).toLocaleString("es-AR") : "-",
@@ -7040,7 +7264,7 @@
     const objetivo = Number(statsObjetivos[String(inicio)]) || 0;
     const logrado = resumen.total.importe;
 
-    el("objetivoMonto").value = objetivo > 0 ? String(objetivo) : "";
+    el("objetivoMonto").value = objetivo > 0 ? montoParaCampo(objetivo) : "";
 
     const barra = el("objetivoBarra");
     barra.classList.toggle("hidden", objetivo <= 0);
@@ -7080,12 +7304,12 @@
   // Una estadía debe plata cuando el importe está cargado y el anticipo no lo
   // cubre. Sin importe no se puede afirmar nada: no es que no deba, es que no
   // sabemos, y meterla en la lista sería mandar a reclamar a ciegas.
-  const debePlata = (r) => (Number(r.importe) || 0) > 0 &&
-    (Number(r.importe) || 0) - (Number(r.anticipo) || 0) > 0;
+  const debePlata = (r) => montoDe(r.importe) > 0 &&
+    montoDe(r.importe) - montoDe(r.anticipo) > 0;
 
   // Vacío no es "no": es que nadie lo marcó todavía. Las dos cosas van a la
   // lista porque en las dos falta hacer algo, pero se distinguen en la fila.
-  const faltaFacturar = (r) => (Number(r.importe) || 0) > 0 &&
+  const faltaFacturar = (r) => montoDe(r.importe) > 0 &&
     String(r.facturado || "").trim().toLowerCase() !== "si";
 
   function renderPendientes(inicio) {
@@ -7099,8 +7323,8 @@
       .map((r) => ({
         fila: r,
         monto: dePlata
-          ? (Number(r.importe) || 0) - (Number(r.anticipo) || 0)
-          : (Number(r.importe) || 0),
+          ? montoDe(r.importe) - montoDe(r.anticipo)
+          : montoDe(r.importe),
       }))
       .sort((a, b) => b.monto - a.monto);
 
@@ -7148,8 +7372,8 @@
       const celdas = [
         String(fila.guest_name || "").trim() || "(sin nombre)",
         houseName(fila.house_code),
-        `${fila.check_in} → ${fila.check_out}`,
-        pesosAR(Number(fila.importe) || 0),
+        fmtDates(fila.check_in, fila.check_out),
+        pesosAR(montoDe(fila.importe)),
         dePlata ? pesosAR(monto) : (marca === "no" ? "Sin facturar" : "Sin marcar"),
       ];
 
@@ -7204,8 +7428,8 @@
     if (!/^\d{4}$/.test(inicio)) return setStatus("Elegí una temporada primero.");
 
     const crudo = el("objetivoMonto").value.trim();
-    const objetivo = crudo === "" ? 0 : Number(crudo);
-    if (!Number.isFinite(objetivo) || objetivo < 0) {
+    const objetivo = crudo === "" ? 0 : parsearMonto(crudo);
+    if (objetivo === null || !Number.isFinite(objetivo) || objetivo < 0) {
       return setStatus("El objetivo tiene que ser un número.");
     }
 
@@ -7267,8 +7491,8 @@
       const todos = (bloq.items || [])
         .filter(fechasOk)
         .filter((b) => String(b.status || "").trim().toUpperCase() === "BLOCKED");
-      statsFilas = statsFilas.concat(todos.filter((b) => Number(b.importe) > 0));
-      statsBloqueos = todos.filter((b) => !(Number(b.importe) > 0));
+      statsFilas = statsFilas.concat(todos.filter((b) => montoDe(b.importe) > 0));
+      statsBloqueos = todos.filter((b) => !(montoDe(b.importe) > 0));
     } catch {
       // Si falla, Números sigue sirviendo con las confirmadas: el aviso es un
       // extra, no el plato.
@@ -7347,8 +7571,8 @@
     const noches = nochesEntreYmd(r.check_in, r.check_out) || 0;
     if (noches <= 0) return [];
 
-    const importe = Number(r.importe) || 0;
-    const anticipo = Number(r.anticipo) || 0;
+    const importe = montoDe(r.importe);
+    const anticipo = montoDe(r.anticipo);
     const reparto = Object.entries(nochesPorMes(r.check_in, r.check_out)).sort();
 
     const partes = reparto.map(([clave, n], i) => {
@@ -7373,7 +7597,7 @@
         phone: i === 0 ? (r.phone || "") : "",
         dni: i === 0 ? (r.dni || "") : "",
         facturado: i === 0 ? (r.facturado || "") : "",
-        cotizacion_usd: i === 0 ? (Number(r.cotizacion_usd) || "") : "",
+        cotizacion_usd: i === 0 ? (montoDe(r.cotizacion_usd) || "") : "",
       };
     });
 
@@ -7383,7 +7607,7 @@
     // negativo en la mitad de las estadías que cruzan de mes.
     let resto = anticipo;
     for (const p of partes) {
-      const aplica = Math.min(resto, Number(p.importe) || 0);
+      const aplica = Math.min(resto, montoDe(p.importe));
       p.anticipo = aplica || "";
       resto -= aplica;
     }
@@ -7391,7 +7615,7 @@
     // lo que sobra va al último tramo para que el total siga cerrando.
     if (resto > 0 && partes.length) {
       const ultima = partes[partes.length - 1];
-      ultima.anticipo = (Number(ultima.anticipo) || 0) + resto;
+      ultima.anticipo = montoDe(ultima.anticipo) + resto;
     }
 
     return partes;
@@ -7524,10 +7748,10 @@
           c(0).value = XL_MESES[mes === 12 ? 0 : mes];
 
           if (t) {
-            const importe = Number(t.importe) || 0;
-            const anticipo = Number(t.anticipo) || 0;
+            const importe = montoDe(t.importe);
+            const anticipo = montoDe(t.anticipo);
             const restan = importe ? importe - anticipo : "";
-            const cot = Number(t.cotizacion_usd) || 0;
+            const cot = montoDe(t.cotizacion_usd);
 
             c(1).value = t.importe === "" ? "" : importe;
             c(2).value = t.noches;

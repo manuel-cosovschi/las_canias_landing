@@ -518,6 +518,91 @@ devuelve `ok`. Es el mismo error de forma que el `A:Z` de `_sheet.js`.
 - El documento de confirmación usa el importe guardado si existe, y si no cae
   al cálculo con tarifas de siempre.
 
+### `Number("300.000")` es 300
+
+El destrozo más caro del panel y el más difícil de ver. Las tres funciones que
+reciben plata —`set-reservation-payment`, `create-manual-reservation`,
+`owner-blocks`— leían el monto así:
+
+```js
+Number(String(v).replace(/[^\d.-]/g, ""))
+```
+
+En castellano el punto separa miles, y eso hace dos cosas distintas según
+cuántos puntos tenga el número:
+
+| lo que escribe el dueño | lo que se guardaba |
+|---|---|
+| `300.000` | **300** — trescientos pesos |
+| `1.333.000` | **NaN** → "importe inválido", sin decir por qué |
+
+El primero es el peor: no falla, no avisa, y deja un precio mil veces más chico
+en la planilla. El segundo era el que lo hacía visible — el dueño escribía
+`1.333.000`, el panel lo rechazaba, y nadie entendía qué tenía de malo el
+número.
+
+Ahora las tres usan `_plata.js`, que tiene una sola regla: **el separador
+decimal es el último** (`1.333.000,50` y `1,333,000.50` son el mismo número), y
+un punto es de miles salvo que el número no tenga forma de miles — `1.5` es uno
+y medio, `1.500` es mil quinientos. `_plata.test.js` cubre las formas en que los
+dueños escriben la plata; se corre con `node netlify/functions/_plata.test.js`.
+
+El panel tiene el mismo parser en `parsearMonto`, y además:
+
+- Los campos de plata son `type="text"`, no `type="number"`. Un campo numérico
+  **no admite el punto**: escrito `1.333.000` el navegador devuelve `""`, así
+  que el importe se perdía entero al guardar en vez de llegar mal.
+- Se escriben con el signo `$` adentro, a la izquierda, y el punto de miles
+  aparece solo mientras se tipea (`formatearMientrasEscribe`). El signo es un
+  adorno con `pointer-events: none`: no entra en el valor ni se puede borrar.
+- Al servidor viaja el número pelado (`montoParaGuardar`), nunca el texto con
+  puntos. El parser del servidor es la red de seguridad, no el camino normal.
+
+**Si se agrega un campo donde se escriba plata, pasarlo por
+`activarCampoDePlata` y leerlo con `montoDe` o `montoParaGuardar`.** Un
+`Number(input.value)` suelto vuelve a traer el problema entero.
+
+## El calendario daba más que Números
+
+Los dueños sumaron diciembre del 26 en el calendario, lo compararon con la
+barra **dic 26** de Números y les faltaba plata. No es un error de suma: eran
+dos formas distintas de contar, y las dos estaban escritas en el código.
+
+**1. La barra del mes repartía cada estadía noche por noche.** Una del 27 de
+diciembre al 3 de enero son 7 noches, 5 en diciembre: la barra de diciembre
+mostraba 5/7 del importe y el resto se iba a enero. Más exacto, sí, y
+completamente inútil para cerrar contra un calendario, donde esa reserva es una
+sola cosa que pasa en diciembre.
+
+Ahora **cada reserva cuenta entera en el mes en que entra**, como la llevaban en
+el Excel. La suma de los doce meses sigue dando el total de la temporada.
+
+Esto no era sólo confuso: hizo perder plata. La reserva de Las Cañas 1 del 27/12
+al 3/1 valía **$1.380.000**, y en la planilla quedó en **$985.715** — que es
+exactamente 5/7 de 1.380.000, la parte que la barra mostraba en diciembre.
+Alguien tomó el número de la barra y lo escribió como importe de la reserva.
+**Si un número de Números no se puede explicar mirando el calendario, el que
+está mal es Números.**
+
+**2. Las noches bloqueadas sin importe ocupan el calendario y no suman un
+peso.** Un bloqueo con plata cargada cuenta como cualquier reserva; uno sin
+plata son fechas fuera de venta y no entra en ningún total. Esa diferencia
+existía y sólo se veía en un recuadro al pie.
+
+Ahora está en la tabla, casa por casa, en la columna **S/cargar**:
+
+```
+Casa          Noches   S/cargar   ...
+Las Cañas 1      7        7       ← 14 noches ocupadas en el calendario,
+                                     la mitad sin importe cargado
+```
+
+`Noches + S/cargar` es exactamente lo que se ve ocupado en el calendario. Si las
+dos cuentas no cierran, la columna dice dónde está la diferencia.
+
+De paso se fue la columna **Est.** (cantidad de estadías), que no se usaba para
+decidir nada y empujaba las nueve columnas fuera del ancho del panel.
+
 ## La tienda
 
 Los dueños quieren vender reposeras y cosas de playa al lado del alquiler. El
@@ -721,6 +806,12 @@ ya usaban `d/m/Y`.
 19, y formatearla con la zona local restaría un día. Es exactamente el error que
 ya había mordido en `toMinusOneDayISO`.
 
+Quedaban sueltas las de **Números** (la lista de quién debe, el recuadro de
+bloqueos), las de pendientes y confirmadas, el modal de importes y los avisos
+del calendario. Todas pasan ahora por `fmtDates`, que es `fmtYmdAR` de los dos
+lados con la flecha en el medio. **Si se muestra una fecha nueva, va por ahí:**
+el ISO crudo en pantalla es un error, no un estilo.
+
 ### Bloquear y desbloquear no habilitan las mismas fechas
 
 Son operaciones inversas, así que los calendarios también lo son:
@@ -804,8 +895,41 @@ endpoints —este para los datos, `set-reservation-payment` para la plata— y s
 uno falla dice cuál: "no se pudo guardar" a secas deja al dueño sin saber si el
 nombre entró y el importe no.
 
-Un campo vacío no se toca; un guión lo borra. Sin esa convención no habría forma
-de vaciar un dato ya cargado, porque dejarlo en blanco significa "no lo toques".
+### Un campo vacío ahora borra
+
+Durante un tiempo la regla fue al revés: un campo vacío no se tocaba y había que
+escribir un guión para borrar. Nadie la leyó nunca, y no es raro — el formulario
+se abre con todos los datos a la vista, así que borrar uno de la pantalla
+significa borrarlo, no "dejalo como estaba".
+
+Lo que hacía era peor que confuso. El dueño vaciaba **Cobrado** para sacar una
+seña, bajaba el importe, y el panel le contestaba *"lo cobrado no puede ser mayor
+que el importe total"* con el campo de cobrado vacío delante: comparaba el
+importe nuevo contra la seña vieja de la planilla, la que el blanco decía no
+tocar. No había forma de entenderlo ni de salir.
+
+Ahora el formulario manda **lo que cambió**: `cambioDeTexto` y `cambioDeMonto`
+comparan cada campo contra el valor con el que se abrió. Sin cambios no viaja
+nada; vacío viaja como `""`, que es borrar. El guión se sigue aceptando por si
+alguien lo escribe de memoria, acá y en las funciones.
+
+Y el aviso de "lo cobrado no puede ser mayor" se calcula con lo que se ve en
+pantalla, no con lo guardado: si el mensaje contradice los dos números que el
+dueño tiene delante, el mensaje está mal.
+
+### El modal tiene que poder scrollear
+
+Con el formulario abierto, el modal del calendario mide más que la ventana de un
+portátil. Estaba centrado con `flex` y sin scroll, y eso corta **arriba y
+abajo**: no se llegaba al botón de guardar ni a la ✕ para cerrarlo, y la rueda
+del mouse movía la página de atrás.
+
+La clase `.lc-modal` lo arregla para todos los modales a la vez: la caja de
+adentro se centra con `margin: auto` en vez de `align-items`, y lleva
+`max-height: calc(100dvh - 2rem)` con `overflow-y: auto`. Centrado con margen
+automático se centra si entra y scrollea si no; centrado con `flex`, lo que
+sobresale queda fuera de alcance. `100dvh` y no `100vh` por las barras del
+navegador en el celular.
 
 Variable de entorno opcional: `N8N_SET_GUEST_PATH` (por defecto
 `/webhook/set-reservation-guest`).

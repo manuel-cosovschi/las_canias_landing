@@ -11,15 +11,17 @@ const { assertAuth, json, callN8n } = require("./_utils");
 // Para comparar contra lo que ya está guardado cuando el panel manda sólo uno
 // de los dos montos. Es la misma lectura que usa search-reservations.
 const { readAllRows } = require("./_sheet");
+// "1.333.000" es un millón trescientos, no un error de tipeo: ver _plata.js.
+const { parsearMonto } = require("./_plata");
 
 // Un campo ausente no se toca; uno en "" se borra. Así el panel puede guardar
 // sólo lo que el dueño editó sin pisar el resto.
 function monto(v) {
   if (v === undefined) return undefined;
-  if (v === null || String(v).trim() === "") return "";
+  if (v === null || String(v).trim() === "" || String(v).trim() === "-") return "";
 
-  const n = Number(String(v).replace(/[^\d.-]/g, ""));
-  if (!Number.isFinite(n) || n < 0) return null;
+  const n = parsearMonto(v);
+  if (n === null || n < 0) return null;
   return Math.round(n);
 }
 

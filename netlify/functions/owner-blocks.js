@@ -13,6 +13,8 @@
 // los estados y daba un mensaje sin decir con qué se pisaba.
 
 const { assertAuth, json, callN8n } = require("./_utils");
+// "1.333.000" es un millón trescientos, no un error de tipeo: ver _plata.js.
+const { parsearMonto } = require("./_plata");
 
 const CASAS = ["LC1", "LC2", "LC3", "LC4", "LC5"];
 const ES_YMD = /^\d{4}-\d{2}-\d{2}$/;
@@ -28,9 +30,9 @@ function aYMD(v) {
 // Vacío queda vacío: un bloqueo de mantenimiento no tiene importe, y un cero
 // no es lo mismo que "no hay dato".
 function monto(v) {
-  if (v === undefined || v === null || String(v).trim() === "") return "";
-  const n = Number(String(v).replace(/[^\d.-]/g, ""));
-  if (!Number.isFinite(n) || n < 0) return null;
+  if (v === undefined || v === null || String(v).trim() === "" || String(v).trim() === "-") return "";
+  const n = parsearMonto(v);
+  if (n === null || n < 0) return null;
   return Math.round(n);
 }
 
