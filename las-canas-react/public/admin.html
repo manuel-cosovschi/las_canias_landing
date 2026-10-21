@@ -5683,13 +5683,41 @@
      propósito: preferimos repetir un aviso a que se pierda.
   ===================== */
 
-  const ORDEN_SEV = { urgente: 0, alta: 1, media: 2, baja: 3 };
+  const ORDEN_SEV = { urgente: 0, alta: 1, media: 2, baja: 3, nueva: 4 };
   const ESTILO_SEV = {
     urgente: { chip: "bg-red-100 text-red-900 border-red-200", caja: "border-red-200 bg-red-50", texto: "Urgente" },
     alta:    { chip: "bg-amber-100 text-amber-900 border-amber-200", caja: "border-amber-200 bg-amber-50", texto: "Revisar" },
     media:   { chip: "bg-sky-100 text-sky-900 border-sky-200", caja: "border-sky-200 bg-sky-50", texto: "Para mirar" },
     baja:    { chip: "bg-brand-beige/60 text-brand-brown border-brand-beige", caja: "border-brand-beige bg-brand-cream", texto: "Menor" },
+    nueva:   { chip: "bg-emerald-100 text-emerald-900 border-emerald-200", caja: "border-emerald-200 bg-emerald-50", texto: "Novedad" },
   };
+
+  // Lo que se arregló, contado para los dueños y no para quien programa. Va en
+  // la misma campanita que los problemas: es el único lugar del panel que
+  // miran sin que nadie se los pida.
+  //
+  // Van últimas (ORDEN_SEV las pone al final) y nunca saltan solas: un cambio
+  // del panel no interrumpe a nadie, un doble alquiler sí. Se sacan con "Ya lo
+  // vi", como cualquier aviso.
+  //
+  // Para la próxima tanda: agregar otra entrada arriba, con fecha y un id
+  // nuevo. El id es lo que recuerda que ya la vieron, así que no se reusa.
+  const NOVEDADES = [
+    {
+      id: "novedad-2026-10-21",
+      sev: "nueva",
+      titulo: "Qué se arregló en el panel (21 de octubre)",
+      puntos: [
+        "Los importes aceptan el punto de miles, y el punto ahora se pone solo mientras escribís, con el signo $ adelante. Antes, escribir 300.000 guardaba 300 pesos sin avisar.",
+        "En “Cargar datos” del calendario, lo que borrás queda borrado. Antes había que escribir un guión, y vaciar “Cobrado” daba un error que no se entendía.",
+        "Ese formulario ya se puede deslizar hasta abajo en la computadora: antes el botón de guardar quedaba fuera de la pantalla.",
+        "En Números, cada reserva suma entera en el mes en que entra, igual que en el calendario. Antes una reserva de fin de año se partía entre diciembre y enero, y las cuentas no cerraban.",
+        "En Números hay una columna nueva, S/cargar: las noches que el calendario muestra ocupadas y todavía no tienen importe. Noches + S/cargar es lo que ves en el calendario.",
+        "Las fechas de Números se leen día/mes/año.",
+      ],
+      queHacer: "Es para que lo sepan, no hay que hacer nada. Tocá “Ya lo vi” y no aparece más.",
+    },
+  ];
 
   let avisosSistema = [];
 
@@ -5874,10 +5902,23 @@
     t.textContent = av.titulo;
     izq.appendChild(t);
 
-    const d = document.createElement("div");
-    d.className = "text-xs text-brand-brown/80 mt-1 break-words";
-    d.textContent = av.detalle;
-    izq.appendChild(d);
+    // Un problema se cuenta en un renglón; una tanda de arreglos no entra en
+    // uno, así que las novedades traen una lista en vez de un detalle.
+    if (Array.isArray(av.puntos)) {
+      const ul = document.createElement("ul");
+      ul.className = "text-xs text-brand-brown/80 mt-2 space-y-1.5 list-disc pl-4";
+      for (const punto of av.puntos) {
+        const li = document.createElement("li");
+        li.textContent = punto;
+        ul.appendChild(li);
+      }
+      izq.appendChild(ul);
+    } else {
+      const d = document.createElement("div");
+      d.className = "text-xs text-brand-brown/80 mt-1 break-words";
+      d.textContent = av.detalle;
+      izq.appendChild(d);
+    }
 
     const q = document.createElement("div");
     q.className = "text-xs text-brand-accent mt-2";
@@ -5910,12 +5951,23 @@
     badge.textContent = String(visibles.length);
     badge.classList.toggle("hidden", visibles.length === 0);
 
+    // Las novedades se cuentan aparte: "3 sin revisar" tiene que seguir
+    // queriendo decir tres cosas que mirar en la planilla, no dos problemas y
+    // un cambio del panel.
     const urgentes = visibles.filter((a) => a.sev === "urgente").length;
-    resumen.textContent = !avisosSistema.length
-      ? "Está todo en orden."
-      : !visibles.length
-        ? `${avisosSistema.length} ${avisosSistema.length === 1 ? "aviso marcado" : "avisos marcados"} como vistos.`
-        : `${visibles.length} sin revisar` + (urgentes ? ` · ${urgentes} urgente${urgentes === 1 ? "" : "s"}` : "");
+    const problemas = visibles.filter((a) => a.sev !== "nueva").length;
+    const novedades = visibles.length - problemas;
+    const problemasTotal = avisosSistema.filter((a) => a.sev !== "nueva").length;
+
+    const partes = [];
+    if (!problemasTotal) partes.push("Está todo en orden.");
+    else if (!problemas) {
+      partes.push(`${problemasTotal} ${problemasTotal === 1 ? "aviso marcado" : "avisos marcados"} como vistos.`);
+    } else {
+      partes.push(`${problemas} sin revisar` + (urgentes ? ` · ${urgentes} urgente${urgentes === 1 ? "" : "s"}` : ""));
+    }
+    if (novedades) partes.push(novedades === 1 ? "1 novedad" : `${novedades} novedades`);
+    resumen.textContent = partes.join(" · ");
 
     lista.innerHTML = "";
 
@@ -5981,16 +6033,25 @@
     try {
       const out = await apiFetch(`${EP_SEARCH_RESERVATIONS}?limit=500`, { method: "GET", body: null });
       const filas = (out.items || []).filter((r) => r && r.id);
-      avisosSistema = detectarAvisos(filas);
+      // detectarAvisos ya devuelve ordenado y las novedades son lo último de
+      // ORDEN_SEV, así que van al final con sólo pegarlas.
+      avisosSistema = [...detectarAvisos(filas), ...NOVEDADES];
       pintarAvisos();
       mostrarUrgentes();
     } catch (e) {
       // Si no se puede revisar, no se inventa un "está todo bien": se deja la
-      // campanita sin número y se avisa sólo si alguien la abre.
-      avisosSistema = [];
+      // campanita sin número y se avisa sólo si alguien la abre. Las novedades
+      // no dependen de la planilla, así que se muestran igual.
+      avisosSistema = [...NOVEDADES];
       pintarAvisos();
+      // pintarAvisos deja "Está todo en orden", que acá sería mentira: no se
+      // pudo mirar nada. Se pisa, pero sin esconder las novedades que sí están.
       const resumen = el("notisResumen");
-      if (resumen) resumen.textContent = "No se pudo revisar la planilla.";
+      const sinVer = NOVEDADES.filter((n) => !avisosOcultos().has(n.id)).length;
+      if (resumen) {
+        resumen.textContent = "No se pudo revisar la planilla." +
+          (sinVer ? ` · ${sinVer === 1 ? "1 novedad" : sinVer + " novedades"}` : "");
+      }
     }
   }
 

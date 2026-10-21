@@ -262,6 +262,29 @@ Cada aviso se puede marcar como visto. Eso vive en el `localStorage` del
 navegador, no en el servidor: si entran desde otro teléfono, el aviso vuelve a
 aparecer. Es a propósito — preferimos repetir un aviso a que se pierda.
 
+### Las novedades van por el mismo lado
+
+La campanita es el único lugar del panel que los dueños miran sin que nadie se
+lo pida, así que lo que se arregla se cuenta ahí y no por WhatsApp. `NOVEDADES`
+(en `admin.html`) es una lista de tarjetas escritas para ellos: qué cambió y
+qué hacían antes, sin una palabra de código.
+
+Reglas que las separan de un problema:
+
+- Severidad `nueva`, la última de `ORDEN_SEV`: van abajo de todo. Un doble
+  alquiler primero, el changelog después.
+- **Nunca saltan solas.** El pop-up sólo mira `sev === "urgente"`, así que un
+  cambio del panel no interrumpe a nadie.
+- Se cuentan aparte en el resumen ("1 sin revisar · 1 novedad"): *sin revisar*
+  tiene que seguir queriendo decir cosas que mirar en la planilla.
+- Se sacan con **Ya lo vi**, como cualquier aviso, y el id es lo que recuerda
+  que ya la vieron — por eso no se reusa.
+- No dependen de la planilla: si `search-reservations` falla, el aviso de que
+  no se pudo revisar aparece igual, y las novedades también.
+
+**Para la próxima tanda:** una entrada nueva arriba del array, con fecha en el
+título y un id nuevo. Nada más.
+
 Dos detalles de implementación que cuestan de encontrar:
 
 - El panel vive **fuera** del `<header>`. Adentro no entra: anclado al botón se
