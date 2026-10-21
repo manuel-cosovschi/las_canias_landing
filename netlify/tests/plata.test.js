@@ -1,11 +1,15 @@
-// node netlify/functions/_plata.test.js
+// node netlify/tests/plata.test.js
 //
 // Lo que importa acá es que un monto escrito a mano llegue entero a la
 // planilla. Cada caso de abajo es una forma en la que los dueños escriben la
 // plata, y los tres primeros son los que el panel estaba rompiendo.
+//
+// Vive acá y no al lado de _plata.js porque Netlify publica como función cada
+// archivo de netlify/functions, y un nombre con punto —"_plata.test"— no es un
+// nombre de función válido: el deploy entero falla por eso.
 
 const assert = require("assert");
-const { parsearMonto } = require("./_plata");
+const { parsearMonto } = require("../functions/_plata");
 
 const casos = [
   // [lo que escribe el dueño, lo que tiene que guardarse]
