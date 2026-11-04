@@ -67,6 +67,11 @@ const rows = sheetItems.map(i => i.json);
 // ---- helpers ----
 const normYMD = (v) => String(v || "").slice(0, 10);
 const esYMD = (v) => /^\d{4}-\d{2}-\d{2}$/.test(String(v || ""));
+// Los mensajes los lee el huésped en la página: día/mes/año, como el resto.
+const fechaAR = (v) => {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(normYMD(v));
+  return m ? `${m[3]}/${m[2]}/${m[1]}` : normYMD(v);
+};
 
 const toUTCms = (ymd) => {
   const s = normYMD(ymd);
@@ -262,7 +267,7 @@ const minAllowed = FIRST_ALLOWED_BY_HOUSE[house];
 if (!minAllowed) return [{ json: { ok: false, message: "Casa inválida." } }];
 
 if (toUTCms(checkin) < toUTCms(minAllowed)) {
-  return [{ json: { ok: false, message: `Esta casa está disponible a partir de ${minAllowed}.` } }];
+  return [{ json: { ok: false, message: `Esta casa está disponible a partir del ${fechaAR(minAllowed)}.` } }];
 }
 
 const maxGuests = HOUSE_RULES[house]?.max;
@@ -273,7 +278,7 @@ if (Number.isFinite(maxGuests) && guestsNum > maxGuests) {
 // ---- validar fechas ----
 const nights = nightsBetween(checkin, checkout);
 if (!Number.isFinite(nights)) {
-  return [{ json: { ok: false, message: "Fechas inválidas: formato esperado YYYY-MM-DD." } }];
+  return [{ json: { ok: false, message: "Fechas inválidas: formato esperado AAAA-MM-DD." } }];
 }
 if (nights <= 0) {
   return [{ json: { ok: false, message: "Fechas inválidas: check-out debe ser posterior al check-in." } }];
@@ -283,7 +288,7 @@ if (nights <= 0) {
 // Esto antes no existía del lado del servidor: el panel limita hasta cuándo se
 // puede reservar y sólo la página lo respetaba.
 if (CFG.firstDate && toUTCms(checkin) < toUTCms(CFG.firstDate)) {
-  return [{ json: { ok: false, message: `Se puede reservar a partir del ${CFG.firstDate}.` } }];
+  return [{ json: { ok: false, message: `Se puede reservar a partir del ${fechaAR(CFG.firstDate)}.` } }];
 }
 
 if (CFG.lastDate) {
@@ -291,7 +296,7 @@ if (CFG.lastDate) {
   // la última noche también se puede reservar. Mismo criterio que la página.
   const checkoutCutoff = sumarDias(CFG.lastDate, 1);
   if (toUTCms(checkin) > toUTCms(CFG.lastDate) || toUTCms(checkout) > toUTCms(checkoutCutoff)) {
-    return [{ json: { ok: false, message: `Por ahora se reserva hasta el ${CFG.lastDate}. Para fechas posteriores consultá por WhatsApp.` } }];
+    return [{ json: { ok: false, message: `Por ahora se reserva hasta el ${fechaAR(CFG.lastDate)}. Para fechas posteriores consultá por WhatsApp.` } }];
   }
 }
 
@@ -303,7 +308,7 @@ if (overlapFixed) {
     return [{
       json: {
         ok: false,
-        message: `Fechas fijas: ${overlapFixed.checkin} → ${overlapFixed.checkout}. Para excepciones consultá por WhatsApp.`
+        message: `Fechas fijas: ${fechaAR(overlapFixed.checkin)} → ${fechaAR(overlapFixed.checkout)}. Para excepciones consultá por WhatsApp.`
       }
     }];
   }
@@ -313,7 +318,7 @@ if (overlapFixed) {
     return [{
       json: {
         ok: false,
-        message: `Fechas fijas: ${fixedByCi.checkin} → ${fixedByCi.checkout}. Debés reservar exactamente ese rango.`
+        message: `Fechas fijas: ${fechaAR(fixedByCi.checkin)} → ${fechaAR(fixedByCi.checkout)}. Debés reservar exactamente ese rango.`
       }
     }];
   }

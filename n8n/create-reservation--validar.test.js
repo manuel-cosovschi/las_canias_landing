@@ -110,7 +110,7 @@ console.log("\n== 1. Secret ==");
 console.log("\n== 2. Ventana de reservas (regla nueva) ==");
 {
   const r = correr({ headers: H, body: { ...base, checkin: "2027-05-01", checkout: "2027-05-04" } });
-  check("checkin despues del tope -> rechaza", r.json.ok === false && /2027-03-31/.test(r.json.message), JSON.stringify(r.json));
+  check("checkin despues del tope -> rechaza", r.json.ok === false && /31\/03\/2027/.test(r.json.message), JSON.stringify(r.json));
 }
 {
   // ultima noche habilitada = 31/03; checkout la manana siguiente debe entrar
@@ -119,12 +119,12 @@ console.log("\n== 2. Ventana de reservas (regla nueva) ==");
 }
 {
   const r = correr({ headers: H, body: { ...base, checkin: "2027-03-30", checkout: "2027-04-02" } });
-  check("checkout pasado el tope -> rechaza", r.json.ok === false && /2027-03-31/.test(r.json.message), JSON.stringify(r.json));
+  check("checkout pasado el tope -> rechaza", r.json.ok === false && /31\/03\/2027/.test(r.json.message), JSON.stringify(r.json));
 }
 {
   const cfg = { ...CONFIG_REAL, first_date: "2026-11-01" };
   const r = correr({ headers: H, body: { ...base, checkin: "2026-10-20", checkout: "2026-10-23" }, config: cfg });
-  check("antes de first_date -> rechaza", r.json.ok === false && /2026-11-01/.test(r.json.message), JSON.stringify(r.json));
+  check("antes de first_date -> rechaza", r.json.ok === false && /01\/11\/2026/.test(r.json.message), JSON.stringify(r.json));
 }
 
 console.log("\n== 3. Findes fijos (desde el panel) ==");
@@ -144,7 +144,7 @@ console.log("\n== 3. Findes fijos (desde el panel) ==");
   // un finde que el panel NO tiene todavia: se agrega a la config y tiene que valer
   const cfg = { ...CONFIG_REAL, fixed_windows: [...CONFIG_REAL.fixed_windows, { checkin: "2027-02-12", checkout: "2027-02-15" }] };
   const r = correr({ headers: H, body: { ...base, checkin: "2027-02-13", checkout: "2027-02-16" }, config: cfg });
-  check("finde nuevo cargado del panel -> rechaza", r.json.ok === false && /2027-02-12/.test(r.json.message), JSON.stringify(r.json));
+  check("finde nuevo cargado del panel -> rechaza", r.json.ok === false && /12\/02\/2027/.test(r.json.message), JSON.stringify(r.json));
 }
 
 console.log("\n== 4. Minimo de noches ==");

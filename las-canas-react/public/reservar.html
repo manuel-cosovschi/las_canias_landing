@@ -973,9 +973,11 @@ async function loadPricePeriods(){
     }
     return null;
   }
+  // Día/mes/año, que es como se lee una fecha acá. Si no viene en
+  // "AAAA-MM-DD" se devuelve tal cual, en vez de armar "undefined/…".
   function ymdToDMY(ymd){
-    const [y,m,d] = String(ymd).split("-");
-    return `${d}/${m}/${y}`;
+    const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(ymd || ""));
+    return m ? `${m[3]}/${m[2]}/${m[1]}` : String(ymd || "");
   }
   // Mínimo especial que aplica a estas fechas, si hay alguno cargado.
   // Alcanza con tocar el tramo: quien entra el último día de un fin de semana
@@ -1041,18 +1043,18 @@ async function loadPricePeriods(){
             type:"fixed_block",
             min: null,
             fixed: overlap,
-            label: `Fechas fijas: ${overlap.checkin} → ${overlap.checkout}. Para excepciones consultá por WhatsApp.`
+            label: `Fechas fijas: ${ymdToDMY(overlap.checkin)} → ${ymdToDMY(overlap.checkout)}. Para excepciones consultá por WhatsApp.`
           };
         }
         const nights = Math.round((parseYMD(overlap.checkout) - parseYMD(overlap.checkin)) / 86400000);
-        return { type:"fixed", min: nights, fixed: overlap, label: `Fechas fijas: ${overlap.checkin} → ${overlap.checkout} (${nights} noches)` };
+        return { type:"fixed", min: nights, fixed: overlap, label: `Fechas fijas: ${ymdToDMY(overlap.checkin)} → ${ymdToDMY(overlap.checkout)} (${nights} noches)` };
       }
     }
 
     const fixed = getFixedWindowForCheckin(ciYmd);
     if (fixed){
       const nights = Math.round((parseYMD(fixed.checkout) - parseYMD(fixed.checkin)) / 86400000);
-      return { type:"fixed", min: nights, fixed, label: `Fechas fijas: ${fixed.checkin} → ${fixed.checkout} (${nights} noches)` };
+      return { type:"fixed", min: nights, fixed, label: `Fechas fijas: ${ymdToDMY(fixed.checkin)} → ${ymdToDMY(fixed.checkout)} (${nights} noches)` };
     }
 
     const especial = getMinNightsRuleFor(ciYmd, coYmd);
@@ -1352,7 +1354,7 @@ async function loadPricePeriods(){
           }
         });
 
-        setStatus(`3) Estas fechas son fijas: check-out debe ser ${rule.fixed.checkout}.`);
+        setStatus(`3) Estas fechas son fijas: check-out debe ser ${ymdToDMY(rule.fixed.checkout)}.`);
       } else {
         const minCo = addDays(ci0, rule.min);
 
@@ -1521,7 +1523,7 @@ async function loadPricePeriods(){
 
     if (rule.type === "fixed" && checkout.value !== rule.fixed.checkout){
       continueBtn.disabled = true;
-      setStatus(`Estas fechas son fijas: check-out debe ser ${rule.fixed.checkout}.`);
+      setStatus(`Estas fechas son fijas: check-out debe ser ${ymdToDMY(rule.fixed.checkout)}.`);
       return;
     }
 
@@ -1984,7 +1986,7 @@ async function loadPricePeriods(){
 
       el("resId").textContent = row.id;
       el("resHouse").textContent = payload.house_code;
-      el("resDates").textContent = `${payload.check_in} → ${payload.check_out}`;
+      el("resDates").textContent = `${ymdToDMY(payload.check_in)} → ${ymdToDMY(payload.check_out)}`;
       el("resGuests").textContent = String(payload.guests);
       el("resRef").textContent = row.id;
 

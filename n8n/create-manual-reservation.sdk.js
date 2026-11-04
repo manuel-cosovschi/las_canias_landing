@@ -168,6 +168,11 @@ const chequear = node({
 const filas = ($items("Leer la planilla") || []).map(i => i?.json || {});
 
 const soloFecha = (v) => String(v || "").slice(0, 10);
+// Para los mensajes que lee el dueño: día/mes/año, no el "2026-11-20" de la planilla.
+const fechaAR = (v) => {
+  const p = soloFecha(v).split("-");
+  return p.length === 3 ? p[2] + "/" + p[1] + "/" + p[0] : soloFecha(v);
+};
 
 // Sólo lo que realmente ocupa la casa. Una cancelada o vencida no estorba.
 const OCUPAN = new Set(["CONFIRMED", "HOLD_TRANSFER", "BLOCKED"]);
@@ -184,7 +189,7 @@ const choque = filas.find((r) => {
 
 if (choque) {
   return [{ json: { ok: false, message:
-    "Esas fechas se pisan con " + soloFecha(choque.check_in) + " a " + soloFecha(choque.check_out) +
+    "Esas fechas se pisan con " + fechaAR(choque.check_in) + " a " + fechaAR(choque.check_out) +
     (choque.guest_name ? " (" + choque.guest_name + ")" : " (bloqueo)") } }];
 }
 
