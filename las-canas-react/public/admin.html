@@ -2675,7 +2675,7 @@
     const partes = [];
     if (c.last_topic) partes.push(CRM_TEMA[c.last_topic] || c.last_topic);
     if (c.personas) partes.push(`${c.personas} personas`);
-    if (Array.isArray(c.fechas) && c.fechas.length === 2) partes.push(`${c.fechas[0]} → ${c.fechas[1]}`);
+    if (Array.isArray(c.fechas) && c.fechas.length === 2) partes.push(fmtDates(c.fechas[0], c.fechas[1]));
     if (c.casa) partes.push(String(c.casa).replace("LC", "Las Cañas "));
     resumen.textContent = partes.join(" · ") || "Sin datos cargados";
 
@@ -2979,6 +2979,9 @@
     lab.appendChild(cap);
     lab.appendChild(inp);
     padre.appendChild(lab);
+    // Recién acá: flatpickr pone el campo visible al lado del original, y para
+    // eso el original ya tiene que estar adentro del rótulo.
+    if (campo.type === "date") campoFechaAR(inp);
     // El precio por noche es plata como cualquier otra: con el signo adelante
     // y los puntos de miles mientras se escribe.
     if (campo.plata) {
@@ -3081,8 +3084,8 @@
     const ord = list.slice().sort((a, b) => (a.from < b.from ? -1 : a.from > b.from ? 1 : 0));
     for (let i = 1; i < ord.length; i++) {
       if (ord[i].from <= ord[i - 1].to) {
-        const a = ord[i - 1].label || ord[i - 1].from;
-        const b = ord[i].label || ord[i].from;
+        const a = ord[i - 1].label || fmtYmdAR(ord[i - 1].from);
+        const b = ord[i].label || fmtYmdAR(ord[i].from);
         return 'Se superponen "' + a + '" y "' + b + '".';
       }
     }
@@ -3274,8 +3277,8 @@
     const minimos = cfg.min_nights_rules.slice().sort((a, b) => (a.from < b.from ? -1 : a.from > b.from ? 1 : 0));
     for (let i = 1; i < minimos.length; i++) {
       if (minimos[i].from <= minimos[i - 1].to) {
-        const a = minimos[i - 1].label || minimos[i - 1].from;
-        const b = minimos[i].label || minimos[i].from;
+        const a = minimos[i - 1].label || fmtYmdAR(minimos[i - 1].from);
+        const b = minimos[i].label || fmtYmdAR(minimos[i].from);
         return 'Se superponen los mínimos "' + a + '" y "' + b + '".';
       }
     }
@@ -3323,7 +3326,7 @@
     try {
       setStatus("Cargando reglas...");
       const cfg = await loadRulesIntoForm();
-      setStatus("✅ Reservas habilitadas hasta el " + (cfg.last_date || "?") + ".");
+      setStatus("✅ Reservas habilitadas hasta el " + (cfg.last_date ? fmtYmdAR(cfg.last_date) : "?") + ".");
     } catch (e) {
       setStatus("❌ " + e.message);
     }
@@ -3354,7 +3357,7 @@
       setStatus("Guardando reglas...");
       const config = readRulesFromUI();
       await apiFetch(EP_SET_CALENDAR_CONFIG, { method: "POST", body: { config } });
-      setStatus("✅ Reglas guardadas. Se puede reservar hasta el " + config.last_date + ".");
+      setStatus("✅ Reglas guardadas. Se puede reservar hasta el " + fmtYmdAR(config.last_date) + ".");
       showToast("Reglas guardadas ✅", "ok");
       await loadRulesIntoForm();
     } catch (e) {
@@ -3706,6 +3709,82 @@
     if (!m) return null;
     return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
   }
+
+  // Los campos de fecha del panel se ven SIEMPRE día/mes/año.
+  //
+  // Un <input type="date"> no lo garantiza: lo dibuja el navegador con el
+  // idioma del celular o de la compu, y en uno configurado en inglés sale
+  // mes/día/año ("11/20/2026"). Era lo único del sistema que todavía se leía al
+  // revés: los mails, el comprobante y el resto del panel ya iban en d/m/a.
+  //
+  // Se monta flatpickr encima, igual que en "Bloquear fechas" y en la página de
+  // reservas: el campo que se ve muestra "20/11/2026", y el original queda
+  // oculto con "2026-11-20". Así todo el código que lee `.value` —el que arma
+  // los pedidos, valida y cuenta noches— sigue recibiendo lo mismo que antes.
+  //
+  // Lo que escribe `.value` también tiene que seguir andando (abrir "Cambiar
+  // fechas" precarga las de la reserva, "Limpiar" las borra), y con flatpickr
+  // asignar el oculto no actualiza el visible. Por eso se redirige el setter a
+  // flatpickr. `dentro` corta la vuelta: flatpickr escribe ese mismo `.value`
+  // al actualizarse, y sin el corte se llamaría a sí mismo para siempre.
+  const VALUE_NATIVO = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value");
+
+  // Se acepta lo que escribe un dueño ("20/11/2026", "20/11/26", "20-11-2026")
+  // y el "2026-11-20" que asigna el código. Un 31/02 no pasa: Date lo correría
+  // al 3 de marzo, y eso es justo lo que no hay que hacer en silencio.
+  function leerFechaEscrita(texto) {
+    const t = String(texto || "").trim();
+    let d, mes, anio;
+    let m = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(t);
+    if (m) { anio = +m[1]; mes = +m[2]; d = +m[3]; }
+    else if ((m = /^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{4}|\d{2})$/.exec(t))) {
+      d = +m[1]; mes = +m[2]; anio = +m[3];
+      if (anio < 100) anio += 2000;
+    } else return undefined;
+    const f = new Date(anio, mes - 1, d);
+    return f.getFullYear() === anio && f.getMonth() === mes - 1 && f.getDate() === d ? f : undefined;
+  }
+
+  function campoFechaAR(inp) {
+    if (!inp || inp._flatpickr || !window.flatpickr) return inp;
+    const fp = flatpickr(inp, {
+      locale: flatpickr.l10ns.es,
+      dateFormat: "Y-m-d",
+      altInput: true,
+      altFormat: "d/m/Y",
+      // Se puede tipear, y borrar: varios son opcionales ("Desde", los filtros
+      // de búsqueda) y sin esto no habría forma de vaciarlos.
+      allowInput: true,
+      parseDate: leerFechaEscrita,
+      // Sin esto, en el celular flatpickr vuelve al campo nativo, que es
+      // justamente el que sale en mes/día/año.
+      disableMobile: true,
+    });
+    fp.altInput.placeholder = inp.placeholder || "dd/mm/aaaa";
+
+    let dentro = false;
+    Object.defineProperty(inp, "value", {
+      configurable: true,
+      get() { return VALUE_NATIVO.get.call(this); },
+      set(v) {
+        if (dentro) return VALUE_NATIVO.set.call(this, v);
+        dentro = true;
+        try {
+          const s = String(v ?? "");
+          if (s) fp.setDate(s, false); else fp.clear(false);
+        } finally {
+          dentro = false;
+        }
+      },
+    });
+    return inp;
+  }
+
+  // El campo que el dueño ve y toca. Con flatpickr el original queda oculto, así
+  // que el foco y las teclas van al visible.
+  const campoVisible = (inp) => inp?._flatpickr?.altInput || inp;
+
+  document.querySelectorAll('input[type="date"]').forEach(campoFechaAR);
 
   function aRangosDeFlatpickr(rangos) {
     return (rangos || [])
@@ -4702,7 +4781,7 @@
     searchList.replaceChildren();
     searchCount.textContent = "-";
   };
-  [searchQ, searchFrom, searchTo].forEach((input) => {
+  [searchQ, searchFrom, searchTo].map(campoVisible).forEach((input) => {
     input.addEventListener("keydown", (e) => { if (e.key === "Enter") runSearch(); });
   });
 
@@ -5247,7 +5326,9 @@
     }
     limpiarCarga();
     cargaManual.classList.remove("hidden");
-    cargaCheckin.focus();
+    // A la casa y no a la entrada: el foco en la fecha abre el calendario de
+    // golpe, antes de que el dueño haya elegido qué casa carga.
+    cargaCasa.focus();
   };
 
   el("btnCancelarCarga").onclick = () => cargaManual.classList.add("hidden");
@@ -6613,7 +6694,7 @@
     }
 
     const que = esBloqueo
-      ? `Desbloquear ${houseName(calSeleccion.house_code)} del ${calSeleccion.check_in} al ${calSeleccion.check_out}?`
+      ? `Desbloquear ${houseName(calSeleccion.house_code)} del ${fmtYmdAR(calSeleccion.check_in)} al ${fmtYmdAR(calSeleccion.check_out)}?`
       : [
           `Cancelar la reserva${calSeleccion.guest_name ? " de " + calSeleccion.guest_name : ""} (${fmtDates(calSeleccion.check_in, calSeleccion.check_out)})?`,
           calSeleccion.email
