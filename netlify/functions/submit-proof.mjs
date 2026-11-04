@@ -63,6 +63,16 @@ export default async (req) => {
       }
     }
 
+    // Las fechas van al mail tal cual llegan, y la página las manda como las
+    // guarda ("2026-12-18"). En el mail del comprobante se leían con el año
+    // adelante, mientras el resto del sistema ya va en día/mes/año. El mail
+    // muestra estos ocho campos en el mismo orden en que llegan, y la reserva
+    // se busca por el id; las fechas sólo están para que el dueño las lea.
+    for (const k of ["check_in", "check_out"]) {
+      const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(campos[k] || "").trim());
+      if (m) campos[k] = `${m[3]}/${m[2]}/${m[1]}`;
+    }
+
     if (!campos.id) return respuestaJson(400, { message: "Falta id" });
     if (!archivo || !archivo.size) {
       return respuestaJson(400, { message: "Falta archivo comprobante (field: proof)" });
