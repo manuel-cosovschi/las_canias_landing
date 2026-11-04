@@ -1095,3 +1095,33 @@ parecer que la ventana está abierta cuando ya venció.
 
 Si Meta igual rechaza el envío, n8n contesta 400 con el motivo y el panel lo
 muestra, en vez de un 500 opaco.
+
+## Fechas: día/mes/año en todo el sistema
+
+La planilla guarda las fechas como `AAAA-MM-DD` y así viajan entre la página,
+Netlify y n8n. **Eso no cambia.** Lo que lee una persona (mails, mensajes,
+campos del panel) va siempre en `dd/mm/aaaa`. Para formatear, se reordena el
+texto y no se usa `new Date`: "2026-12-18" sin hora es medianoche UTC, y en
+Argentina eso cae el 17 a las 21:00.
+
+En el panel, los campos de fecha no son `<input type="date">`: esos los dibuja
+el navegador con el idioma del dispositivo, y en uno en inglés salen en
+mes/día/año. Van con flatpickr (`campoFechaAR` en `admin.html`): el campo
+visible muestra d/m/a y el `.value` del original sigue siendo `AAAA-MM-DD`.
+
+Nodos de n8n que arman texto con fechas y que **no** tienen copia en el repo
+(se cambiaron a mano el 04/11/2026; si se tocan, mantener el formato):
+
+| Workflow | Nodo | Qué muestra |
+|---|---|---|
+| `LC – Proof Upload (Send Email)` | `validar input + armar binary` | mail "Comprobante de transferencia" |
+| `create-reservation` | `Code in JavaScript2` + `Send a message` | mail "INICIO HOLD" (asunto y cuerpo, campos `check_in_display`/`check_out_display`) |
+| `owner-cancel` | `Preparar Email (HTML + Subject + To)` | mail "Reserva cancelada" al huésped |
+| `Owner - Cancel Reservation` | `Build email payload` + `Send a message` | mail "RESERVA CANCELADA" (también la fecha de cancelación, en hora argentina) |
+| `owner-approve` | `chequear que se pueda aprobar` | "No se puede confirmar: … ya está ocupada del …" |
+
+Los que sí tienen copia: `n8n/create-reservation--validar.js`,
+`n8n/create-manual-reservation.sdk.js`, `n8n/set-reservation-dates.sdk.js` y
+`n8n/owner-approve--preparar-email.js`. `submit-proof` además convierte las
+fechas antes de mandarlas al webhook del comprobante, así el mail sale bien
+aunque alguien vuelva el nodo atrás.
