@@ -156,11 +156,16 @@ Cuando alguien reserva por la web, la fila queda en `HOLD_TRANSFER` con un
 cancelarla y liberar las fechas. **Ese algo es un Google Apps Script pegado a
 la planilla, no n8n.**
 
-Dejarlo escrito acá porque no hay forma de deducirlo: no está en este
-repositorio, no está en n8n, y buscar "apps script" en el código no devuelve
-nada. La única huella que deja es el texto `Auto-expired (Apps Script)` en la
-columna `status_reason` de las reservas que venció, y el `reminder_1h_sent_at`
-del aviso de 1 hora antes.
+El proyecto de Google se llama **`reemplazo de schedules`** y ejecuta
+`runHoldsMaintenance` cada diez minutos. Su copia versionada está en
+[`apps-script/HoldsMaintenance.gs`](../../apps-script/HoldsMaintenance.gs), con
+[pruebas e instrucciones de actualización](../../apps-script/README.md).
+**Un deploy de Netlify no actualiza Apps Script.** Los destinatarios del aviso
+se conservan sólo en Google y se omiten de este repositorio público.
+
+La huella que deja es el texto `Auto-expired (Apps Script)` en la columna
+`status_reason` de las reservas que venció, y el `reminder_1h_sent_at` del aviso
+de 1 hora antes.
 
 En n8n existen dos workflows que hacían ese trabajo, **`LC - Cron Expire
 Holds`** y **`LC - Aviso 1h antes de vencer`**, y están apagados a propósito:
