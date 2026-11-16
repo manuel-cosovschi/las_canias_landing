@@ -52,12 +52,77 @@
 
   <style>
     html { scroll-behavior: smooth; scroll-padding-top: 5rem; }
-    body { font-family: "Inter", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background: #F5F1E9; }
+    /* Letra del sistema primero: en iPhone y Mac es San Francisco, que ya trae
+       su propio ajuste de espaciado por tamaño. Inter queda de respaldo.
+       El color de fondo es el que se ve mientras carga la foto. */
+    body { font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, "Inter", Segoe UI, Roboto, Arial, sans-serif; background: #3B2C20; -webkit-font-smoothing: antialiased; }
     h1,h2,h3,.serif { font-family: "Playfair Display", serif; }
     .logo-shadow { filter: drop-shadow(2px 4px 6px rgba(74,55,40,.20)); }
 
     /* Flatpickr typography */
-    .flatpickr-calendar { font-family: "Inter", ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; }
+    .flatpickr-calendar { font-family: -apple-system, BlinkMacSystemFont, system-ui, "Inter", Segoe UI, Roboto, Helvetica, Arial; }
+
+    /* ===== Vidrio =====
+       La foto de la casa va fija detrás de todo, con el mismo desenfoque que
+       el diseño aprobado: blur de 6px y un poco más de color. El desenfoque va
+       en CSS y no horneado en el archivo para que sea igual en cualquier
+       pantalla: horneado, en el celular la foto se achica y queda casi nítida.
+       Los -24px de margen esconden el borde transparente que deja el blur.
+       Encima, un velo oscuro para que el título blanco se lea sobre cualquier
+       parte de la foto. */
+    #lcFondo {
+      position: fixed; inset: -24px; z-index: -1;
+      background: #3B2C20 url("/panel-fondo.jpg") center 60% / cover no-repeat;
+      filter: blur(6px) saturate(115%);
+    }
+    #lcFondo::after { content: ""; position: absolute; inset: 0; background: rgba(46,34,25,.22); }
+
+    /* Una sola receta de vidrio para barra, menú y paneles. El borde de arriba
+       más claro es la luz que agarra el canto del material.
+       OJO: backdrop-filter convierte al elemento en referencia de todo lo
+       `fixed` que tenga adentro. Por eso los modales y el panel de avisos
+       viven fuera de <main> y tienen que seguir ahí. */
+    .lc-vidrio {
+      background: rgba(251,248,242,.8);
+      -webkit-backdrop-filter: blur(24px) saturate(170%);
+      backdrop-filter: blur(24px) saturate(170%);
+      border: 1px solid rgba(255,255,255,.5);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.7), 0 10px 30px rgba(30,20,12,.18);
+    }
+    /* Los paneles grandes llevan mucho texto y formularios: más opacos que la
+       barra, para que la foto no compita con lo que hay que leer. */
+    .lc-panel { border-radius: 22px; background: rgba(251,248,242,.86); }
+    .lc-chip { box-shadow: inset 0 1px 0 rgba(255,255,255,.7); }
+
+    /* La barra flota: no ocupa una franja opaca, el contenido pasa por debajo. */
+    .lc-barra { padding: 10px 12px 0; }
+    .lc-barra-int { border-radius: 22px; }
+
+    /* Texto apoyado directo sobre la foto. */
+    .lc-titulo { color: #fff; text-shadow: 0 2px 16px rgba(20,12,6,.45); letter-spacing: -0.015em; }
+    .lc-subtitulo { color: #fff; font-weight: 500; text-shadow: 0 1px 8px rgba(20,12,6,.6); }
+
+    /* Cifras del encabezado de Transferencias. */
+    .lc-cifra { border-radius: 18px; padding: .8rem 1rem; background: rgba(255,255,255,.72); border: 1px solid rgba(255,255,255,.6); }
+    .lc-cifra-rotulo { font-size: .8125rem; font-weight: 600; color: #5C4A3A; }
+    .lc-cifra-valor { font-size: 1.75rem; line-height: 1.15; font-weight: 700; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+    .lc-cifra--urgente { background: rgba(255,244,224,.9); }
+    .lc-cifra--urgente .lc-cifra-rotulo { color: #8A4B00; }
+    .lc-cifra--urgente .lc-cifra-valor { color: #6A3B00; }
+
+    /* El botón responde al apretar, no al soltar. `scale` y no `transform`:
+       varios botones ya usan transform para ubicarse y se pisarían. */
+    button { transition: scale 100ms ease-out; }
+    button:active:not(:disabled) { scale: .97; }
+
+    /* Quien pidió menos transparencia o más contraste en el sistema recibe
+       superficies sólidas. */
+    @media (prefers-reduced-transparency: reduce) {
+      .lc-vidrio { background: #FBF8F2; -webkit-backdrop-filter: none; backdrop-filter: none; }
+    }
+    @media (prefers-contrast: more) {
+      .lc-vidrio { background: #fff; border-color: #4A3728; -webkit-backdrop-filter: none; backdrop-filter: none; }
+    }
 
     /* Navegación lateral: en escritorio es una columna fija; abajo de lg pasa
        a una tira horizontal que scrollea, sin cambiar el markup. */
@@ -65,14 +130,14 @@
       color: #4A3728;
       border: 1px solid transparent;
     }
-    .navItem:hover { background: rgba(228, 217, 200, .5); }
+    .navItem:hover { background: rgba(74, 55, 40, .08); }
     .navItem[aria-current="page"],
     .navItem[aria-current="page"]:hover {
-      background: #4A3728;
-      color: #F5F1E9;
-      border-color: #4A3728;
+      background: #fff;
+      color: #2E2219;
+      box-shadow: 0 1px 3px rgba(46,34,25,.16);
     }
-    .navItem[aria-current="page"] .navPunto { background: #F5F1E9; }
+    .navItem[aria-current="page"] .navPunto { background: #4A3728; }
     .navPunto {
       width: 6px; height: 6px; border-radius: 999px;
       background: transparent; flex: none;
@@ -265,14 +330,16 @@
 
 <body class="text-brand-brown overflow-x-hidden">
 
+  <div id="lcFondo" aria-hidden="true"></div>
+
   <!-- Header -->
-  <header class="sticky top-0 z-50 border-b border-brand-beige/60 bg-brand-cream/90 backdrop-blur">
+  <header class="lc-barra sticky top-0 z-50">
     <!-- En pantallas angostas el título con tracking-[0.3em] mide más de 200px y
          empujaba "Cerrar sesión" fuera de la ventana. El body tiene
          overflow-x-hidden, así que no aparecía una barra de scroll: el botón
          simplemente quedaba cortado. Ahora el título puede achicarse (min-w-0 +
          truncate) y el espaciado de letras cede primero. -->
-    <div class="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between gap-2">
+    <div class="lc-vidrio lc-barra-int max-w-5xl mx-auto px-4 py-2.5 flex items-center justify-between gap-2">
       <a href="index.html" class="flex items-center gap-2 sm:gap-3 group min-w-0">
         <img src="/logo.PNG" alt="Las Cañas" class="w-9 h-9 shrink-0 rounded-xl bg-white/70 p-1 logo-shadow" />
         <div class="leading-tight min-w-0">
@@ -306,7 +373,7 @@
         </button>
 
         <button id="btnAuth"
-          class="hidden px-3 sm:px-4 py-2 rounded-full bg-brand-brown text-brand-cream text-[10px] font-black uppercase tracking-[0.1em] sm:tracking-[0.22em] shadow-lg hover:opacity-90 transition whitespace-nowrap">
+          class="hidden px-3 sm:px-4 py-2 rounded-full bg-brand-brown text-brand-cream text-xs font-semibold hover:opacity-90 transition whitespace-nowrap">
           <span class="sm:hidden">Salir</span>
           <span class="hidden sm:inline">Cerrar sesión</span>
         </button>
@@ -320,7 +387,7 @@
        el header tiene backdrop-blur y un filtro hace que lo fijo se posicione
        contra el header en vez de contra la ventana. -->
   <div id="notisPanel"
-    class="hidden fixed top-[72px] right-3 w-[min(92vw,26rem)] max-h-[70vh] overflow-y-auto rounded-2xl
+    class="hidden fixed top-[78px] right-3 w-[min(92vw,26rem)] max-h-[70vh] overflow-y-auto rounded-2xl
            border border-brand-beige bg-white shadow-xl z-[1400]">
     <div class="sticky top-0 bg-white border-b border-brand-beige px-4 py-3 flex items-center justify-between gap-2">
       <div class="min-w-0">
@@ -362,13 +429,13 @@
     <div class="mb-8">
       <div class="flex items-start justify-between gap-4">
         <div>
-          <h1 class="serif text-3xl sm:text-4xl font-bold tracking-tight">Panel de Dueños</h1>
-          <p class="text-brand-accent mt-2 max-w-2xl">
+          <h1 class="lc-titulo serif text-4xl sm:text-5xl font-bold">Panel de Dueños</h1>
+          <p class="lc-subtitulo mt-2 max-w-2xl">
             Confirmar transferencias, cancelar reservas y bloquear fechas.
           </p>
         </div>
 
-        <div id="chipEnv" class="hidden sm:flex items-center gap-2 px-3 py-2 rounded-2xl bg-white/70 border border-brand-beige text-xs">
+        <div id="chipEnv" class="lc-vidrio lc-chip hidden sm:flex items-center gap-2 px-3 py-2 rounded-2xl text-xs">
           <span class="w-2 h-2 rounded-full bg-emerald-600"></span>
           <span class="font-semibold">Online</span>
         </div>
@@ -376,12 +443,12 @@
     </div>
 
     <!-- Status -->
-    <div id="status" class="mb-6 p-4 rounded-2xl bg-white/70 text-sm border border-brand-beige/70">
+    <div id="status" class="lc-vidrio lc-chip mb-6 p-4 rounded-2xl text-sm">
       Iniciá sesión para continuar.
     </div>
 
     <!-- LOGIN INLINE -->
-    <section id="loginView" class="bg-white/75 rounded-2xl shadow-sm border border-brand-beige p-6 sm:p-10 max-w-xl mx-auto">
+    <section id="loginView" class="lc-vidrio lc-panel p-6 sm:p-10 max-w-xl mx-auto">
       <div class="flex flex-col items-center text-center gap-3">
         <div class="w-14 h-14 rounded-2xl bg-brand-beige/40 border border-brand-beige flex items-center justify-center">
           <img src="/logo.PNG" alt="Las Cañas" class="w-9 h-9 object-contain logo-shadow" />
@@ -448,7 +515,7 @@
       <!-- NAVEGACIÓN LATERAL -->
       <aside class="w-full lg:w-56 lg:shrink-0 lg:sticky lg:top-24">
         <nav id="navSecciones" aria-label="Secciones del panel"
-          class="flex lg:flex-col gap-1 overflow-x-auto lg:overflow-visible bg-white/70 border border-brand-beige rounded-2xl p-2">
+          class="lc-vidrio flex lg:flex-col gap-1 overflow-x-auto lg:overflow-visible rounded-2xl p-2">
           <button id="tabBlock" class="navItem shrink-0 lg:w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold text-left transition">
             <span class="navPunto"></span><span class="whitespace-nowrap">Bloquear fechas</span>
           </button>
@@ -484,7 +551,7 @@
           </button>
         </nav>
 
-        <div class="hidden lg:flex items-center gap-2 mt-3 px-3 py-2.5 rounded-2xl bg-white/70 border border-brand-beige text-xs">
+        <div class="lc-vidrio lc-chip hidden lg:flex items-center gap-2 mt-3 px-3 py-2.5 rounded-2xl text-xs">
           <span class="font-semibold">Owner Secret:</span>
           <span id="secretBadge" class="text-brand-accent">No configurado</span>
         </div>
@@ -494,7 +561,7 @@
       <div class="flex-1 min-w-0 w-full">
 
       <!-- BLOQUEAR FECHAS -->
-      <div id="viewBlock" class="bg-white/75 rounded-2xl shadow-sm border border-brand-beige p-6">
+      <div id="viewBlock" class="lc-vidrio lc-panel p-6">
         <div class="flex items-start justify-between gap-4 mb-4">
           <div>
             <h2 class="serif text-xl sm:text-2xl font-bold">Bloqueo manual</h2>
@@ -654,7 +721,7 @@
       </div>
 
       <!-- TRANSFERENCIAS -->
-      <div id="viewTransfers" class="bg-white/75 rounded-2xl shadow-sm border border-brand-beige p-6 hidden">
+      <div id="viewTransfers" class="lc-vidrio lc-panel p-6 hidden">
         <div class="flex items-start justify-between gap-3 mb-4">
           <div>
             <h2 class="serif text-xl sm:text-2xl font-bold">Transferencias pendientes</h2>
@@ -662,10 +729,6 @@
           </div>
 
           <div class="flex flex-wrap items-center justify-end gap-2">
-            <div class="px-3 py-2 rounded-2xl bg-white/70 border border-brand-beige text-xs">
-              <span class="font-semibold">Pendientes:</span>
-              <span id="pendingCount" class="text-brand-accent font-semibold">-</span>
-            </div>
             <!-- Vive acá adentro y no arriba del panel: allá dejaba una fila
                  vacía con margen que corría todas las secciones 16px hacia
                  abajo y las desalineaba del menú lateral. -->
@@ -673,6 +736,20 @@
               class="px-4 py-2 rounded-full bg-brand-brown text-brand-cream text-xs font-semibold hover:opacity-90 transition">
               Actualizar pendientes
             </button>
+          </div>
+        </div>
+
+        <!-- Las dos cosas que se miran antes de leer la lista: cuántas hay y
+             cuánto falta para que venza la primera. El reloj lo actualiza
+             updateCountdowns junto con los de cada tarjeta. -->
+        <div class="grid grid-cols-2 gap-3 mb-5">
+          <div class="lc-cifra">
+            <div class="lc-cifra-rotulo">Pendientes</div>
+            <div id="pendingCount" class="lc-cifra-valor">-</div>
+          </div>
+          <div id="pendingProximaCaja" class="lc-cifra">
+            <div class="lc-cifra-rotulo">Vence primero</div>
+            <div id="pendingProxima" class="lc-cifra-valor">—</div>
           </div>
         </div>
 
@@ -709,7 +786,7 @@
       </div>
 
       <!-- CONFIRMADAS -->
-      <div id="viewConfirmed" class="bg-white/75 rounded-2xl shadow-sm border border-brand-beige p-6 hidden">
+      <div id="viewConfirmed" class="lc-vidrio lc-panel p-6 hidden">
         <div class="flex items-start justify-between gap-3 mb-4">
           <div>
             <h2 class="serif text-xl sm:text-2xl font-bold">Reservas confirmadas</h2>
@@ -816,7 +893,7 @@
       </div>
       <!-- GUÍA -->
       <!-- TIENDA -->
-      <div id="viewShop" class="bg-white/75 rounded-2xl shadow-sm border border-brand-beige p-6 hidden">
+      <div id="viewShop" class="lc-vidrio lc-panel p-6 hidden">
         <div class="flex items-start justify-between gap-4 mb-4">
           <div>
             <h2 class="serif text-xl sm:text-2xl font-bold">Tienda de playa</h2>
@@ -879,7 +956,7 @@
       </div>
 
       <!-- CONVERSACIONES DE CAÑITA (CRM) -->
-      <div id="viewCrm" class="bg-white/75 rounded-2xl shadow-sm border border-brand-beige p-6 hidden">
+      <div id="viewCrm" class="lc-vidrio lc-panel p-6 hidden">
         <div class="flex items-start justify-between gap-4 mb-4">
           <div>
             <h2 class="serif text-xl sm:text-2xl font-bold">Conversaciones</h2>
@@ -917,7 +994,7 @@
         <div id="crmLista" class="space-y-2"></div>
       </div>
 
-      <div id="viewGuide" class="bg-white/75 rounded-2xl shadow-sm border border-brand-beige p-6 hidden">
+      <div id="viewGuide" class="lc-vidrio lc-panel p-6 hidden">
         <div class="flex items-start justify-between gap-4 mb-4">
           <div>
             <h2 class="serif text-xl sm:text-2xl font-bold">Guía del panel</h2>
@@ -1318,7 +1395,7 @@
       </div>
 
       <!-- BUSCAR -->
-      <div id="viewSearch" class="bg-white/75 rounded-2xl shadow-sm border border-brand-beige p-6 hidden">
+      <div id="viewSearch" class="lc-vidrio lc-panel p-6 hidden">
         <div class="flex items-start justify-between gap-3 mb-4">
           <div>
             <h2 class="serif text-xl sm:text-2xl font-bold">Buscar reservas</h2>
@@ -1394,7 +1471,7 @@
       </div>
 
       <!-- CALENDARIO -->
-      <div id="viewCalendar" class="bg-white/75 rounded-2xl shadow-sm border border-brand-beige p-6 hidden">
+      <div id="viewCalendar" class="lc-vidrio lc-panel p-6 hidden">
         <div class="mb-4">
           <h2 class="serif text-xl sm:text-2xl font-bold">Calendario</h2>
           <p class="text-xs text-brand-accent mt-1">
@@ -1421,7 +1498,7 @@
       </div>
 
       <!-- NÚMEROS -->
-      <div id="viewStats" class="bg-white/75 rounded-2xl shadow-sm border border-brand-beige p-6 hidden">
+      <div id="viewStats" class="lc-vidrio lc-panel p-6 hidden">
         <div class="flex flex-wrap items-start justify-between gap-4 mb-5">
           <div>
             <h2 class="serif text-xl sm:text-2xl font-bold">Números de la temporada</h2>
@@ -1503,8 +1580,12 @@
 
         <div class="mt-7">
           <h3 class="font-bold text-sm mb-1">El detalle, casa por casa</h3>
+          <!-- sm: y no siempre: esta frase mide 472px de un tirón. En el
+               celular no entra, y como el body recorta lo que sobra a los
+               costados en vez de scrollear, el teléfono achicaba toda la
+               sección Números para hacerla entrar. -->
           <p class="text-xs text-brand-accent mb-3">
-            <span class="whitespace-nowrap">S/cargar = noches que el calendario muestra ocupadas y todavía no tienen importe:</span>
+            <span class="sm:whitespace-nowrap">S/cargar = noches que el calendario muestra ocupadas y todavía no tienen importe:</span>
             son las que hacen que el calendario dé más que estas cuentas.
             Ocupación = noches vendidas sobre los días de la temporada que ya pasaron.
             <span class="whitespace-nowrap">US$ = a la cotización de cada reserva.</span>
@@ -1591,7 +1672,7 @@
       </div>
 
       <!-- PRECIOS -->
-      <div id="viewPrices" class="bg-white/75 rounded-2xl shadow-sm border border-brand-beige p-6 hidden">
+      <div id="viewPrices" class="lc-vidrio lc-panel p-6 hidden">
         <div class="flex items-start justify-between gap-4 mb-4">
           <div>
             <h2 class="serif text-xl sm:text-2xl font-bold">Precios por noche</h2>
@@ -1642,7 +1723,7 @@
       </div>
 
       <!-- REGLAS DEL CALENDARIO -->
-      <div id="viewRules" class="bg-white/75 rounded-2xl shadow-sm border border-brand-beige p-6 hidden">
+      <div id="viewRules" class="lc-vidrio lc-panel p-6 hidden">
         <div class="flex items-start justify-between gap-4 mb-4">
           <div>
             <h2 class="serif text-xl sm:text-2xl font-bold">Reglas del calendario</h2>
@@ -4239,6 +4320,10 @@
     // El cartel se recalcula en cada tic junto con los relojes: si se armara
     // sólo al dibujar la lista, una que entra en la hora final mientras el
     // panel está abierto no aparecería hasta recargar.
+    // La cifra "Vence primero" de arriba de la lista. Se pinta de ámbar en la
+    // hora final, igual que las tarjetas.
+    pintarProxima(proxima, vencidas);
+
     const cartel = el("pendingUrgente");
     if (!cartel) return;
     const partes = [];
@@ -4251,6 +4336,17 @@
     if (partes.length) {
       cartel.textContent = "⏰ " + partes.join(" · ") + ". Están primeras en la lista.";
     }
+  }
+
+  function pintarProxima(proxima, vencidas){
+    const valor = el("pendingProxima");
+    const caja = el("pendingProximaCaja");
+    if (!valor || !caja) return;
+    // Si alguna ya venció, eso es lo primero que hay que saber: no se tapa
+    // con el reloj de la siguiente.
+    const hayProxima = Number.isFinite(proxima);
+    valor.textContent = vencidas ? "Vencida" : hayProxima ? formatCountdown(proxima) : "—";
+    caja.classList.toggle("lc-cifra--urgente", vencidas > 0 || (hayProxima && isExpiringSoon(proxima)));
   }
 
   function startCountdownTicker(){
@@ -4281,6 +4377,7 @@
     if (!filtered.length) {
       pendingList.innerHTML = `<div class="p-4 bg-white/70 border border-brand-beige rounded-2xl">No hay pendientes con esos filtros.</div>`;
       el("pendingUrgente").classList.add("hidden");
+      pintarProxima(Infinity, 0);
       stopCountdownTicker();
       return;
     }
