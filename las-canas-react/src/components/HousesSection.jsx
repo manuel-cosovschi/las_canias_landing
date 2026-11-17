@@ -1,7 +1,23 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-const img = (path) => encodeURI(path);
-const vid = (path) => encodeURI(path);
+import FOTOS_ORIGINALES from "../../public/fotos-casas.json";
+
+// Las fotos de cada casa salen de dos lados:
+//
+// - las originales, que vienen en el repo (public/fotos-casas.json). Ese JSON
+//   lo comparten la página y el panel, por eso no vive acá adentro.
+// - las que los dueños arman desde el panel ("Fotos de las casas"), que
+//   devuelve /api/house-gallery sólo para las casas que tocaron.
+//
+// Mientras la galería no contesta, las tarjetas esperan en vez de mostrar las
+// originales: si no, quien entra ve una foto y al segundo la ve cambiar por
+// otra. Si tarda demasiado o falla, quedan las originales.
+const ESPERA_GALERIA_MS = 2500;
+
+const esVideoPorNombre = (camino) => /\.(mp4|mov|webm)$/i.test(String(camino || ""));
+
+const originales = (id) =>
+  (FOTOS_ORIGINALES[id] || []).map((src) => ({ src, video: esVideoPorNombre(src) }));
 
 /**
  * Datos según Master Doc (baños/ambientes/camas/observaciones + servicios comunes).
@@ -48,34 +64,6 @@ const housesData = [
     ],
     // ✅ además de COMMON.includes
     includesExtra: ["Aire acondicionado frío/calor"],
-    images: [
-      // AFUERA / ENTRADA
-      img("/Casa 1 Imagenes/Entrada1LC1.jpeg"),
-      img("/Casa 1 Imagenes/Entrada2LC1.jpeg"),
-      img("/Casa 1 Imagenes/MesaEntrada1LC1.jpeg"),
-      img("/Casa 1 Imagenes/MesaEntradaLC1.jpeg"),
-
-      // TRANSICIÓN / PASILLO
-      img("/Casa 1 Imagenes/PasilloLC1.jpeg"),
-
-      // LIVING / ESTAR
-      img("/Casa 1 Imagenes/FULLLivingLC1.jpeg"),
-      img("/Casa 1 Imagenes/Living+CocinaLC1.jpeg"),
-      img("/Casa 1 Imagenes/Living+Cocina1LC1.jpeg"),
-
-      // HABITACIÓN
-      img("/Casa 1 Imagenes/Habitacion1LC1.jpeg"),
-
-      // BAÑOS
-      img("/Casa 1 Imagenes/Baño1LC1.jpeg"),
-      img("/Casa 1 Imagenes/Ducha1LC1.jpeg"),
-      img("/Casa 1 Imagenes/ToiletteLC1.jpeg"),
-
-      // PATIO / PARQUE
-      img("/Casa 1 Imagenes/patio1.JPG"),
-      img("/Casa 1 Imagenes/patio1extra.JPG"),
-      img("/Casa 1 Imagenes/vistapatio1LC1.JPG"),
-    ],
   },
   {
     id: 2,
@@ -92,29 +80,6 @@ const housesData = [
       extra: "Ocupación ideal: 2 adultos + 2 niños (o 3 adultos + 1 niño)",
     },
     highlights: ["2 Smart TVs", "Parrilla privada", "Parque"],
-    images: [
-      // AFUERA / ENTRADA
-      img("/Casa 2 Imagenes/EntradaLC2.jpeg"),
-      img("/Casa 2 Imagenes/Bienvenida1LC2.jpeg"),
-      img("/Casa 2 Imagenes/EntradaInteriorLC2.jpeg"),
-
-      // TRANSICIÓN / ESCALERA
-      img("/Casa 2 Imagenes/SubidaLC2.jpeg"),
-
-      // LIVING / COCINA
-      img("/Casa 2 Imagenes/Living1LC2.jpeg"),
-      img("/Casa 2 Imagenes/Living+CocinaLC2.jpeg"),
-
-      // HABITACIONES
-      img("/Casa 2 Imagenes/Habitacion1LC2.jpeg"),
-
-      // BAÑOS
-      img("/Casa 2 Imagenes/BañoLC2.jpeg"),
-      img("/Casa 2 Imagenes/ToiletteLC2.jpeg"),
-
-      // PATIO
-      img("/Casa 2 Imagenes/PatioLC2.jpeg"),
-    ],
   },
   {
     id: 3,
@@ -132,35 +97,6 @@ const housesData = [
         "Ideal para 5. Capacidad máxima: 6 personas (incluye 1 niño y 1 adolescente).",
     },
     highlights: ["Más capacidad", "Parrilla privada", "Parque"],
-    images: [
-      // AFUERA / ENTRADA
-      img("/Casa 3 Imagenes/EntradaLC3.jpeg"),
-
-      // VIDEO (recorrido completo; arranca en la puerta para seguir el orden de la galería)
-      vid("/Casa 3 Imagenes/videoRecorridoLC3.MP4"),
-
-      // TRANSICIÓN / ESCALERAS
-      img("/Casa 3 Imagenes/Escalera1LC3.jpeg"),
-      img("/Casa 3 Imagenes/Escalera2LC3.jpeg"),
-
-      // LIVING / COMEDOR
-      img("/Casa 3 Imagenes/Living1LC3.jpeg"),
-
-      // COCINA / COMEDOR (DETALLE)
-      img("/Casa 3 Imagenes/Cocina+ComedorLC3.jpeg"),
-      img("/Casa 3 Imagenes/Comedor1LC3.jpeg"),
-
-      // HABITACIONES
-      img("/Casa 3 Imagenes/Habitacion1LC3.jpeg"),
-      img("/Casa 3 Imagenes/HabitacionLC3.jpeg"),
-
-      // BAÑOS
-      img("/Casa 3 Imagenes/BañoLC3.jpeg"),
-      img("/Casa 3 Imagenes/Toilette1LC3.jpeg"),
-
-      // PATIO
-      img("/Casa 3 Imagenes/PatioLC3.jpeg"),
-    ],
   },
   {
     id: 4,
@@ -180,31 +116,6 @@ const housesData = [
     highlights: ["Planta baja", "Parrilla privada", "Parque"],
     // ✅ además de COMMON.includes
     includesExtra: ["Aire acondicionado frío/calor"],
-    images: [
-      // AFUERA / ENTRADA
-      img("/Casa 4 Imagenes/EntradaLC4.jpeg"),
-      img("/Casa 4 Imagenes/VistaEntradaLC4.jpeg"),
-
-      // LIVING / COCINA
-      img("/Casa 4 Imagenes/LivingLC4.jpeg"),
-      img("/Casa 4 Imagenes/Living1LC4.jpeg"),
-      img("/Casa 4 Imagenes/Living+CocinaLC4.jpeg"),
-      img("/Casa 4 Imagenes/CocinaLC4.jpeg"),
-
-      // HABITACIÓN
-      img("/Casa 4 Imagenes/Habitacion1LC4.jpeg"),
-
-      // BAÑO
-      img("/Casa 4 Imagenes/BañoLC4.jpeg"),
-      img("/Casa 4 Imagenes/Ducha2LC4.jpeg"),
-      img("/Casa 4 Imagenes/DuchaLC4.jpeg"),
-      img("/Casa 4 Imagenes/ToiletteLC4.jpeg"),
-
-      // PATIO
-      img("/Casa 4 Imagenes/PatioLC4.jpeg"),
-      img("/Casa 4 Imagenes/Patio1LC4.jpeg"),
-      img("/Casa 4 Imagenes/Patio2LC4.jpeg"),
-    ],
   },
   {
     id: 5,
@@ -221,32 +132,6 @@ const housesData = [
       extra: "Máximo: 2 adultos + 1 niño de hasta 6 años",
     },
     highlights: ["Planta baja", "Parrilla privada", "Parque"],
-    images: [
-      // AFUERA / ENTRADA
-      img("/Casa 5 Imagenes/EntradaLC5.jpeg"),
-      img("/Casa 5 Imagenes/BienvenidaLC5.jpeg"),
-      img("/Casa 5 Imagenes/EntradaInteriorLC5.jpeg"),
-
-      // LIVING / COMEDOR
-      img("/Casa 5 Imagenes/Living+ComedorLC5.jpeg"),
-      img("/Casa 5 Imagenes/Living+Comedor1LC5.jpeg"),
-      img("/Casa 5 Imagenes/PasilloLC5.jpeg"),
-
-      // HABITACIÓN
-      img("/Casa 5 Imagenes/HabitacionLC5.jpeg"),
-
-      // BAÑO
-      img("/Casa 5 Imagenes/BañoLC5.jpeg"),
-      img("/Casa 5 Imagenes/DuchaLC5.jpeg"),
-
-      // TOILETTE
-      img("/Casa 5 Imagenes/ToiletteLC5.jpeg"),
-
-      // PATIO
-      img("/Casa 5 Imagenes/Patio1LC5.jpeg"),
-      img("/Casa 5 Imagenes/PatioLC5.jpeg"),
-      img("/Casa 5 Imagenes/VistaDesdePatioLC5.jpeg"),
-    ],
   },
 ];
 
@@ -278,25 +163,79 @@ function Pill({ children }) {
   );
 }
 
+// La portada es la primera foto: un video no sirve de portada porque en el
+// celular no arranca solo. Si la casa sólo tiene videos, va el primero.
+function portada(items) {
+  return items.find((m) => !m.video) || items[0] || null;
+}
+
+// Una miniatura o portada de video: muestra el primer cuadro. El "#t=0.1" es
+// para que Safari pinte ese cuadro en vez de dejar el recuadro en negro.
+function CuadroVideo({ src, className }) {
+  return (
+    <video
+      src={`${src}#t=0.1`}
+      className={className}
+      muted
+      playsInline
+      preload="metadata"
+    />
+  );
+}
+
+function useGaleria() {
+  // null = todavía no se sabe; {} = se sabe y no hay cambios (o falló).
+  const [galeria, setGaleria] = useState(null);
+
+  useEffect(() => {
+    let vivo = true;
+    const listo = (g) => vivo && setGaleria((ya) => ya ?? g);
+    const plazo = setTimeout(() => listo({}), ESPERA_GALERIA_MS);
+
+    fetch("/api/house-gallery")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        // Si llegó tarde, igual se usa: mejor cambiar tarde que nunca.
+        if (vivo) setGaleria(d && d.ok && d.casas ? d.casas : {});
+      })
+      .catch(() => listo({}))
+      .finally(() => clearTimeout(plazo));
+
+    return () => {
+      vivo = false;
+      clearTimeout(plazo);
+    };
+  }, []);
+
+  return galeria;
+}
+
 export default function HousesSection() {
-  const houses = useMemo(() => housesData, []);
+  const galeria = useGaleria();
+
+  // Cada casa con su lista de fotos y videos: { src, video }. El src ya va
+  // codificado (los nombres de las originales tienen espacios y eñes).
+  const houses = useMemo(
+    () =>
+      housesData.map((h) => {
+        const crudas = galeria === null ? null : galeria[h.id] || originales(h.id);
+        const media = crudas && crudas.map((m) => ({ src: encodeURI(m.src), video: Boolean(m.video) }));
+        return { ...h, media };
+      }),
+    [galeria]
+  );
 
   // Lightbox state (por casa)
   const [lightboxOpen, setLightboxOpen] = useState(false);
-  const [activeHouse, setActiveHouse] = useState(null); // { title, images }
+  const [activeHouse, setActiveHouse] = useState(null); // { title, media }
   const [idx, setIdx] = useState(0);
 
-  const images = activeHouse?.images || [];
+  const images = activeHouse?.media || [];
   const current = images[idx];
 
-  const isVideo = (src) => {
-    const s = String(src || "").toLowerCase();
-    return s.endsWith(".mp4") || s.includes(".mp4?");
-  };
-
   const openGallery = (house) => {
-    if (!house?.images?.length) return; // no abre si no hay
-    setActiveHouse({ title: house.title, images: house.images });
+    if (!house?.media?.length) return; // no abre si no hay
+    setActiveHouse({ title: house.title, media: house.media });
     setIdx(0);
     setLightboxOpen(true);
   };
@@ -391,7 +330,16 @@ export default function HousesSection() {
         {/* ✅ cards alineadas */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 items-stretch">
           {houses.map((h) => {
-            const hasPhotos = (h.images?.length || 0) > 0;
+            const cargando = h.media === null;
+            const media = h.media || [];
+            const hasPhotos = media.length > 0;
+            const tapa = portada(media);
+            // Las miniaturas son las que siguen, sin repetir la portada, con
+            // su lugar real en la galería para abrirla ahí.
+            const miniaturas = media
+              .map((m, i) => ({ ...m, i }))
+              .filter((m) => m !== tapa && m.src !== tapa?.src)
+              .slice(0, 4);
 
             return (
               <div
@@ -399,13 +347,22 @@ export default function HousesSection() {
                 className="group bg-white rounded-[2.5rem] overflow-hidden shadow-2xl hover:shadow-brand-brown/10 transition-all duration-500 border border-transparent hover:border-brand-beige h-full flex flex-col"
               >
                 <div className="relative aspect-[4/5] overflow-hidden bg-brand-beige/20">
-                  {hasPhotos ? (
-                    <img
-                      src={h.images[0]}
-                      alt={`${h.title}, casa en alquiler en Mar de Cobo`}
-                      className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
-                      loading="lazy"
-                    />
+                  {cargando ? (
+                    <div className="w-full h-full animate-pulse bg-brand-beige/30" aria-hidden="true" />
+                  ) : hasPhotos ? (
+                    tapa.video ? (
+                      <CuadroVideo
+                        src={tapa.src}
+                        className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
+                      />
+                    ) : (
+                      <img
+                        src={tapa.src}
+                        alt={`${h.title}, casa en alquiler en Mar de Cobo`}
+                        className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
+                        loading="lazy"
+                      />
+                    )
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-brand-brown/60">
                       Fotos disponibles pronto 📸
@@ -518,28 +475,25 @@ export default function HousesSection() {
                       </button>
                     </div>
 
-                    {hasPhotos && h.images.length > 1 && (
+                    {miniaturas.length > 0 && (
                       <div className="mt-8 grid grid-cols-4 gap-3">
-                        {h.images.slice(1, 5).map((src, i) => (
+                        {miniaturas.map(({ src, video, i }) => (
                           <button
-                            key={i}
+                            key={src}
                             type="button"
                             onClick={() => {
-                              setActiveHouse({ title: h.title, images: h.images });
-                              setIdx(i + 1);
+                              setActiveHouse({ title: h.title, media });
+                              setIdx(i);
                               setLightboxOpen(true);
                             }}
                             className="rounded-xl overflow-hidden border border-brand-beige/60 hover:scale-[1.03] transition-transform"
-                            aria-label={`Abrir item ${i + 2} de ${h.title}`}
+                            aria-label={`Abrir item ${i + 1} de ${h.title}`}
                           >
-                            {isVideo(src) ? (
+                            {video ? (
                               <div className="relative w-full h-full">
-                                <video
+                                <CuadroVideo
                                   src={src}
                                   className="w-full h-full aspect-square object-cover"
-                                  muted
-                                  playsInline
-                                  preload="metadata"
                                 />
                                 <div className="absolute inset-0 flex items-center justify-center">
                                   <div className="bg-black/45 text-white text-[10px] font-black uppercase tracking-widest px-3 py-2 rounded-full">
@@ -550,7 +504,7 @@ export default function HousesSection() {
                             ) : (
                               <img
                                 src={src}
-                                alt={`${h.title} ${i + 2}`}
+                                alt={`${h.title} ${i + 1}`}
                                 className="w-full h-full aspect-square object-cover"
                                 loading="lazy"
                               />
@@ -606,9 +560,10 @@ export default function HousesSection() {
                 className="relative w-full bg-brand-cream"
                 style={{ height: "min(82vh, 760px)" }}
               >
-                {isVideo(current) ? (
+                {current.video ? (
                   <video
-                    src={current}
+                    key={current.src}
+                    src={current.src}
                     className="w-full h-full object-contain select-none max-h-[82vh]"
                     controls
                     playsInline
@@ -616,7 +571,7 @@ export default function HousesSection() {
                   />
                 ) : (
                   <img
-                    src={current}
+                    src={current.src}
                     alt={`${activeHouse.title} foto ${idx + 1}`}
                     className="w-full h-full object-contain select-none max-h-[82vh]"
                     draggable="false"
@@ -651,9 +606,9 @@ export default function HousesSection() {
 
             {/* thumbnails */}
             <div className="mt-4 flex gap-3 overflow-x-auto pb-2">
-              {images.map((src, i) => (
+              {images.map(({ src, video }, i) => (
                 <button
-                  key={i}
+                  key={src}
                   type="button"
                   onClick={() => setIdx(i)}
                   className={`shrink-0 w-24 h-16 rounded-xl overflow-hidden border transition-all bg-white ${
@@ -663,15 +618,9 @@ export default function HousesSection() {
                   }`}
                   aria-label={`Ir a item ${i + 1}`}
                 >
-                  {isVideo(src) ? (
+                  {video ? (
                     <div className="relative w-full h-full">
-                      <video
-                        src={src}
-                        className="w-full h-full object-cover"
-                        muted
-                        playsInline
-                        preload="metadata"
-                      />
+                      <CuadroVideo src={src} className="w-full h-full object-cover" />
                       <div className="absolute inset-0 flex items-center justify-center">
                         <div className="bg-brand-brown/60 text-white text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-full">
                           Video

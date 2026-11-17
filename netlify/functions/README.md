@@ -758,6 +758,42 @@ elige el archivo, y la ficha muestra la miniatura. `tieneFoto` no se le cree al
 navegador — `store-catalog` le pregunta al almacenamiento cuáles existen, para
 que nadie pueda escribir una URL a mano ni quede un `<img>` roto.
 
+## Fotos de las casas
+
+Los dueños cambian desde el panel (pestaña *Fotos de las casas*) las fotos y
+videos que se ven de cada casa en la página: suben, ordenan, sacan y guardan.
+
+| Función | Quién | Qué hace |
+|---|---|---|
+| `house-gallery` | pública | la lista de cada casa que los dueños tocaron |
+| `set-house-gallery` | dueño | guarda la lista de una casa (`items: null` = volver a las originales) |
+| `upload-house-media` | dueño | sube una parte de un archivo |
+| `house-media` | pública | sirve un archivo subido, con Range |
+
+Todas v2, porque usan Netlify Blobs (store `galeria-casas`). No agregan
+variables de entorno: usan `LC_OWNER_SECRET`, como la tienda.
+
+- **Las originales** viven en el repo, en `las-canas-react/public/fotos-casas.json`.
+  Lo leen la página (empaquetado) y el panel. Una casa sin lista guardada
+  muestra esas. Si `house-gallery` falla, la página muestra esas: nunca queda
+  vacía. Las funciones no leen el JSON: una foto original se acepta si el
+  camino tiene la forma `/Casa N Imagenes/archivo.ext`.
+- **Los archivos subidos van de a partes de 4 MB.** Netlify corta los pedidos
+  de más de 6 MB y un video del celular pesa decenas. Al revés igual:
+  `house-media` contesta con Range de a una parte por vez, que es como el
+  navegador pide los videos (Safari no reproduce uno sin Range).
+- **Las fotos se achican en el navegador** antes de subir (2400 px, JPG): una
+  foto del celular de 5 MB queda en menos de 1 MB.
+- **Cada archivo tiene un id que nunca se reescribe**, así que se cachea para
+  siempre. `Netlify-Vary: header=Range` evita que la CDN mezcle respuestas de
+  rangos distintos.
+- **Limpieza:** al guardar, lo que la casa dejó de usar se borra. Lo subido que
+  nunca se guardó se borra pasadas 24 h, en el siguiente guardado de cualquier
+  casa.
+
+Pruebas de punta a punta, contra el servidor local de Blobs:
+`node --test netlify/tests/galeria.test.js`.
+
 ## El calendario del panel
 
 ### Cada casa, siempre el mismo renglón

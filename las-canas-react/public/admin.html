@@ -540,6 +540,9 @@
           <button id="tabRules" class="navItem shrink-0 lg:w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold text-left transition">
             <span class="navPunto"></span><span class="whitespace-nowrap">Reglas</span>
           </button>
+          <button id="tabFotos" class="navItem shrink-0 lg:w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold text-left transition">
+            <span class="navPunto"></span><span class="whitespace-nowrap">Fotos de las casas</span>
+          </button>
           <button id="tabShop" class="navItem shrink-0 lg:w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-sm font-semibold text-left transition">
             <span class="navPunto"></span><span class="whitespace-nowrap">Tienda</span>
           </button>
@@ -892,6 +895,70 @@
         <div id="confirmedList" class="space-y-3 text-sm"></div>
       </div>
       <!-- GUÍA -->
+      <!-- FOTOS DE LAS CASAS -->
+      <div id="viewFotos" class="lc-vidrio lc-panel p-6 hidden">
+        <div class="flex items-start justify-between gap-4 mb-4">
+          <div>
+            <h2 class="serif text-xl sm:text-2xl font-bold">Fotos de las casas</h2>
+            <p class="text-xs text-brand-accent mt-1">
+              Las fotos y videos que se ven de cada casa en la página, en el mismo orden.
+            </p>
+          </div>
+          <span class="text-xs font-semibold px-3 py-1 rounded-full bg-brand-beige/50 border border-brand-beige/80">
+            Página
+          </span>
+        </div>
+
+        <div id="fotosCasas" class="flex flex-wrap gap-2 mb-4" role="tablist" aria-label="Casa"></div>
+
+        <div class="p-3 rounded-2xl bg-brand-cream border border-brand-beige text-xs text-brand-brown/90 mb-4">
+          <strong>Cómo funciona:</strong> elegí la casa, subí fotos o videos, ordenalos con las
+          flechas y apretá <strong>Guardar</strong>. Hasta que guardes, la página sigue mostrando
+          lo de antes. La <strong>primera foto es la portada</strong> de la tarjeta.
+          Las fotos se achican solas antes de subirse. Los videos pueden pesar hasta 150 MB:
+          si uno no se ve acá en la vista previa, tampoco se va a ver en la página
+          (pasa con algunos del iPhone); mandátelo por WhatsApp y subí ese.
+        </div>
+
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
+          <p id="fotosEstado" class="text-sm font-semibold">-</p>
+          <label id="fotosSubirBoton"
+            class="cursor-pointer py-2 px-4 rounded-2xl bg-white/80 border border-brand-beige font-semibold text-sm hover:bg-brand-beige/30 transition">
+            + Subir fotos o videos
+            <input id="fotosArchivo" type="file" multiple
+              accept="image/jpeg,image/png,image/webp,image/heic,image/heif,video/mp4,video/quicktime,video/webm,.heic,.heif,.mov"
+              class="sr-only" />
+          </label>
+        </div>
+
+        <div id="fotosSubidas" class="space-y-2 mb-3"></div>
+
+        <div id="fotosGrilla" class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3"></div>
+
+        <div id="fotosAviso" class="hidden mt-4 p-3 rounded-2xl bg-red-50 border border-red-200 text-sm text-red-800"></div>
+
+        <div class="mt-4 flex flex-wrap gap-3">
+          <button id="btnFotosDescartar"
+            class="py-2 px-4 rounded-2xl bg-white/80 border border-brand-beige font-semibold hover:bg-brand-beige/30 transition">
+            Descartar cambios
+          </button>
+          <button id="btnFotosOriginales"
+            class="py-2 px-4 rounded-2xl bg-white/80 border border-brand-beige font-semibold hover:bg-brand-beige/30 transition">
+            Volver a las originales
+          </button>
+        </div>
+
+        <button id="btnFotosGuardar"
+          class="mt-5 w-full py-3 rounded-2xl bg-brand-brown text-brand-cream font-semibold hover:opacity-90 transition disabled:opacity-40 disabled:cursor-not-allowed">
+          Guardar
+        </button>
+
+        <p class="mt-3 text-xs text-brand-accent">
+          Al guardar se reemplaza la lista entera de esa casa, y lo que hayas sacado deja de
+          ocupar lugar. En la página se ve en un minuto, más o menos.
+        </p>
+      </div>
+
       <!-- TIENDA -->
       <div id="viewShop" class="lc-vidrio lc-panel p-6 hidden">
         <div class="flex items-start justify-between gap-4 mb-4">
@@ -1322,6 +1389,21 @@
                 Para que un mes se pueda reservar necesita <strong>las dos cosas</strong>: estar dentro
                 de la ventana <em>y</em> tener su período de precio cargado.
               </p>
+            </div>
+          </details>
+
+          <details class="rounded-2xl border border-brand-beige bg-white/80 p-4">
+            <summary class="font-semibold cursor-pointer">Fotos de las casas</summary>
+            <div class="mt-3 text-sm text-brand-brown/90 space-y-2">
+              <p>Las fotos y videos de cada casa que se ven en la página, en el mismo orden.</p>
+              <ul class="list-disc pl-5 space-y-1">
+                <li>Arriba elegís la casa. Con <strong>+ Subir fotos o videos</strong> sumás archivos (podés elegir varios juntos); con las flechas los cambiás de lugar y con la ✕ los sacás.</li>
+                <li>Nada cambia en la página hasta que tocás <strong>Guardar</strong>. Después tarda un minuto, más o menos, en verse.</li>
+                <li>La <strong>primera foto</strong> es la portada de la tarjeta de la casa. Un video no puede ser portada.</li>
+                <li>Las fotos se achican solas antes de subirse, así la página carga rápido en el celular. Los videos pueden pesar hasta 150 MB.</li>
+                <li>Si un video no se ve en la vista previa del panel, tampoco se va a ver en la página. Pasa con algunos del iPhone: mandátelo por WhatsApp y subí ese.</li>
+                <li><strong>Volver a las originales</strong> deja la casa con las fotos con las que salió la página, y borra las que subieron para ella.</li>
+              </ul>
             </div>
           </details>
 
@@ -2194,6 +2276,8 @@
 
   const tabRules = el("tabRules");
   const viewRules = el("viewRules");
+  const tabFotos = el("tabFotos");
+  const viewFotos = el("viewFotos");
   const tabShop = el("tabShop");
   const viewShop = el("viewShop");
 
@@ -2420,6 +2504,9 @@
   const EP_SET_STORE_CATALOG = "/.netlify/functions/set-store-catalog";
   const EP_UPLOAD_PHOTO = "/.netlify/functions/upload-store-photo";
   const EP_STORE_PHOTO = "/.netlify/functions/store-photo";
+  const EP_HOUSE_GALLERY = "/.netlify/functions/house-gallery";
+  const EP_SET_HOUSE_GALLERY = "/.netlify/functions/set-house-gallery";
+  const EP_UPLOAD_HOUSE_MEDIA = "/.netlify/functions/upload-house-media";
   const EP_SET_CALENDAR_CONFIG = "/.netlify/functions/set-calendar-config";
   const EP_SEARCH_RESERVATIONS = "/.netlify/functions/search-reservations";
   const EP_PROOF_FILE = "/.netlify/functions/proof-file";
@@ -2584,6 +2671,7 @@
     { id: "stats",     boton: tabStats,     vista: viewStats },
     { id: "prices",    boton: tabPrices,    vista: viewPrices },
     { id: "rules",     boton: tabRules,     vista: viewRules },
+    { id: "fotos",     boton: tabFotos,     vista: viewFotos },
     { id: "shop",      boton: tabShop,      vista: viewShop },
     { id: "crm",       boton: tabCrm,       vista: viewCrm },
     { id: "guide",     boton: tabGuide,     vista: viewGuide },
@@ -3699,6 +3787,494 @@
       validarTiendaUI();
     }
   };
+
+  /* =====================
+     FOTOS DE LAS CASAS
+     Las fotos y videos de cada casa en la página. Las originales vienen en el
+     repo (fotos-casas.json); lo que arman los dueños vive en el servidor
+     (house-gallery) y sólo para las casas que tocaron.
+  ===================== */
+
+  const FOTOS_CASAS = [1, 2, 3, 4, 5];
+  // Mismos números que _galeria.mjs. Si cambian allá, cambian acá.
+  const FOTOS_TAMANO_PARTE = 4 * 1024 * 1024;
+  const FOTOS_MAXIMO_VIDEO = 150 * 1024 * 1024;
+  const FOTOS_MAXIMO_ITEMS = 60;
+  // Una foto de 2400 px del lado largo se ve nítida en cualquier pantalla y,
+  // en JPG, pesa menos de 1 MB. Las del celular vienen de 4000 px y 5 MB:
+  // subidas así, la página tarda en cargar justo en el celular.
+  const FOTOS_LADO_MAXIMO = 2400;
+  const FOTOS_CALIDAD = 0.85;
+
+  let fotosOriginales = null;   // { "1": ["/Casa 1 Imagenes/...", ...], ... }
+  let fotosGuardadas = {};      // lo que devolvió house-gallery
+  let fotosCasa = 1;
+  let fotosLista = [];          // [{ origen, src?, id?, video, vista }]
+  let fotosSucio = false;
+  let fotosSubiendo = 0;
+
+  const fotosEsVideoPorNombre = (camino) => /\.(mp4|mov|webm)$/i.test(String(camino || ""));
+
+  function fotosListaDe(casa) {
+    const guardada = fotosGuardadas[casa];
+    if (guardada) {
+      return guardada.map((m) => ({
+        origen: m.origen,
+        src: m.origen === "original" ? m.src : undefined,
+        id: m.origen === "subida" ? m.id : undefined,
+        video: Boolean(m.video),
+        vista: m.origen === "original" ? encodeURI(m.src) : m.src,
+      }));
+    }
+    return (fotosOriginales[casa] || []).map((src) => ({
+      origen: "original",
+      src,
+      video: fotosEsVideoPorNombre(src),
+      vista: encodeURI(src),
+    }));
+  }
+
+  // La portada es la primera foto (un video no arranca solo en el celular),
+  // igual que en la página.
+  function fotosPortada(lista) {
+    return lista.find((m) => !m.video) || lista[0] || null;
+  }
+
+  function fotosMarcarSucio(v) {
+    fotosSucio = v;
+    fotosPintarEstado();
+  }
+
+  function fotosPintarEstado() {
+    const personalizada = Boolean(fotosGuardadas[fotosCasa]);
+    const n = fotosLista.length;
+    const fotos = fotosLista.filter((m) => !m.video).length;
+    const videos = n - fotos;
+    const cuenta = `${fotos} ${fotos === 1 ? "foto" : "fotos"}` +
+      (videos ? ` y ${videos} ${videos === 1 ? "video" : "videos"}` : "");
+
+    el("fotosEstado").textContent = fotosSucio
+      ? `Las Cañas ${fotosCasa}: ${cuenta} · cambios sin guardar`
+      : `Las Cañas ${fotosCasa}: ${cuenta} · ` +
+        (personalizada ? "armada por ustedes" : "las fotos originales");
+
+    el("btnFotosOriginales").classList.toggle("hidden", !personalizada && !fotosSucio);
+
+    let err = null;
+    if (!n) err = "La casa tiene que quedar con al menos una foto.";
+    else if (!fotos) err = "Falta al menos una foto: es la portada de la tarjeta.";
+    else if (n > FOTOS_MAXIMO_ITEMS) err = `Son demasiadas: el máximo es ${FOTOS_MAXIMO_ITEMS} por casa.`;
+
+    const aviso = el("fotosAviso");
+    aviso.textContent = err || "";
+    aviso.classList.toggle("hidden", !err || !fotosSucio);
+
+    const guardar = el("btnFotosGuardar");
+    guardar.disabled = !fotosSucio || Boolean(err) || fotosSubiendo > 0;
+    guardar.textContent = fotosSubiendo > 0
+      ? "Esperá a que terminen de subirse…"
+      : `Guardar fotos de Las Cañas ${fotosCasa}`;
+  }
+
+  function fotosPintarCasas() {
+    const caja = el("fotosCasas");
+    caja.innerHTML = "";
+    for (const casa of FOTOS_CASAS) {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.setAttribute("role", "tab");
+      b.setAttribute("aria-selected", String(casa === fotosCasa));
+      b.textContent = `LC${casa}`;
+      b.className = "px-4 py-2 rounded-full text-sm font-semibold border transition " +
+        (casa === fotosCasa
+          ? "bg-brand-brown text-brand-cream border-brand-brown"
+          : "bg-white/80 border-brand-beige hover:bg-brand-beige/30");
+      b.onclick = () => fotosCambiarCasa(casa);
+      caja.appendChild(b);
+    }
+  }
+
+  function fotosCambiarCasa(casa) {
+    if (casa === fotosCasa) return;
+    if (fotosSubiendo > 0) {
+      showToast("Esperá a que terminen de subirse antes de cambiar de casa", "err");
+      return;
+    }
+    if (fotosSucio && !confirm(`Tenés cambios sin guardar en Las Cañas ${fotosCasa}. ¿Los descartás?`)) return;
+    fotosCasa = casa;
+    fotosLista = fotosListaDe(casa);
+    fotosMarcarSucio(false);
+    fotosPintarCasas();
+    fotosPintarGrilla();
+  }
+
+  function fotosBotonChico(texto, titulo, alClick, deshabilitado) {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.textContent = texto;
+    b.title = titulo;
+    b.setAttribute("aria-label", titulo);
+    b.disabled = Boolean(deshabilitado);
+    b.className = "w-9 h-9 rounded-xl border border-brand-beige bg-white font-semibold hover:bg-brand-beige/30 transition disabled:opacity-30 disabled:cursor-not-allowed";
+    b.onclick = alClick;
+    return b;
+  }
+
+  function fotosMover(i, paso) {
+    const j = i + paso;
+    if (j < 0 || j >= fotosLista.length) return;
+    [fotosLista[i], fotosLista[j]] = [fotosLista[j], fotosLista[i]];
+    fotosMarcarSucio(true);
+    fotosPintarGrilla();
+  }
+
+  function fotosPintarGrilla() {
+    const grilla = el("fotosGrilla");
+    grilla.innerHTML = "";
+    const tapa = fotosPortada(fotosLista);
+
+    fotosLista.forEach((m, i) => {
+      const ficha = document.createElement("div");
+      ficha.className = "rounded-2xl border border-brand-beige bg-white/70 overflow-hidden flex flex-col";
+
+      const marco = document.createElement("div");
+      marco.className = "relative aspect-square bg-brand-beige/30";
+
+      let medio;
+      if (m.video) {
+        medio = document.createElement("video");
+        medio.src = m.vista + "#t=0.1";
+        medio.muted = true;
+        medio.playsInline = true;
+        medio.preload = "metadata";
+        medio.controls = true;
+        // El navegador del dueño es una buena muestra de los de los huéspedes:
+        // si acá no se puede ver, se avisa antes de que lo guarden.
+        medio.onerror = () => {
+          const cartel = document.createElement("div");
+          cartel.className = "absolute inset-x-2 bottom-2 rounded-xl bg-red-50 border border-red-200 text-red-800 text-[11px] p-2";
+          cartel.textContent = "Este video no se puede ver en este navegador.";
+          marco.appendChild(cartel);
+        };
+      } else {
+        medio = document.createElement("img");
+        medio.src = m.vista;
+        medio.alt = `Foto ${i + 1}`;
+        medio.loading = "lazy";
+      }
+      medio.className = "w-full h-full object-cover";
+      marco.appendChild(medio);
+
+      const numero = document.createElement("span");
+      numero.className = "absolute top-2 left-2 px-2 py-0.5 rounded-full bg-white/90 text-xs font-bold";
+      numero.textContent = String(i + 1);
+      marco.appendChild(numero);
+
+      if (m === tapa) {
+        const badge = document.createElement("span");
+        badge.className = "absolute top-2 right-2 px-2 py-0.5 rounded-full bg-brand-brown text-brand-cream text-[10px] font-bold uppercase tracking-wider";
+        badge.textContent = "Portada";
+        marco.appendChild(badge);
+      } else if (m.video) {
+        const badge = document.createElement("span");
+        badge.className = "absolute top-2 right-2 px-2 py-0.5 rounded-full bg-black/60 text-white text-[10px] font-bold uppercase tracking-wider";
+        badge.textContent = "Video";
+        marco.appendChild(badge);
+      }
+      ficha.appendChild(marco);
+
+      const pie = document.createElement("div");
+      pie.className = "flex items-center justify-between gap-1 p-2";
+      const flechas = document.createElement("div");
+      flechas.className = "flex gap-1";
+      flechas.appendChild(fotosBotonChico("←", "Mover antes", () => fotosMover(i, -1), i === 0));
+      flechas.appendChild(fotosBotonChico("→", "Mover después", () => fotosMover(i, 1), i === fotosLista.length - 1));
+      pie.appendChild(flechas);
+      pie.appendChild(fotosBotonChico("✕", "Sacar de la casa", () => {
+        fotosLista.splice(i, 1);
+        fotosMarcarSucio(true);
+        fotosPintarGrilla();
+      }));
+      ficha.appendChild(pie);
+
+      grilla.appendChild(ficha);
+    });
+
+    fotosPintarEstado();
+  }
+
+  // ---------- subir ----------
+
+  function fotosNuevoId() {
+    return "m" + Date.now().toString(36) + Math.floor(Math.random() * 1e8).toString(36);
+  }
+
+  // El tipo a veces viene vacío (pasa con los .mov en Windows): se deduce del
+  // nombre.
+  function fotosTipoDe(archivo) {
+    if (archivo.type) return archivo.type;
+    const ext = (archivo.name.split(".").pop() || "").toLowerCase();
+    return { mov: "video/quicktime", mp4: "video/mp4", webm: "video/webm",
+      jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png", webp: "image/webp",
+      heic: "image/heic", heif: "image/heif" }[ext] || "";
+  }
+
+  // Achica la foto en el navegador y la pasa a JPG. Además de pesar menos,
+  // resuelve las HEIC del iPhone en Safari, que las sabe abrir. Si el
+  // navegador no la puede abrir, se avisa en vez de subir algo que la página
+  // no va a poder mostrar.
+  function fotosAchicar(archivo) {
+    return new Promise((resolve, reject) => {
+      const url = URL.createObjectURL(archivo);
+      const img = new Image();
+      img.onload = () => {
+        try {
+          const escala = Math.min(1, FOTOS_LADO_MAXIMO / Math.max(img.naturalWidth, img.naturalHeight));
+          const canvas = document.createElement("canvas");
+          canvas.width = Math.round(img.naturalWidth * escala);
+          canvas.height = Math.round(img.naturalHeight * escala);
+          const ctx = canvas.getContext("2d");
+          // Fondo blanco: un PNG con transparencia en JPG quedaría negro.
+          ctx.fillStyle = "#fff";
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          canvas.toBlob((blob) => {
+            URL.revokeObjectURL(url);
+            if (blob) resolve(blob);
+            else reject(new Error("No se pudo preparar la foto"));
+          }, "image/jpeg", FOTOS_CALIDAD);
+        } catch (e) {
+          URL.revokeObjectURL(url);
+          reject(e);
+        }
+      };
+      img.onerror = () => {
+        URL.revokeObjectURL(url);
+        reject(new Error("Este navegador no puede abrir la foto. Si es del iPhone (HEIC), " +
+          "subila desde el iPhone o pasala a JPG."));
+      };
+      img.src = url;
+    });
+  }
+
+  function fotosFilaSubida(nombre) {
+    const fila = document.createElement("div");
+    fila.className = "rounded-xl border border-brand-beige bg-white/70 p-2 text-xs";
+    const texto = document.createElement("div");
+    texto.className = "flex justify-between gap-2";
+    const n = document.createElement("span");
+    n.className = "truncate";
+    n.textContent = nombre;
+    const estado = document.createElement("span");
+    estado.className = "shrink-0 text-brand-accent";
+    texto.appendChild(n);
+    texto.appendChild(estado);
+    const barra = document.createElement("div");
+    barra.className = "mt-1 h-1.5 rounded-full bg-brand-beige/50 overflow-hidden";
+    const relleno = document.createElement("div");
+    relleno.className = "h-full bg-brand-brown transition-all";
+    relleno.style.width = "0%";
+    barra.appendChild(relleno);
+    fila.appendChild(texto);
+    fila.appendChild(barra);
+    el("fotosSubidas").appendChild(fila);
+    return {
+      progreso(p, msg) { relleno.style.width = Math.round(p * 100) + "%"; estado.textContent = msg; },
+      error(msg) {
+        fila.classList.add("border-red-200", "bg-red-50");
+        relleno.classList.replace("bg-brand-brown", "bg-red-400");
+        estado.className = "shrink-0 text-red-800";
+        estado.textContent = msg;
+        const cerrar = document.createElement("button");
+        cerrar.type = "button";
+        cerrar.className = "ml-2 underline";
+        cerrar.textContent = "Cerrar";
+        cerrar.onclick = () => fila.remove();
+        estado.appendChild(cerrar);
+      },
+      listo() { fila.remove(); },
+    };
+  }
+
+  // Manda el archivo de a partes. Cada parte se reintenta una vez: con el
+  // wifi de la costa, un corte a mitad de un video de 80 MB es lo esperable.
+  async function fotosSubirPartes(id, blob, tipo, alAvanzar) {
+    const total = Math.max(1, Math.ceil(blob.size / FOTOS_TAMANO_PARTE));
+    for (let n = 0; n < total; n++) {
+      const pedazo = blob.slice(n * FOTOS_TAMANO_PARTE, (n + 1) * FOTOS_TAMANO_PARTE);
+      const q = new URLSearchParams({ id, n: String(n), total: String(total), tipo, tamano: String(blob.size) });
+      let ultimoError = null;
+      for (let intento = 0; intento < 2; intento++) {
+        try {
+          const res = await fetch(`${EP_UPLOAD_HOUSE_MEDIA}?${q}`, {
+            method: "POST",
+            headers: { "x-lc-secret": getOwnerSecret() || "", "Content-Type": "application/octet-stream" },
+            body: pedazo,
+          });
+          const out = await res.json().catch(() => ({}));
+          if (res.status === 401) throw Object.assign(new Error("Falta el Owner Secret o no es el correcto."), { final: true });
+          if (!res.ok || out.ok === false) {
+            // Un 4xx no se arregla reintentando: el problema es el archivo.
+            const err = new Error(out.message || `Error ${res.status}`);
+            if (res.status < 500) err.final = true;
+            throw err;
+          }
+          ultimoError = null;
+          break;
+        } catch (e) {
+          ultimoError = e;
+          if (e.final) break;
+        }
+      }
+      if (ultimoError) throw ultimoError;
+      alAvanzar((n + 1) / total);
+    }
+  }
+
+  async function fotosSubirUno(archivo) {
+    const fila = fotosFilaSubida(archivo.name);
+    const tipo = fotosTipoDe(archivo);
+    const esVideo = tipo.startsWith("video/");
+    const esFoto = tipo.startsWith("image/");
+
+    try {
+      if (!esVideo && !esFoto) throw new Error("No es una foto ni un video.");
+
+      let blob = archivo;
+      let tipoFinal = tipo;
+      if (esFoto) {
+        fila.progreso(0, "Preparando…");
+        blob = await fotosAchicar(archivo);
+        tipoFinal = "image/jpeg";
+      } else if (archivo.size > FOTOS_MAXIMO_VIDEO) {
+        throw new Error("Pesa más de 150 MB. Recortalo o mandátelo por WhatsApp y subí ese.");
+      }
+
+      const id = fotosNuevoId();
+      fila.progreso(0, "Subiendo… 0%");
+      await fotosSubirPartes(id, blob, tipoFinal, (p) => fila.progreso(p, `Subiendo… ${Math.round(p * 100)}%`));
+
+      // Se suma a la casa que estaba elegida al empezar: no se puede cambiar
+      // de casa mientras se sube (ver fotosCambiarCasa).
+      fotosLista.push({
+        origen: "subida",
+        id,
+        video: esVideo,
+        vista: `/api/house-media?id=${id}`,
+      });
+      fila.listo();
+      fotosMarcarSucio(true);
+      fotosPintarGrilla();
+    } catch (e) {
+      fila.error(e.message || "No se pudo subir");
+    }
+  }
+
+  el("fotosArchivo").onchange = async () => {
+    const archivos = Array.from(el("fotosArchivo").files || []);
+    el("fotosArchivo").value = "";
+    if (!archivos.length) return;
+    if (!getOwnerSecret()) {
+      openSecretModal();
+      return;
+    }
+
+    fotosSubiendo += archivos.length;
+    fotosPintarEstado();
+    // De a uno: en paralelo, cinco videos se pelean el mismo wifi y tardan
+    // lo mismo, pero con más chances de que se corte alguno.
+    for (const archivo of archivos) {
+      try {
+        await fotosSubirUno(archivo);
+      } finally {
+        fotosSubiendo--;
+        fotosPintarEstado();
+      }
+    }
+  };
+
+  // ---------- cargar y guardar ----------
+
+  async function fotosCargar() {
+    if (!fotosOriginales) {
+      const res = await fetch("/fotos-casas.json", { cache: "no-cache" });
+      if (!res.ok) throw new Error("No se pudo leer la lista de fotos originales");
+      fotosOriginales = await res.json();
+    }
+    const out = await apiFetch(EP_HOUSE_GALLERY, { method: "GET", body: null });
+    fotosGuardadas = out.casas || {};
+    fotosLista = fotosListaDe(fotosCasa);
+    fotosMarcarSucio(false);
+    fotosPintarCasas();
+    fotosPintarGrilla();
+  }
+
+  tabFotos.onclick = async () => {
+    showTab("fotos");
+    // Si había cambios sin guardar, volver a la pestaña no los pisa.
+    if (fotosSucio || fotosSubiendo > 0) return;
+    try {
+      setStatus("Cargando las fotos...");
+      await fotosCargar();
+      setStatus("✅ Fotos cargadas.");
+    } catch (e) {
+      setStatus("❌ " + e.message);
+    }
+  };
+
+  el("btnFotosDescartar").onclick = async () => {
+    if (fotosSubiendo > 0) return showToast("Esperá a que terminen de subirse", "err");
+    try {
+      await fotosCargar();
+      setStatus("✅ Se descartaron los cambios.");
+    } catch (e) {
+      setStatus("❌ " + e.message);
+    }
+  };
+
+  async function fotosGuardar(items) {
+    const casa = fotosCasa;
+    el("btnFotosGuardar").disabled = true;
+    try {
+      setStatus("Guardando las fotos...");
+      const out = await apiFetch(EP_SET_HOUSE_GALLERY, { method: "POST", body: { casa, items } });
+      // Si el servidor descartó alguna (una subida que no terminó), se dice:
+      // guardar 10 y que entren 9 en silencio es cómo se pierde una foto.
+      if (items && out.guardados !== out.recibidos) {
+        showToast(`Se guardaron ${out.guardados} de ${out.recibidos}: alguna no había terminado de subirse`, "err");
+      } else {
+        showToast(items ? `Fotos de Las Cañas ${casa} guardadas ✅` : `Las Cañas ${casa} volvió a las fotos originales ✅`, "ok");
+      }
+      setStatus(`✅ Las Cañas ${casa}: ` + (out.originales ? "fotos originales." : `${out.guardados} en la página.`));
+      await fotosCargar();
+    } catch (e) {
+      setStatus("❌ " + e.message);
+      showToast(e.message || "Error", "err");
+      fotosPintarEstado();
+    }
+  }
+
+  el("btnFotosGuardar").onclick = () => {
+    if (el("btnFotosGuardar").disabled) return;
+    fotosGuardar(fotosLista.map((m) =>
+      m.origen === "subida" ? { origen: "subida", id: m.id } : { origen: "original", src: m.src }));
+  };
+
+  el("btnFotosOriginales").onclick = () => {
+    if (fotosSubiendo > 0) return showToast("Esperá a que terminen de subirse", "err");
+    if (!confirm(`¿Volver a las fotos originales de Las Cañas ${fotosCasa}? ` +
+      "Las que subieron para esta casa se borran.")) return;
+    fotosGuardar(null);
+  };
+
+  // Cerrar la pestaña a mitad de una subida o con cambios sin guardar pierde
+  // el trabajo: el navegador pregunta antes.
+  window.addEventListener("beforeunload", (e) => {
+    if (fotosSucio || fotosSubiendo > 0) {
+      e.preventDefault();
+      e.returnValue = "";
+    }
+  });
 
   // ✅ ahora showTab() ya no rompe nada (countdownInterval existe)
   showTab("block");
@@ -5800,6 +6376,18 @@
   // Para la próxima tanda: agregar otra entrada arriba, con fecha y un id
   // nuevo. El id es lo que recuerda que ya la vieron, así que no se reusa.
   const NOVEDADES = [
+    {
+      id: "novedad-2026-11-17",
+      sev: "nueva",
+      titulo: "Ahora pueden cambiar las fotos de las casas (17 de noviembre)",
+      puntos: [
+        "Hay una pestaña nueva, “Fotos de las casas”: eligen la casa, suben fotos o videos, los ordenan y guardan. Es lo que se ve en la página.",
+        "La primera foto de cada casa es la portada de su tarjeta.",
+        "Las fotos se achican solas al subirlas. Los videos pueden pesar hasta 150 MB.",
+        "Si algo no les gusta, “Volver a las originales” deja la casa como estaba.",
+      ],
+      queHacer: "Cuando quieran, entren a “Fotos de las casas”. Está explicado también en la Guía.",
+    },
     {
       id: "novedad-2026-10-21",
       sev: "nueva",
